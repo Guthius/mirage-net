@@ -1,24 +1,29 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <OutputType>WinExe</OutputType>
+        <OutputType>Exe</OutputType>
         <TargetFramework>net9.0-windows</TargetFramework>
         <Nullable>enable</Nullable>
         <UseWindowsForms>true</UseWindowsForms>
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>Mirage</RootNamespace>
         <GenerateResourceUsePreserializedResources>True</GenerateResourceUsePreserializedResources>
+        <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+        <IsPackable>false</IsPackable>
+        <Product>Mirage</Product>
+        <AssemblyVersion>3.0.0.3</AssemblyVersion>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="MessagePack" Version="3.1.1"/>
         <PackageReference Include="System.Resources.Extensions" Version="9.0.0"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="Forms\frmLoad.cs">
-        <SubType>Form</SubType>
-      </Compile>
-      <Compile Update="Forms\frmServer.cs">
-        <SubType>Form</SubType>
-      </Compile>
+        <None Update="Data\**">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="Classes.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 </Project>

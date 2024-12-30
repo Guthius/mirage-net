@@ -1,0 +1,56 @@
+﻿{
+  "Name": "Zjin",
+  "JoinSay": "Hello adventurer, I have some cheap items for sale.  I can also fix your damaged equipment.",
+  "LeaveSay": "Good luck on your journey.",
+  "FixesItems": 1,
+  "TradeItem": [
+    {
+      "GiveItem": 1,
+      "GiveValue": 10,
+      "GetItem": 2,
+      "GetValue": 1
+    },
+    {
+      "GiveItem": 1,
+      "GiveValue": 100,
+      "GetItem": 5,
+      "GetValue": 1
+    },
+    {
+      "GiveItem": 1,
+      "GiveValue": 50,
+      "GetItem": 4,
+      "GetValue": 1
+    },
+    {
+      "GiveItem": 5,
+      "GiveValue": 1,
+      "GetItem": 1,
+      "GetValue": 50
+    },
+    {
+      "GiveItem": 24,
+      "GiveValue": 1,
+      "GetItem": 1,
+      "GetValue": 100
+    },
+    {
+      "GiveItem": 52,
+      "GiveValue": 1,
+      "GetItem": 53,
+      "GetValue": 1
+    },
+    {
+      "GiveItem": 1,
+      "GiveValue": 500,
+      "GetItem": 76,
+      "GetValue": 1
+    },
+    {
+      "GiveItem": 1,
+      "GiveValue": 100,
+      "GetItem": 77,
+      "GetValue": 1
+    }
+  ]
+}

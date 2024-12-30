@@ -1,0 +1,15 @@
+﻿{
+  "Name": "Cloaked Imp",
+  "AttackSay": "'Ack, leave me alone!!!!",
+  "Sprite": 8,
+  "SpawnSecs": 2,
+  "Behavior": 1,
+  "Range": 10,
+  "DropChance": 2,
+  "DropItem": 1,
+  "DropItemValue": 5,
+  "STR": 3,
+  "DEF": 3,
+  "SPD": 4,
+  "MAG": 1
+}

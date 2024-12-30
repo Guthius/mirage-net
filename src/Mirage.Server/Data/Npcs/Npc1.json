@@ -1,0 +1,15 @@
+﻿{
+  "Name": "Drunken Sea Pirate",
+  "AttackSay": "arrrrrrr...... ughhhh *puke*",
+  "Sprite": 7,
+  "SpawnSecs": 5,
+  "Behavior": 1,
+  "Range": 1,
+  "DropChance": 2,
+  "DropItem": 1,
+  "DropItemValue": 3,
+  "STR": 2,
+  "DEF": 1,
+  "SPD": 5,
+  "MAG": 0
+}

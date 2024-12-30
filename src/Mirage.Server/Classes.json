@@ -1,0 +1,26 @@
+﻿[
+  {
+    "Name": "Knight",
+    "Sprite": 0,
+    "STR": 8,
+    "DEF": 7,
+    "SPEED": 5,
+    "MAGI": 8
+  },
+  {
+    "Name": "Black Mage",
+    "Sprite": 1,
+    "STR": 2,
+    "DEF": 2,
+    "SPEED": 3,
+    "MAGI": 13
+  },
+  {
+    "Name": "Monk",
+    "Sprite": 30,
+    "STR": 8,
+    "DEF": 5,
+    "SPEED": 7,
+    "MAGI": 0
+  }
+]

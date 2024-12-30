@@ -16,7 +16,7 @@ public static class modClientTCP
     {
         _playerBufferLen = 0;
 
-        My.Forms.frmMirage.Socket.RemoteHost = "192.168.50.13";
+        My.Forms.frmMirage.Socket.RemoteHost = "127.0.0.1";
         My.Forms.frmMirage.Socket.RemotePort = modTypes.GAME_PORT;
     }
 
@@ -525,7 +525,7 @@ public static class modClientTCP
             modTypes.SEP_CHAR + modTypes.Shop[shopNum].LeaveSay.Trim() +
             modTypes.SEP_CHAR + modTypes.Shop[shopNum].FixesItems;
 
-        for (var i = 1; i < modTypes.MAX_TRADES; i++)
+        for (var i = 1; i <= modTypes.MAX_TRADES; i++)
         {
             packet = packet +
                      modTypes.SEP_CHAR + modTypes.Shop[shopNum].TradeItem[i].GiveItem +

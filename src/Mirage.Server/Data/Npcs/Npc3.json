@@ -1,0 +1,15 @@
+﻿{
+  "Name": "Bandit",
+  "AttackSay": "Your gold or your life chum!",
+  "Sprite": 6,
+  "SpawnSecs": 5,
+  "Behavior": 0,
+  "Range": 3,
+  "DropChance": 4,
+  "DropItem": 1,
+  "DropItemValue": 10,
+  "STR": 3,
+  "DEF": 4,
+  "SPD": 2,
+  "MAG": 0
+}

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading.Channels;
 
@@ -26,7 +27,33 @@ public sealed class Winsock : Component
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public WinsockState State { get; private set; } = WinsockState.Disconnected;
+    
+    public string LocalIP
+    {
+        get
+        {
+            if (_socket?.RemoteEndPoint is IPEndPoint ep)
+            {
+                return ep.Address.ToString();
+            }
 
+            return "unknown";
+        }
+    }
+
+    public int LocalPort
+    {
+        get
+        {
+            if (_socket?.RemoteEndPoint is IPEndPoint ep)
+            {
+                return ep.Port;
+            }
+
+            return 0;
+        }
+    }
+    
     public void Close()
     {
         lock (_lock)

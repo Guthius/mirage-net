@@ -8,7 +8,11 @@ public static class modHandleData
     {
         // Handle Data
         var parse = data.Split(modTypes.SEP_CHAR);
-
+        if (parse.Length == 0)
+        {
+            return;
+        }
+        
         // ::::::::::::::::::::::::::
         // :: Alert message packet ::
         // ::::::::::::::::::::::::::
