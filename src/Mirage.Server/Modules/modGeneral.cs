@@ -2,10 +2,9 @@
 
 namespace Mirage.Modules;
 
-public static partial class modGeneral
+public static class modGeneral
 {
-    [LibraryImport("kernel32.dll", EntryPoint = "GetTickCount")]
-    internal static partial int GetTickCount();
+    public static int GetTickCount() => Environment.TickCount;
 
     // Version constants
     public const int CLIENT_MAJOR = 3;
