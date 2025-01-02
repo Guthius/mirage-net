@@ -884,7 +884,6 @@ public static class modGameLogic
         };
     }
 
-
     public static bool CanAttackNpc(int attacker, int mapNpcNum)
     {
         if (!modServerTCP.IsPlaying(attacker))
@@ -1730,8 +1729,6 @@ public static class modGameLogic
         modServerTCP.SendMP(index);
         modServerTCP.SendSP(index);
         modServerTCP.SendStats(index);
-        modServerTCP.SendWeatherTo(index);
-        modServerTCP.SendTimeTo(index);
 
         // Warp the player to his saved location
         PlayerWarp(index, modTypes.GetPlayerMap(index), modTypes.GetPlayerX(index), modTypes.GetPlayerY(index));

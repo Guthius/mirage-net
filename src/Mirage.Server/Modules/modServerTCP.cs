@@ -27,24 +27,6 @@ public static class modServerTCP
         return false;
     }
 
-    public static bool IsMultiIPOnline(string ip)
-    {
-        var n = 0;
-        for (var i = 1; i <= modTypes.MAX_PLAYERS; i++)
-        {
-            if (modNetwork.IsConnected(i) && modTypes.GetPlayerIP(i).Equals(ip, StringComparison.CurrentCultureIgnoreCase))
-            {
-                n++;
-                if (n > 1)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
     public static bool IsBanned(string ip)
     {
         const string filename = "Banlist.txt";
@@ -920,39 +902,5 @@ public static class modServerTCP
         }
 
         SendDataTo(index, packet);
-    }
-
-    public static void SendWeatherTo(int index)
-    {
-        var packet = "WEATHER" + modTypes.SEP_CHAR + modGeneral.GameWeather + modTypes.SEP_CHAR;
-        SendDataTo(index, packet);
-    }
-
-    public static void SendWeatherToAll()
-    {
-        for (var i = 1; i <= modTypes.MAX_PLAYERS; i++)
-        {
-            if (IsPlaying(i))
-            {
-                SendWeatherTo(i);
-            }
-        }
-    }
-
-    public static void SendTimeTo(int index)
-    {
-        var packet = "TIME" + modTypes.SEP_CHAR + modGeneral.GameTime + modTypes.SEP_CHAR;
-        SendDataTo(index, packet);
-    }
-
-    public static void SendTimeToAll()
-    {
-        for (var i = 1; i <= modTypes.MAX_PLAYERS; i++)
-        {
-            if (IsPlaying(i))
-            {
-                SendTimeTo(i);
-            }
-        }
     }
 }

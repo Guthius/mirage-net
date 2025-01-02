@@ -14,13 +14,7 @@ public static partial class modGeneral
 
     // Used for respawning items
     public static int SpawnSeconds;
-
-    // Used for weather effects
-    public static int GameWeather = modTypes.WEATHER_NONE;
-    public static int WeatherSeconds;
-    public static int GameTime = modTypes.TIME_DAY;
-    public static int TimeSeconds;
-
+    
     // Used for closing key doors again
     public static int KeyTimer;
 

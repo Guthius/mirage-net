@@ -2,8 +2,6 @@
 
 public static class modText
 {
-    public const char Quote = '"';
-
     public const int Black = 0;
     public const int Blue = 1;
     public const int Green = 2;

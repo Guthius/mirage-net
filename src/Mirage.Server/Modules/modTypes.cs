@@ -20,14 +20,11 @@ public static class modTypes
     public const int MAX_PLAYER_SPELLS = 20;
     public const int MAX_SPELLS = 255;
     public const int MAX_TRADES = 8;
-    public const int MAX_GUILDS = 20;
-    public const int MAX_GUILD_MEMBERS = 10;
 
     public const int NO = 0;
     public const int YES = 1;
 
     // Account constants
-    public const int NAME_LENGTH = 20;
     public const int MAX_CHARS = 3;
 
     // Sex constants
@@ -40,11 +37,7 @@ public static class modTypes
     public const int MAX_MAPY = 11;
     public const int MAP_MORAL_NONE = 0;
     public const int MAP_MORAL_SAFE = 1;
-
-    // Image constants
-    public const int PIC_X = 32;
-    public const int PIC_Y = 32;
-
+    
     // Tile consants
     public const int TILE_TYPE_WALKABLE = 0;
     public const int TILE_TYPE_BLOCKED = 1;
@@ -79,16 +72,7 @@ public static class modTypes
     // Constants for player movement
     public const int MOVING_WALKING = 1;
     public const int MOVING_RUNNING = 2;
-
-    // Weather constants
-    public const int WEATHER_NONE = 0;
-    public const int WEATHER_RAINING = 1;
-    public const int WEATHER_SNOWING = 2;
-
-    // Time constants
-    public const int TIME_DAY = 0;
-    public const int TIME_NIGHT = 1;
-
+    
     // Admin constants
     public const int ADMIN_MONITER = 1;
     public const int ADMIN_MAPPER = 2;
@@ -114,8 +98,7 @@ public static class modTypes
     // Target type constants
     public const int TARGET_TYPE_PLAYER = 0;
     public const int TARGET_TYPE_NPC = 1;
-
-
+    
     public struct PlayerInvRec
     {
         public int Num;
@@ -134,7 +117,6 @@ public static class modTypes
         public int Exp;
         public int Access;
         public int PK;
-        public int Guild;
 
         // Vitals
         public int HP;
@@ -330,17 +312,9 @@ public static class modTypes
         public readonly int[,] DoorOpen = new int[MAX_MAPX + 1, MAX_MAPY + 1];
         public long DoorTimer;
     }
-
-    public struct GuildRec()
-    {
-        public string Name = string.Empty;
-        public string Founder = string.Empty;
-        public string[] Member = new string[MAX_GUILD_MEMBERS + 1];
-    }
-
+    
     // Used for parsing
     public static char SEP_CHAR = (char) 0;
-    public static char END_CHAR = (char) 237;
 
     // Maximum classes
     public static int Max_Classes;
@@ -356,7 +330,6 @@ public static class modTypes
     public static readonly MapNpcRec[,] MapNpc = new MapNpcRec[MAX_MAPS + 1, MAX_MAP_NPCS + 1];
     public static readonly ShopRec[] Shop = new ShopRec[MAX_SHOPS + 1];
     public static readonly SpellRec[] Spell = new SpellRec[MAX_SPELLS + 1];
-    public static readonly GuildRec[] Guild = new GuildRec[MAX_GUILDS + 1];
 
     public static void ClearTempTile()
     {
@@ -371,14 +344,6 @@ public static class modTypes
                     TempTile[i].DoorOpen[x, y] = NO;
                 }
             }
-        }
-    }
-
-    public static void ClearClasses()
-    {
-        for (var i = 0; i < Max_Classes; i++)
-        {
-            Class[i] = new ClassRec();
         }
     }
 
@@ -560,26 +525,10 @@ public static class modTypes
     //////////////////////
     // PLAYER FUNCTIONS //
     //////////////////////
-
-
+    
     public static string GetPlayerLogin(int index)
     {
         return Player[index].Login;
-    }
-
-    public static void SetPlayerLogin(int index, string login)
-    {
-        Player[index].Login = login;
-    }
-
-    public static string GetPlayerPassword(int index)
-    {
-        return Player[index].Password;
-    }
-
-    public static void SetPlayerPassword(int index, string password)
-    {
-        Player[index].Password = password;
     }
 
     public static string GetPlayerName(int index)
@@ -587,19 +536,9 @@ public static class modTypes
         return Player[index].Char[Player[index].CharNum].Name;
     }
 
-    public static void SetPlayerName(int index, string name)
-    {
-        Player[index].Char[Player[index].CharNum].Name = name;
-    }
-
     public static int GetPlayerClass(int index)
     {
         return Player[index].Char[Player[index].CharNum].Class;
-    }
-
-    public static void SetPlayerClass(int index, int classNum)
-    {
-        Player[index].Char[Player[index].CharNum].Class = classNum;
     }
 
     public static int GetPlayerSprite(int index)
@@ -753,21 +692,6 @@ public static class modTypes
     public static int GetClassMaxSP(int classNum)
     {
         return (1 + Class[classNum].SPEED / 2 + Class[classNum].SPEED) * 2;
-    }
-
-    public static int GetClassSTR(int classNum)
-    {
-        return Class[classNum].STR;
-    }
-
-    public static int GetClassDEF(int classNum)
-    {
-        return Class[classNum].DEF;
-    }
-
-    public static int GetClassSPEED(int classNum)
-    {
-        return Class[classNum].SPEED;
     }
 
     public static int GetClassMAGI(int classNum)

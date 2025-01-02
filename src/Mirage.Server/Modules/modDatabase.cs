@@ -15,7 +15,6 @@ public static class modDatabase
     public const int START_Y = modTypes.MAX_MAPY / 2;
 
     public const string ADMIN_LOG = "admin.txt";
-    public const string PLAYER_LOG = "player.txt";
 
     private static string GetAccountPath(string name)
     {
@@ -28,8 +27,7 @@ public static class modDatabase
     {
         return GetAccountPath(modTypes.Player[index].Login);
     }
-
-
+    
     public static void SavePlayer(int index)
     {
         var json = JsonSerializer.Serialize(modTypes.Player[index], JsonOptions);
@@ -195,14 +193,6 @@ public static class modDatabase
         }
     }
 
-    public static void SaveItems()
-    {
-        for (var i = 1; i <= modTypes.MAX_ITEMS; i++)
-        {
-            SaveItem(i);
-        }
-    }
-
     public static void SaveItem(int itemNum)
     {
         var json = JsonSerializer.Serialize(modTypes.Item[itemNum]);
@@ -231,14 +221,6 @@ public static class modDatabase
 
             var json = File.ReadAllText(itemPath);
             modTypes.Item[i] = JsonSerializer.Deserialize<modTypes.ItemRec>(json, JsonOptions);
-        }
-    }
-
-    public static void SaveShops()
-    {
-        for (var i = 1; i <= modTypes.MAX_SHOPS; i++)
-        {
-            SaveShop(i);
         }
     }
 
@@ -281,14 +263,6 @@ public static class modDatabase
         File.WriteAllText(Path.Combine("Data", "Spells", filename), json);
     }
 
-    public static void SaveSpells()
-    {
-        for (var i = 1; i <= modTypes.MAX_SPELLS; i++)
-        {
-            SaveSpell(i);
-        }
-    }
-
     public static void LoadSpells()
     {
         var path = Path.Combine("Data", "Spells");
@@ -309,14 +283,6 @@ public static class modDatabase
 
             var json = File.ReadAllText(spellPath);
             modTypes.Spell[i] = JsonSerializer.Deserialize<modTypes.SpellRec>(json, JsonOptions);
-        }
-    }
-    
-    public static void SaveNpcs()
-    {
-        for (var i = 1; i <= modTypes.MAX_NPCS; i++)
-        {
-            SaveNpc(i);
         }
     }
 
@@ -357,14 +323,6 @@ public static class modDatabase
         var bytes = MessagePackSerializer.Serialize(modTypes.Map[mapNum]);
 
         File.WriteAllBytes(path, bytes);
-    }
-
-    public static void SaveMaps()
-    {
-        for (var i = 1; i <= modTypes.MAX_MAPS; i++)
-        {
-            SaveMap(i);
-        }
     }
 
     public static void LoadMaps()
