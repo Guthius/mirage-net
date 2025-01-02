@@ -1525,11 +1525,11 @@ public static class modGameLogic
         // Check to see if the tile is a warp tile, and if so warp them
         if (modTypes.Map[mapNum].Tile[x, y].Type == modTypes.TILE_TYPE_WARP)
         {
-            mapNum = modTypes.Map[mapNum].Tile[x, y].Data1;
-            x = modTypes.Map[mapNum].Tile[x, y].Data2;
-            y = modTypes.Map[mapNum].Tile[x, y].Data3;
+            var destMapNum = modTypes.Map[mapNum].Tile[x, y].Data1;
+            var dx = modTypes.Map[mapNum].Tile[x, y].Data2;
+            var dy = modTypes.Map[mapNum].Tile[x, y].Data3;
 
-            PlayerWarp(index, mapNum, x, y);
+            PlayerWarp(index, destMapNum, dx, dy);
             moved = true;
         }
 
