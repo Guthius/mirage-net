@@ -907,17 +907,17 @@ public static class modHandleData
                         break;
 
                     case 1:
-                        modTypes.SetPlayerSTR(index, modTypes.GetPlayerDEF(index) + 1);
+                        modTypes.SetPlayerDEF(index, modTypes.GetPlayerDEF(index) + 1);
                         modServerTCP.PlayerMsg(index, "You have gained more defense!", modText.White);
                         break;
 
                     case 2:
-                        modTypes.SetPlayerSTR(index, modTypes.GetPlayerMAGI(index) + 1);
+                        modTypes.SetPlayerMAGI(index, modTypes.GetPlayerMAGI(index) + 1);
                         modServerTCP.PlayerMsg(index, "You have gained more magic abilities!", modText.White);
                         break;
 
                     case 3:
-                        modTypes.SetPlayerSTR(index, modTypes.GetPlayerSPEED(index) + 1);
+                        modTypes.SetPlayerSPEED(index, modTypes.GetPlayerSPEED(index) + 1);
                         modServerTCP.PlayerMsg(index, "You have gained more speed!", modText.White);
                         break;
                 }
