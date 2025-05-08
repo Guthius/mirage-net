@@ -1,28 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net9.0-windows</TargetFramework>
-        <Nullable>enable</Nullable>
-        <UseWindowsForms>true</UseWindowsForms>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <RootNamespace>Mirage</RootNamespace>
-        <GenerateResourceUsePreserializedResources>True</GenerateResourceUsePreserializedResources>
-        <IsPackable>false</IsPackable>
-        <Product>Mirage</Product>
-        <AssemblyVersion>3.0.0.3</AssemblyVersion>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="MessagePack" Version="3.1.1"/>
-        <PackageReference Include="System.Resources.Extensions" Version="9.0.0"/>
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3"/>
+        <PackageReference Include="MongoDB.Driver" Version="3.4.0"/>
+        <PackageReference Include="Serilog" Version="4.2.0"/>
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
     </ItemGroup>
 
     <ItemGroup>
         <None Update="Data\**">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Classes.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Mirage.Game\Mirage.Game.csproj"/>
+        <ProjectReference Include="..\Mirage.Net.Protocol\Mirage.Net.Protocol.csproj"/>
     </ItemGroup>
 </Project>

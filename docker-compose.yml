@@ -1,0 +1,13 @@
+﻿name: mirage-server
+services:
+  mongodb:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_DATABASE: mirage
+    volumes:
+      - mongodb-data:/data/db
+      - ./dist/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "27017:27017"
+volumes:
+  mongodb-data:
