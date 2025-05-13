@@ -1,17 +1,18 @@
 ﻿using System.Diagnostics;
 using Mirage.Game.Constants;
 using Mirage.Game.Data;
-using Mirage.Server.Modules;
 using MongoDB.Driver;
 using Serilog;
 
-namespace Mirage.Server.Game.Managers;
+namespace Mirage.Server.Game.Repositories;
 
-public static class ShopManager
+public static class ShopRepository
 {
+    private static readonly ShopInfo[] Shops = new ShopInfo[Limits.MaxShops + 1];
+
     private static IMongoCollection<ShopInfo> GetCollection()
     {
-        return DatabaseManager.GetCollection<ShopInfo>("shops");
+        return Database.GetCollection<ShopInfo>("shops");
     }
 
     public static ShopInfo? Get(int shopId)
@@ -21,7 +22,7 @@ public static class ShopManager
             return null;
         }
 
-        return modTypes.Shops[shopId];
+        return Shops[shopId];
     }
 
     public static void Update(int shopId, ShopInfo shopInfo)
@@ -31,14 +32,14 @@ public static class ShopManager
             return;
         }
 
-        modTypes.Shops[shopId] = shopInfo;
+        Shops[shopId] = shopInfo;
 
         Save(shopId);
     }
 
     private static void Save(int shopId)
     {
-        GetCollection().ReplaceOne(x => x.Id == shopId, modTypes.Shops[shopId], new ReplaceOptions
+        GetCollection().ReplaceOne(x => x.Id == shopId, Shops[shopId], new ReplaceOptions
         {
             IsUpsert = true
         });
@@ -56,17 +57,15 @@ public static class ShopManager
 
             for (var shopId = 1; shopId <= Limits.MaxShops; shopId++)
             {
-                modTypes.Shops[shopId] = shopInfos.FirstOrDefault(x => x.Id == shopId) ?? CreateSpell(shopId);
+                Shops[shopId] = shopInfos.FirstOrDefault(x => x.Id == shopId) ?? CreateSpell(shopId);
             }
         }
         finally
         {
             stopwatch.Stop();
 
-            Log.Information("Loaded {Count} shops in {ElapsedMs}ms", modTypes.Shops.Length, stopwatch.ElapsedMilliseconds);
+            Log.Information("Loaded {Count} shops in {ElapsedMs}ms", Shops.Length, stopwatch.ElapsedMilliseconds);
         }
-
-        return;
 
         static ShopInfo CreateSpell(int shopId)
         {

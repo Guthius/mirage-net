@@ -2,7 +2,7 @@
 using Mirage.Game.Data;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromServer;
-using Mirage.Server.Game.Managers;
+using Mirage.Server.Game.Repositories;
 using Mirage.Server.Net;
 
 namespace Mirage.Server.Game;
@@ -26,7 +26,7 @@ public sealed class GameMap
         for (var slot = 1; slot <= Limits.MaxMapNpcs; slot++)
         {
             var npcId = Info.NpcIds[slot];
-            var npcInfo = NpcManager.Get(npcId);
+            var npcInfo = NpcRepository.Get(npcId);
 
             _npcs[slot] = new GameNpc(slot, this, npcInfo);
         }
@@ -80,7 +80,7 @@ public sealed class GameMap
     {
         Info = mapInfo;
 
-        MapManager.Update(Info.Id, Info);
+        MapRepository.Update(Info.Id, Info);
 
         RespawnNpcs();
     }
@@ -101,7 +101,7 @@ public sealed class GameMap
                     continue;
                 }
 
-                var itemInfo = ItemManager.Get(Info.Tiles[x, y].Data1);
+                var itemInfo = ItemRepository.Get(Info.Tiles[x, y].Data1);
                 if (itemInfo is null)
                 {
                     continue;
@@ -132,7 +132,7 @@ public sealed class GameMap
                 continue;
             }
 
-            var npcInfo = NpcManager.Get(npcId);
+            var npcInfo = NpcRepository.Get(npcId);
             if (npcInfo is null)
             {
                 _npcs[slot].Reset();
@@ -166,7 +166,7 @@ public sealed class GameMap
             return false;
         }
 
-        var itemInfo = ItemManager.Get(itemId);
+        var itemInfo = ItemRepository.Get(itemId);
         if (itemInfo is null)
         {
             return false;

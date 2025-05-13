@@ -1,19 +1,22 @@
 ﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Mirage.Game.Constants;
 using Mirage.Game.Data;
-using Mirage.Server.Modules;
 using MongoDB.Driver;
 using Serilog;
 
-namespace Mirage.Server.Game.Managers;
+namespace Mirage.Server.Game.Repositories;
 
-public static class NpcManager
+public static class NpcRepository
 {
+    private static readonly NpcInfo[] Npcs = new NpcInfo[Limits.MaxNpcs + 1];
+
     private static IMongoCollection<NpcInfo> GetCollection()
     {
-        return DatabaseManager.GetCollection<NpcInfo>("npcs");
+        return Database.GetCollection<NpcInfo>("npcs");
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static NpcInfo? Get(int npcId)
     {
         if (npcId is <= 0 or > Limits.MaxNpcs)
@@ -21,7 +24,7 @@ public static class NpcManager
             return null;
         }
 
-        return modTypes.Npcs[npcId];
+        return Npcs[npcId];
     }
 
     public static void Update(int npcId, NpcInfo npcInfo)
@@ -31,14 +34,14 @@ public static class NpcManager
             return;
         }
 
-        modTypes.Npcs[npcId] = npcInfo;
+        Npcs[npcId] = npcInfo;
 
         Save(npcId);
     }
 
     public static void Save(int npcId)
     {
-        GetCollection().ReplaceOne(x => x.Id == npcId, modTypes.Npcs[npcId], new ReplaceOptions
+        GetCollection().ReplaceOne(x => x.Id == npcId, Npcs[npcId], new ReplaceOptions
         {
             IsUpsert = true
         });
@@ -56,17 +59,15 @@ public static class NpcManager
 
             for (var npcId = 1; npcId <= Limits.MaxNpcs; npcId++)
             {
-                modTypes.Npcs[npcId] = npcInfos.FirstOrDefault(x => x.Id == npcId) ?? CreateNpc(npcId);
+                Npcs[npcId] = npcInfos.FirstOrDefault(x => x.Id == npcId) ?? CreateNpc(npcId);
             }
         }
         finally
         {
             stopwatch.Stop();
 
-            Log.Information("Loaded {Count} NPC's in {ElapsedMs}ms", modTypes.Npcs.Length, stopwatch.ElapsedMilliseconds);
+            Log.Information("Loaded {Count} NPC's in {ElapsedMs}ms", Npcs.Length, stopwatch.ElapsedMilliseconds);
         }
-
-        return;
 
         static NpcInfo CreateNpc(int npcId)
         {

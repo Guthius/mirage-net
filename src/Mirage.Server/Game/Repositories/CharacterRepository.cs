@@ -1,15 +1,16 @@
-﻿using Mirage.Game.Constants;
+﻿using LanguageExt;
+using LanguageExt.Common;
+using Mirage.Game.Constants;
 using Mirage.Game.Data;
-using Mirage.Server.Modules;
 using MongoDB.Driver;
 
-namespace Mirage.Server.Game.Managers;
+namespace Mirage.Server.Game.Repositories;
 
-public static class CharacterManager
+public static class CharacterRepository
 {
     private static IMongoCollection<CharacterInfo> GetCollection()
     {
-        return DatabaseManager.GetCollection<CharacterInfo>("characters");
+        return Database.GetCollection<CharacterInfo>("characters");
     }
 
     public static bool Exists(string characterName)
@@ -18,7 +19,7 @@ public static class CharacterManager
 
         return count > 0;
     }
-    
+
     public static CharacterInfo? Get(string accountId, int slot)
     {
         return GetCollection()
@@ -26,7 +27,7 @@ public static class CharacterManager
                        x.Slot == slot)
             .FirstOrDefault();
     }
-    
+
     public static List<CharacterSlotInfo> GetCharacterSlots(string accountId)
     {
         var projection = Builders<CharacterInfo>.Projection
@@ -43,30 +44,30 @@ public static class CharacterManager
 
         foreach (var characterSlotInfo in characterSlotInfos)
         {
-            characterSlotInfo.ClassName = modTypes.Classes[characterSlotInfo.ClassId].Name;
+            characterSlotInfo.ClassName = ClassRepository.GetName(characterSlotInfo.ClassId);
         }
 
         return characterSlotInfos;
     }
 
-    public static (CharacterInfo? Character, string? ErrorMessage) Create(string accountId, string characterName, Gender gender, int classId, int slot)
+    public static Option<Error> Create(string accountId, string characterName, Gender gender, int classId, int slot)
     {
         if (slot is < 1 or > Limits.MaxCharacters)
         {
-            return (null, "Invalid character slot");
+            return Error.New("Invalid character slot");
         }
 
-        if (classId < 0 || classId > modTypes.Classes.Count)
+        var classInfo = ClassRepository.Get(classId);
+        if (classInfo is null)
         {
-            return (null, "Invalid class");
+            return Error.New("Invalid class");
         }
 
         if (Exists(characterName))
         {
-            return (null, "Sorry, but that name is in use!");
+            return Error.New("Sorry, but that name is in use!");
         }
 
-        var classInfo = modTypes.Classes[classId];
         var characterInfo = new CharacterInfo
         {
             AccountId = accountId,
@@ -97,7 +98,7 @@ public static class CharacterManager
 
         GetCollection().InsertOne(characterInfo);
 
-        return (characterInfo, null);
+        return Option<Error>.None;
     }
 
     public static void Save(CharacterInfo characterInfo)
@@ -109,7 +110,7 @@ public static class CharacterManager
     {
         GetCollection().DeleteOne(x => x.AccountId == accountId && x.Slot == slot);
     }
-    
+
     public static void DeleteForAccount(string accountId)
     {
         GetCollection().DeleteMany(x => x.AccountId == accountId);

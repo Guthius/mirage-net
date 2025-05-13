@@ -1,6 +1,6 @@
 ﻿using Mirage.Game.Constants;
 using Mirage.Game.Data;
-using Mirage.Server.Game.Managers;
+using Mirage.Server.Game.Repositories;
 using Serilog;
 
 namespace Mirage.Server.Game;
@@ -17,7 +17,7 @@ public static class GameState
     {
         for (var mapId = 1; mapId <= Limits.MaxMaps; mapId++)
         {
-            var mapInfo = MapManager.Get(mapId) ?? new MapInfo();
+            var mapInfo = MapRepository.Get(mapId) ?? new MapInfo();
 
             Maps[mapId] = new GameMap(mapInfo);
         }
@@ -29,7 +29,7 @@ public static class GameState
 
         foreach (var map in Maps)
         {
-            map.Update();
+            map?.Update();
         }
     }
 
@@ -148,13 +148,7 @@ public static class GameState
 
     public static IEnumerable<GamePlayer> OnlinePlayers()
     {
-        foreach (var session in Sessions)
-        {
-            if (session?.Player is not null)
-            {
-                yield return session.Player;
-            }
-        }
+        return Sessions.Where(session => session?.Player is not null).Select(session => session!.Player!);
     }
 
     public static void SavePlayers()
@@ -167,7 +161,7 @@ public static class GameState
 
             if (session?.Player != null)
             {
-                CharacterManager.Save(session.Player.Character);
+                CharacterRepository.Save(session.Player.Character);
             }
         }
     }

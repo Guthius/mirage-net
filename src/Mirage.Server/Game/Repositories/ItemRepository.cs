@@ -1,19 +1,22 @@
 ﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Mirage.Game.Constants;
 using Mirage.Game.Data;
-using Mirage.Server.Modules;
 using MongoDB.Driver;
 using Serilog;
 
-namespace Mirage.Server.Game.Managers;
+namespace Mirage.Server.Game.Repositories;
 
-public static class ItemManager
+public static class ItemRepository
 {
+    private static readonly ItemInfo[] Items = new ItemInfo[Limits.MaxItems + 1];
+
     private static IMongoCollection<ItemInfo> GetCollection()
     {
-        return DatabaseManager.GetCollection<ItemInfo>("items");
+        return Database.GetCollection<ItemInfo>("items");
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ItemInfo? Get(int itemId)
     {
         if (itemId is <= 0 or > Limits.MaxItems)
@@ -21,7 +24,7 @@ public static class ItemManager
             return null;
         }
 
-        return modTypes.Items[itemId];
+        return Items[itemId];
     }
 
     public static void Update(int itemId, ItemInfo itemInfo)
@@ -31,14 +34,14 @@ public static class ItemManager
             return;
         }
 
-        modTypes.Items[itemId] = itemInfo;
+        Items[itemId] = itemInfo;
 
         Save(itemId);
     }
 
     private static void Save(int itemId)
     {
-        GetCollection().ReplaceOne(x => x.Id == itemId, modTypes.Items[itemId], new ReplaceOptions
+        GetCollection().ReplaceOne(x => x.Id == itemId, Items[itemId], new ReplaceOptions
         {
             IsUpsert = true
         });
@@ -56,17 +59,15 @@ public static class ItemManager
 
             for (var itemId = 1; itemId <= Limits.MaxItems; itemId++)
             {
-                modTypes.Items[itemId] = itemInfos.FirstOrDefault(x => x.Id == itemId) ?? CreateItem(itemId);
+                Items[itemId] = itemInfos.FirstOrDefault(x => x.Id == itemId) ?? CreateItem(itemId);
             }
         }
         finally
         {
             stopwatch.Stop();
 
-            Log.Information("Loaded {Count} items in {ElapsedMs}ms", modTypes.Items.Length, stopwatch.ElapsedMilliseconds);
+            Log.Information("Loaded {Count} items in {ElapsedMs}ms", Items.Length, stopwatch.ElapsedMilliseconds);
         }
-
-        return;
 
         static ItemInfo CreateItem(int itemId)
         {

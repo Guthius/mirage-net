@@ -8,11 +8,8 @@ namespace Mirage.Server.Game;
 public sealed record GameSession(int Id)
 {
     public readonly byte[] Buffer = new byte[0xFFFF];
-    public int BufferPos;
-    public int DataTimer;
-    public int DataBytes;
-    public int DataPackets;
 
+    public int BufferOffset { get; set; }
     public AccountInfo? Account { get; set; }
     public GamePlayer? Player { get; private set; }
 

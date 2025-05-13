@@ -2,7 +2,7 @@ using Mirage.Game.Data;
 
 namespace Mirage.Net.Protocol.FromServer;
 
-public sealed record ClassesData(List<ClassInfo> Classes) : IPacket<ClassesData>
+public sealed record ClassesData(IReadOnlyList<ClassInfo> Classes) : IPacket<ClassesData>
 {
     public static string PacketId => "classesdata";
 

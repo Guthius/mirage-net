@@ -9,7 +9,7 @@ using Mirage.Net.Protocol.FromClient;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Extensions;
 using Mirage.Server.Game;
-using Mirage.Server.Game.Managers;
+using Mirage.Server.Game.Repositories;
 using Serilog;
 
 namespace Mirage.Server.Net;
@@ -312,7 +312,7 @@ public static class Network
             return;
         }
 
-        if (BanManager.IsBanned(GetIP(connectionId)))
+        if (BanRepository.IsBanned(GetIP(connectionId)))
         {
             SendAlert(connectionId, $"You have been banned from {Options.GameName}, and can no longer play.");
             return;
@@ -329,22 +329,22 @@ public static class Network
             return;
         }
 
-        bytes.CopyTo(session.Buffer.AsSpan(session.BufferPos));
+        bytes.CopyTo(session.Buffer.AsSpan(session.BufferOffset));
 
-        session.BufferPos += bytes.Length;
+        session.BufferOffset += bytes.Length;
 
-        var bytesHandled = Parser.Parse(connectionId, session.Buffer.AsMemory(0, session.BufferPos));
+        var bytesHandled = Parser.Parse(connectionId, session.Buffer.AsMemory(0, session.BufferOffset));
         if (bytesHandled <= 0)
         {
             return;
         }
 
-        var bytesLeft = session.BufferPos - bytesHandled;
+        var bytesLeft = session.BufferOffset - bytesHandled;
         if (bytesLeft > 0)
         {
             session.Buffer.AsSpan(bytesHandled, bytesLeft).CopyTo(session.Buffer);
         }
 
-        session.BufferPos = bytesLeft;
+        session.BufferOffset = bytesLeft;
     }
 }

@@ -2,13 +2,13 @@
 using MongoDB.Driver;
 using Serilog;
 
-namespace Mirage.Server.Game.Managers;
+namespace Mirage.Server.Game.Repositories;
 
-public static class AccountManager
+public static class AccountRepository
 {
     private static IMongoCollection<AccountInfo> GetCollection()
     {
-        return DatabaseManager.GetCollection<AccountInfo>("accounts");
+        return Database.GetCollection<AccountInfo>("accounts");
     }
 
     public static bool Exists(string accountName)
@@ -48,7 +48,7 @@ public static class AccountManager
             return;
         }
 
-        CharacterManager.DeleteForAccount(accountId);
+        CharacterRepository.DeleteForAccount(accountId);
 
         Log.Information("Account '{AccountId}' has been deleted", accountId);
     }

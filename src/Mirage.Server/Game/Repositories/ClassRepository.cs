@@ -1,26 +1,42 @@
 ﻿using System.Diagnostics;
 using Mirage.Game.Data;
-using Mirage.Server.Modules;
 using MongoDB.Driver;
 using Serilog;
 
-namespace Mirage.Server.Game.Managers;
+namespace Mirage.Server.Game.Repositories;
 
-public static class ClassManager
+public static class ClassRepository
 {
+    private static List<ClassInfo> Classes { get; set; } = [];
+    
     private static IMongoCollection<ClassInfo> GetCollection()
     {
-        return DatabaseManager.GetCollection<ClassInfo>("classes");
+        return Database.GetCollection<ClassInfo>("classes");
+    }
+
+    public static ClassInfo? Get(int classId)
+    {
+        if (classId < 0 || classId >= Classes.Count)
+        {
+            return null;
+        }
+        
+        return Classes[classId];
+    }
+
+    public static IReadOnlyList<ClassInfo> GetAll()
+    {
+        return Classes;
     }
 
     public static string GetName(int classId)
     {
-        if (classId < 0 || classId >= modTypes.Classes.Count)
+        if (classId < 0 || classId >= Classes.Count)
         {
             return string.Empty;
         }
 
-        return modTypes.Classes[classId].Name;
+        return Classes[classId].Name;
     }
 
     public static void Load()
@@ -35,13 +51,13 @@ public static class ClassManager
                 .Find(Builders<ClassInfo>.Filter.Empty)
                 .ToList();
 
-            modTypes.Classes = classInfos;
+            Classes = classInfos;
         }
         finally
         {
             stopwatch.Stop();
 
-            Log.Information("Loaded {Count} classes in {ElapsedMs}ms", modTypes.Classes.Count, stopwatch.ElapsedMilliseconds);
+            Log.Information("Loaded {Count} classes in {ElapsedMs}ms", Classes.Count, stopwatch.ElapsedMilliseconds);
         }
     }
 

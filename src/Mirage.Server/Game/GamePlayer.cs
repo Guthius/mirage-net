@@ -3,8 +3,7 @@ using Mirage.Game.Constants;
 using Mirage.Game.Data;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromServer;
-using Mirage.Server.Game.Managers;
-using Mirage.Server.Modules;
+using Mirage.Server.Game.Repositories;
 using Mirage.Server.Net;
 using Serilog;
 
@@ -41,7 +40,7 @@ public sealed class GamePlayer
         Network.SendGlobalMessage($"{Character.Name} has joined {Options.GameName}!", color);
 
         Send(new LoginOk(Id));
-        Send(new ClassesData(modTypes.Classes));
+        Send(new ClassesData(ClassRepository.GetAll()));
         SendItems();
         SendNpcs();
         SendShops();
@@ -82,11 +81,11 @@ public sealed class GamePlayer
 
         Map.PlayersOnMap = GameState.OnlinePlayerCount(mapId) > 1;
 
-        if (modTypes.Maps[mapId].BootMapId > 0)
+        if (Map.Info.BootMapId > 0)
         {
-            Character.X = modTypes.Maps[mapId].BootX;
-            Character.Y = modTypes.Maps[mapId].BootY;
-            Character.MapId = modTypes.Maps[mapId].BootMapId;
+            Character.X = Map.Info.BootX;
+            Character.Y = Map.Info.BootY;
+            Character.MapId = Map.Info.BootMapId;
         }
 
         if (InParty && PartyMember is not null)
@@ -97,7 +96,7 @@ public sealed class GamePlayer
             PartyMember = null;
         }
 
-        CharacterManager.Save(Character);
+        CharacterRepository.Save(Character);
 
         var color = Character.AccessLevel <= AccessLevel.Moderator ? Color.JoinLeftColor : Color.White;
 
@@ -115,7 +114,7 @@ public sealed class GamePlayer
             switch (Map.Info.Tiles[x, y].Type)
             {
                 case TileType.Blocked:
-                case TileType.Key when Map.DoorOpen[x, y] != true:
+                case TileType.Key when !Map.DoorOpen[x, y]:
                     return false;
             }
 
@@ -172,7 +171,7 @@ public sealed class GamePlayer
             x = Map.Info.Tiles[x, y].Data1;
             y = Map.Info.Tiles[x, y].Data2;
 
-            if (Map.Info.Tiles[x, y].Type == TileType.Key && Map.DoorOpen[x, y] == false)
+            if (Map.Info.Tiles[x, y].Type == TileType.Key && !Map.DoorOpen[x, y])
             {
                 Map.DoorOpen[x, y] = true;
                 Map.DoorTimer = Environment.TickCount;
@@ -202,7 +201,8 @@ public sealed class GamePlayer
                 continue;
             }
 
-            if (modTypes.Items[slotInfo.ItemId].Type == ItemType.Currency)
+            var itemInfo = ItemRepository.Get(itemId);
+            if (itemInfo?.Type == ItemType.Currency)
             {
                 return slotInfo.Quantity;
             }
@@ -217,7 +217,7 @@ public sealed class GamePlayer
     {
         var slotInfo = Character.Inventory[slot];
 
-        var itemInfo = ItemManager.Get(slotInfo.ItemId);
+        var itemInfo = ItemRepository.Get(slotInfo.ItemId);
         if (itemInfo is null)
         {
             return;
@@ -271,7 +271,7 @@ public sealed class GamePlayer
 
     public void GiveItem(int itemId, int quantity)
     {
-        var itemInfo = ItemManager.Get(itemId);
+        var itemInfo = ItemRepository.Get(itemId);
         if (itemInfo is null)
         {
             return;
@@ -297,7 +297,7 @@ public sealed class GamePlayer
 
     public void TakeItem(int itemId, int quantity = 0)
     {
-        var itemInfo = ItemManager.Get(itemId);
+        var itemInfo = ItemRepository.Get(itemId);
         if (itemInfo is null)
         {
             return;
@@ -311,16 +311,13 @@ public sealed class GamePlayer
                 continue;
             }
 
-            if (itemInfo.Type == ItemType.Currency)
+            if (itemInfo.Type == ItemType.Currency && quantity < slotInfo.Quantity)
             {
-                if (quantity < slotInfo.Quantity)
-                {
-                    slotInfo.Quantity -= quantity;
+                slotInfo.Quantity -= quantity;
 
-                    SendInventoryUpdate(slot);
+                SendInventoryUpdate(slot);
 
-                    return;
-                }
+                return;
             }
 
             ClearInventorySlot(slot);
@@ -336,7 +333,7 @@ public sealed class GamePlayer
             return;
         }
 
-        var itemInfo = ItemManager.Get(Character.Inventory[slot].ItemId);
+        var itemInfo = ItemRepository.Get(Character.Inventory[slot].ItemId);
         if (itemInfo is null)
         {
             return;
@@ -488,35 +485,32 @@ public sealed class GamePlayer
                         break;
                 }
 
-                var mapInfo = MapManager.Get(Character.MapId);
+                var mapInfo = MapRepository.Get(Character.MapId);
                 if (mapInfo is null)
                 {
                     return;
                 }
 
-                if (mapInfo.Tiles[x, y].Type == TileType.Key)
+                if (mapInfo.Tiles[x, y].Type == TileType.Key && itemInfo.Id == mapInfo.Tiles[x, y].Data1)
                 {
-                    if (itemInfo.Id == mapInfo.Tiles[x, y].Data1)
+                    Map.DoorOpen[x, y] = true;
+                    Map.DoorTimer = Environment.TickCount;
+
+                    Map.Send(new MapKey(x, y, true));
+                    Map.SendMessage("A door has been unlocked.", Color.White);
+
+                    if (Map.Info.Tiles[x, y].Data2 == 1)
                     {
-                        Map.DoorOpen[x, y] = true;
-                        Map.DoorTimer = Environment.TickCount;
+                        ClearInventorySlot(slot);
 
-                        Map.Send(new MapKey(x, y, true));
-                        Map.SendMessage("A door has been unlocked.", Color.White);
-
-                        if (Map.Info.Tiles[x, y].Data2 == 1)
-                        {
-                            ClearInventorySlot(slot);
-
-                            Tell("The key disolves.", Color.Yellow);
-                        }
+                        Tell("The key disolves.", Color.Yellow);
                     }
                 }
 
                 break;
 
             case ItemType.Spell:
-                var spellInfo = SpellManager.Get(itemInfo.Data1);
+                var spellInfo = SpellRepository.Get(itemInfo.Data1);
                 if (spellInfo is null)
                 {
                     Tell("This scroll is not connected to a spell, please inform an admin!", Color.White);
@@ -525,7 +519,7 @@ public sealed class GamePlayer
 
                 if (spellInfo.RequiredClassId != 0 && spellInfo.RequiredClassId - 1 != Character.ClassId)
                 {
-                    Tell($"This spell can only be learned by a {ClassManager.GetName(spellInfo.RequiredClassId - 1)}.", Color.White);
+                    Tell($"This spell can only be learned by a {ClassRepository.GetName(spellInfo.RequiredClassId - 1)}.", Color.White);
                     return;
                 }
 
@@ -569,19 +563,16 @@ public sealed class GamePlayer
         var slotInfo = Character.Inventory[inventorySlot];
 
         var itemId = slotInfo.ItemId;
-        var itemInfo = ItemManager.Get(itemId);
+        var itemInfo = ItemRepository.Get(itemId);
         if (itemInfo is null)
         {
             return;
         }
 
-        if (itemInfo.Type == ItemType.Currency)
+        if (itemInfo.Type == ItemType.Currency && quantity <= 0)
         {
-            if (quantity <= 0)
-            {
-                Network.ReportHackAttempt(Id, "Trying to drop 0 amount of currency");
-                return;
-            }
+            Network.ReportHackAttempt(Id, "Trying to drop 0 amount of currency");
+            return;
         }
 
         quantity = Math.Min(quantity, slotInfo.Quantity);
@@ -628,7 +619,7 @@ public sealed class GamePlayer
                 continue;
             }
 
-            var itemInfo = ItemManager.Get(item.ItemId);
+            var itemInfo = ItemRepository.Get(item.ItemId);
             if (itemInfo is null)
             {
                 continue;
@@ -710,7 +701,7 @@ public sealed class GamePlayer
 
         var spellId = Character.SpellIds[slot];
 
-        return SpellManager.Get(spellId);
+        return SpellRepository.Get(spellId);
     }
 
     public int GetFreeSpellSlot()
@@ -731,19 +722,16 @@ public sealed class GamePlayer
         var oldMap = Map;
         var oldShopId = Map.Info.ShopId;
 
-        var targetMap = MapManager.Get(targetMapId);
+        var targetMap = MapRepository.Get(targetMapId);
         if (targetMap is null)
         {
             return;
         }
 
-        var shopInfo = ShopManager.Get(oldShopId);
-        if (shopInfo is not null)
+        var shopInfo = ShopRepository.Get(oldShopId);
+        if (shopInfo is not null && !string.IsNullOrWhiteSpace(shopInfo.LeaveSay))
         {
-            if (!string.IsNullOrWhiteSpace(shopInfo.LeaveSay))
-            {
-                Tell($"{shopInfo.Name} says, '{shopInfo.LeaveSay}'", Color.SayColor);
-            }
+            Tell($"{shopInfo.Name} says, '{shopInfo.LeaveSay}'", Color.SayColor);
         }
 
         Map.Send(Id, PlayerData.ClearMap(Id, Character));
@@ -757,16 +745,16 @@ public sealed class GamePlayer
         Character.X = x;
         Character.Y = y;
 
-        shopInfo = ShopManager.Get(newShopId);
-        if (shopInfo is not null)
+        shopInfo = ShopRepository.Get(newShopId);
+        if (shopInfo is not null && !string.IsNullOrWhiteSpace(shopInfo.JoinSay))
         {
-            if (!string.IsNullOrWhiteSpace(shopInfo.JoinSay))
-            {
-                Tell($"{shopInfo.Name} says, '{shopInfo.JoinSay}'", Color.SayColor);
-            }
+            Tell($"{shopInfo.Name} says, '{shopInfo.JoinSay}'", Color.SayColor);
         }
 
-        oldMap.PlayersOnMap = GameState.OnlinePlayerCount(oldMap.Info.Id) > 0;
+        if (oldMap != Map)
+        {
+            oldMap.PlayersOnMap = GameState.OnlinePlayerCount(oldMap.Info.Id) > 0;
+        }
 
         GettingMap = true;
 
@@ -780,8 +768,6 @@ public sealed class GamePlayer
         Character.HelmetSlot = UnequipIfNotValid(Character.HelmetSlot, ItemType.Helmet);
         Character.ShieldSlot = UnequipIfNotValid(Character.ShieldSlot, ItemType.Shield);
 
-        return;
-
         int UnequipIfNotValid(int slot, ItemType itemType)
         {
             if (slot <= 0)
@@ -790,7 +776,7 @@ public sealed class GamePlayer
             }
 
             var itemId = Character.Inventory[slot].ItemId;
-            var itemInfo = ItemManager.Get(itemId);
+            var itemInfo = ItemRepository.Get(itemId);
 
             if (itemInfo is null || itemInfo.Type != itemType)
             {
@@ -823,7 +809,7 @@ public sealed class GamePlayer
     {
         var slotInfo = Character.Inventory[inventorySlot];
 
-        var itemInfo = ItemManager.Get(slotInfo.ItemId);
+        var itemInfo = ItemRepository.Get(slotInfo.ItemId);
         if (itemInfo is null)
         {
             return;
@@ -859,7 +845,7 @@ public sealed class GamePlayer
         }
 
         var itemId = Character.Inventory[weaponSlot].ItemId;
-        var itemInfo = ItemManager.Get(itemId);
+        var itemInfo = ItemRepository.Get(itemId);
         if (itemInfo is null)
         {
             return damage;
@@ -878,7 +864,7 @@ public sealed class GamePlayer
 
         var armorSlot = Character.ArmorSlot;
         var armorItemId = Character.Inventory[armorSlot].ItemId;
-        var armorItemInfo = ItemManager.Get(armorItemId);
+        var armorItemInfo = ItemRepository.Get(armorItemId);
 
         if (armorItemInfo is not null)
         {
@@ -894,7 +880,7 @@ public sealed class GamePlayer
         }
 
         var helmItemId = Character.Inventory[helmSlot].ItemId;
-        var helmItemInfo = ItemManager.Get(helmItemId);
+        var helmItemInfo = ItemRepository.Get(helmItemId);
         if (helmItemInfo is null)
         {
             return protection;
@@ -905,6 +891,18 @@ public sealed class GamePlayer
         ReduceDurability(helmSlot);
 
         return protection;
+    }
+
+    private static (int X, int Y) GetAdjacentPosition(int x, int y, Direction direction)
+    {
+        return direction switch
+        {
+            Direction.Up => (x, y - 1),
+            Direction.Down => (x, y + 1),
+            Direction.Left => (x - 1, y),
+            Direction.Right => (x + 1, y),
+            _ => (x, y)
+        };
     }
 
     public bool CanAttackPlayer(GamePlayer victim)
@@ -921,7 +919,7 @@ public sealed class GamePlayer
             return false;
         }
 
-        var (targetX, targetY) = modGameLogic.GetAdjacentPosition(Character.X, Character.Y, Character.Direction);
+        var (targetX, targetY) = GetAdjacentPosition(Character.X, Character.Y, Character.Direction);
         if (victim.Character.X != targetX || victim.Character.Y != targetY)
         {
             return false;
@@ -967,7 +965,7 @@ public sealed class GamePlayer
             return false;
         }
 
-        var (targetX, targetY) = modGameLogic.GetAdjacentPosition(Character.X, Character.Y, Character.Direction);
+        var (targetX, targetY) = GetAdjacentPosition(Character.X, Character.Y, Character.Direction);
         if (targetX != npc.X || targetY != npc.Y)
         {
             return false;
@@ -1010,7 +1008,7 @@ public sealed class GamePlayer
             return false;
         }
 
-        shieldInfo = ItemManager.Get(Character.Inventory[Character.ShieldSlot].ItemId);
+        shieldInfo = ItemRepository.Get(Character.Inventory[Character.ShieldSlot].ItemId);
         if (shieldInfo is null)
         {
             return false;
@@ -1036,7 +1034,7 @@ public sealed class GamePlayer
 
         var weaponSlot = Character.WeaponSlot;
         var weaponItemId = weaponSlot > 0 ? Character.Inventory[weaponSlot].ItemId : 0;
-        var weapon = ItemManager.Get(weaponItemId);
+        var weapon = ItemRepository.Get(weaponItemId);
 
         Map.Send(Id, new Attack(Id));
         AttackTimer = Environment.TickCount;
@@ -1145,7 +1143,7 @@ public sealed class GamePlayer
         }
 
         var mapId = Character.MapId;
-        var mapInfo = MapManager.Get(mapId);
+        var mapInfo = MapRepository.Get(mapId);
         if (mapInfo is null)
         {
             return;
@@ -1154,7 +1152,7 @@ public sealed class GamePlayer
         ItemInfo? weaponInfo = null;
         if (Character.WeaponSlot > 0)
         {
-            weaponInfo = ItemManager.Get(Character.Inventory[Character.WeaponSlot].ItemId);
+            weaponInfo = ItemRepository.Get(Character.Inventory[Character.WeaponSlot].ItemId);
         }
 
         Map.Send(Id, new Attack(Id));
@@ -1220,12 +1218,9 @@ public sealed class GamePlayer
                     : $"You hit a {npc.Info.Name} with a {weaponInfo.Name} for {damage} hit points.",
                 Color.White);
 
-            if (npc.Target == 0 && npc.Target != Id)
+            if (npc.Target == 0 && npc.Target != Id && !string.IsNullOrWhiteSpace(npc.Info.AttackSay))
             {
-                if (!string.IsNullOrWhiteSpace(npc.Info.AttackSay))
-                {
-                    Tell($"A {npc.Info.Name} says, '{npc.Info.AttackSay}' to you.", Color.SayColor);
-                }
+                Tell($"A {npc.Info.Name} says, '{npc.Info.AttackSay}' to you.", Color.SayColor);
             }
 
             npc.Target = Id;
@@ -1270,7 +1265,7 @@ public sealed class GamePlayer
 
         if (spellInfo.Type == SpellType.GiveItem)
         {
-            var itemInfo = ItemManager.Get(spellInfo.Data1);
+            var itemInfo = ItemRepository.Get(spellInfo.Data1);
             if (itemInfo is null)
             {
                 return;
@@ -1290,7 +1285,7 @@ public sealed class GamePlayer
         }
 
         var mapId = Character.MapId;
-        var mapInfo = MapManager.Get(mapId);
+        var mapInfo = MapRepository.Get(mapId);
         if (mapInfo is null)
         {
             return;
@@ -1490,7 +1485,7 @@ public sealed class GamePlayer
     {
         for (var itemId = 1; itemId <= Limits.MaxItems; itemId++)
         {
-            var itemInfo = ItemManager.Get(itemId);
+            var itemInfo = ItemRepository.Get(itemId);
             if (itemInfo is null || string.IsNullOrEmpty(itemInfo.Name))
             {
                 return;
@@ -1504,7 +1499,7 @@ public sealed class GamePlayer
     {
         for (var spellId = 1; spellId <= Limits.MaxSpells; spellId++)
         {
-            var spellInfo = SpellManager.Get(spellId);
+            var spellInfo = SpellRepository.Get(spellId);
             if (spellInfo is null || string.IsNullOrEmpty(spellInfo.Name))
             {
                 continue;
@@ -1518,7 +1513,7 @@ public sealed class GamePlayer
     {
         for (var npcId = 1; npcId <= Limits.MaxNpcs; npcId++)
         {
-            var npcInfo = NpcManager.Get(npcId);
+            var npcInfo = NpcRepository.Get(npcId);
             if (npcInfo is null || string.IsNullOrEmpty(npcInfo.Name))
             {
                 continue;
@@ -1532,7 +1527,7 @@ public sealed class GamePlayer
     {
         for (var shopId = 1; shopId <= Limits.MaxShops; shopId++)
         {
-            var shopInfo = ShopManager.Get(shopId);
+            var shopInfo = ShopRepository.Get(shopId);
             if (shopInfo is null || string.IsNullOrEmpty(shopInfo.Name))
             {
                 continue;

@@ -1,10 +1,10 @@
-﻿using Mirage.Game.Constants;
+﻿using LanguageExt.Common;
+using Mirage.Game.Constants;
 using Mirage.Game.Data;
 using Mirage.Net.Protocol.FromClient;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Game;
-using Mirage.Server.Game.Managers;
-using Mirage.Server.Modules;
+using Mirage.Server.Game.Repositories;
 using Serilog;
 using static Mirage.Server.Net.Network;
 
@@ -16,7 +16,7 @@ public static class NetworkHandlers
     {
         if (session.Player is null)
         {
-            session.Send(new NewCharClasses(modTypes.Classes));
+            session.Send(new NewCharClasses(ClassRepository.GetAll()));
         }
     }
 
@@ -44,14 +44,14 @@ public static class NetworkHandlers
             return;
         }
 
-        if (AccountManager.Exists(request.AccountName))
+        if (AccountRepository.Exists(request.AccountName))
         {
             session.SendAlert("This account name is already taken. Please choose a different name.");
 
             return;
         }
 
-        AccountManager.Create(request.AccountName, request.Password);
+        AccountRepository.Create(request.AccountName, request.Password);
 
         Log.Information("Account '{AccountName}' has been created.", request.AccountName);
 
@@ -71,14 +71,14 @@ public static class NetworkHandlers
             return;
         }
 
-        var account = AccountManager.Authenticate(request.AccountName, request.Password);
+        var account = AccountRepository.Authenticate(request.AccountName, request.Password);
         if (account is null)
         {
             session.SendAlert("Invalid account name or password.");
             return;
         }
 
-        AccountManager.Delete(account.Id);
+        AccountRepository.Delete(account.Id);
 
         session.SendAlert("Your account has been deleted!");
     }
@@ -104,7 +104,7 @@ public static class NetworkHandlers
             return;
         }
 
-        var account = AccountManager.Authenticate(request.AccountName, request.Password);
+        var account = AccountRepository.Authenticate(request.AccountName, request.Password);
         if (account is null)
         {
             session.SendAlert("Invalid account name or password.");
@@ -121,7 +121,7 @@ public static class NetworkHandlers
 
         Log.Information("{AccountName} has logged in from {RemoteIp}", account.Name, GetIP(session.Id));
 
-        var characterSlotInfos = CharacterManager.GetCharacterSlots(account.Id);
+        var characterSlotInfos = CharacterRepository.GetCharacterSlots(account.Id);
 
         var emptyCharacterSlot = new CharacterSlotInfo();
 
@@ -152,10 +152,10 @@ public static class NetworkHandlers
             return;
         }
 
-        var (_, errorMessage) = CharacterManager.Create(account.Id, request.CharacterName, request.Gender, request.ClassId, request.Slot);
-        if (errorMessage is not null)
+        var result = CharacterRepository.Create(account.Id, request.CharacterName, request.Gender, request.ClassId, request.Slot);
+        if (result.Case is Error error)
         {
-            ReportHackAttempt(session.Id, errorMessage);
+            session.SendAlert(error.Message);
             return;
         }
 
@@ -166,7 +166,7 @@ public static class NetworkHandlers
 
     public static void HandleDeleteCharacter(GameSession session, AccountInfo account, DeleteCharacterRequest request)
     {
-        CharacterManager.Delete(account.Id, request.Slot);
+        CharacterRepository.Delete(account.Id, request.Slot);
 
         Log.Information("Character deleted on account '{AccountName}'", account.Name);
 
@@ -175,7 +175,7 @@ public static class NetworkHandlers
 
     public static void HandleSelectCharacter(GameSession session, AccountInfo account, SelectCharacterRequest request)
     {
-        var character = CharacterManager.Get(account.Id, request.Slot);
+        var character = CharacterRepository.Get(account.Id, request.Slot);
         if (character is null)
         {
             session.SendAlert("Character does not exist!");
@@ -559,7 +559,7 @@ public static class NetworkHandlers
 
     public static void HandleWarpTo(GamePlayer player, WarpToRequest request)
     {
-        var mapInfo = MapManager.Get(request.MapId);
+        var mapInfo = MapRepository.Get(request.MapId);
         if (mapInfo is null)
         {
             ReportHackAttempt(player.Id, "Invalid map");
@@ -668,29 +668,7 @@ public static class NetworkHandlers
 
     public static void HandleMapReport(GamePlayer player, MapReportRequest request)
     {
-        var mapStart = 1;
-        var mapEnd = 1;
-
-        var ranges = new List<string>();
-        for (var mapId = 1; mapId <= Limits.MaxMaps; mapId++)
-        {
-            if (string.IsNullOrWhiteSpace(modTypes.Maps[mapId].Name))
-            {
-                mapEnd++;
-            }
-            else
-            {
-                if (mapEnd - mapStart > 0)
-                {
-                    ranges.Add($"{mapStart}-{mapEnd - 1}");
-                }
-
-                mapStart = mapId + 1;
-                mapEnd = mapId + 1;
-            }
-        }
-
-        ranges.Add($"{mapStart}-{mapEnd - 1}");
+        var ranges = MapRepository.GetFreeMapRanges();
 
         player.Tell($"Free Maps: {string.Join(", ", ranges)}.", Color.Brown);
     }
@@ -758,7 +736,7 @@ public static class NetworkHandlers
 
     public static void HandleBanDestroy(GamePlayer player, BanDestroyRequest request)
     {
-        BanManager.Clear();
+        BanRepository.Clear();
 
         player.Tell("Ban list destroyed.", Color.White);
     }
@@ -784,7 +762,14 @@ public static class NetworkHandlers
             return;
         }
 
-        BanManager.BanIndex(targetPlayer.Id, player.Id);
+        BanRepository.AddBan(GetIP(targetPlayer.Id), player.Character.Name);
+
+        SendGlobalMessage($"{targetPlayer.Character.Name} has been banned from {Options.GameName} by {player.Character.Name}!", Color.White);
+
+        Log.Information("{CharacterName} has banned {BannedCharacterName}",
+            targetPlayer.Character.Name, player.Character);
+
+        targetPlayer.SendAlert($"You have been banned by {player.Character.Name}!");
     }
 
     public static void HandleOpenMapEditor(GamePlayer player, OpenManEditorRequest request)
@@ -799,7 +784,7 @@ public static class NetworkHandlers
 
     public static void HandleEditItem(GamePlayer player, EditItemRequest request)
     {
-        var itemInfo = ItemManager.Get(request.ItemId);
+        var itemInfo = ItemRepository.Get(request.ItemId);
         if (itemInfo is null)
         {
             ReportHackAttempt(player.Id, "Invalid Item Index");
@@ -813,14 +798,14 @@ public static class NetworkHandlers
 
     public static void HandleUpdateItem(GamePlayer player, UpdateItemRequest request)
     {
-        var itemInfo = ItemManager.Get(request.ItemInfo.Id);
+        var itemInfo = ItemRepository.Get(request.ItemInfo.Id);
         if (itemInfo is null)
         {
             ReportHackAttempt(player.Id, "Invalid Item Index");
             return;
         }
 
-        ItemManager.Update(request.ItemInfo.Id, request.ItemInfo);
+        ItemRepository.Update(request.ItemInfo.Id, request.ItemInfo);
 
         Log.Information("{CharacterName} saved item #{ItemId}.", player.Character.Name, request.ItemInfo.Id);
 
@@ -834,7 +819,7 @@ public static class NetworkHandlers
 
     public static void HandleEditNpc(GamePlayer player, EditNpcRequest request)
     {
-        var npcInfo = NpcManager.Get(request.NpcId);
+        var npcInfo = NpcRepository.Get(request.NpcId);
         if (npcInfo is null)
         {
             ReportHackAttempt(player.Id, "Invalid NPC Index");
@@ -848,14 +833,14 @@ public static class NetworkHandlers
 
     public static void HandleUpdateNpc(GamePlayer player, UpdateNpcRequest request)
     {
-        var npcInfo = NpcManager.Get(request.NpcInfo.Id);
+        var npcInfo = NpcRepository.Get(request.NpcInfo.Id);
         if (npcInfo is null)
         {
             ReportHackAttempt(player.Id, "Invalid NPC Index");
             return;
         }
 
-        NpcManager.Update(request.NpcInfo.Id, request.NpcInfo);
+        NpcRepository.Update(request.NpcInfo.Id, request.NpcInfo);
 
         Log.Information("{CharacterName} saved npc #{NpcId}.", player.Character.Name, request.NpcInfo.Id);
 
@@ -908,7 +893,7 @@ public static class NetworkHandlers
 
     public static void HandleEditShop(GamePlayer player, EditShopRequest request)
     {
-        var shopInfo = ShopManager.Get(request.ShopId);
+        var shopInfo = ShopRepository.Get(request.ShopId);
         if (shopInfo is null)
         {
             ReportHackAttempt(player.Id, "Invalid Shop Index");
@@ -922,14 +907,14 @@ public static class NetworkHandlers
 
     public static void HandleUpdateShop(GamePlayer player, UpdateShopRequest request)
     {
-        var shopInfo = ShopManager.Get(request.ShopInfo.Id);
+        var shopInfo = ShopRepository.Get(request.ShopInfo.Id);
         if (shopInfo is null)
         {
             ReportHackAttempt(player.Id, "Invalid Shop Index");
             return;
         }
 
-        ShopManager.Update(request.ShopInfo.Id, request.ShopInfo);
+        ShopRepository.Update(request.ShopInfo.Id, request.ShopInfo);
 
         Log.Information("{CharacterName} saving shop #{ShopId}", player.Character.Name, request.ShopInfo.Id);
 
@@ -943,7 +928,7 @@ public static class NetworkHandlers
 
     public static void HandleEditSpell(GamePlayer player, EditSpellRequest request)
     {
-        var spellInfo = SpellManager.Get(request.SpellId);
+        var spellInfo = SpellRepository.Get(request.SpellId);
         if (spellInfo is null)
         {
             ReportHackAttempt(player.Id, "Invalid Spell Index");
@@ -957,14 +942,14 @@ public static class NetworkHandlers
 
     public static void HandleUpdateSpell(GamePlayer player, UpdateSpellRequest request)
     {
-        var spellInfo = SpellManager.Get(request.SpellInfo.Id);
+        var spellInfo = SpellRepository.Get(request.SpellInfo.Id);
         if (spellInfo is null)
         {
             ReportHackAttempt(player.Id, "Invalid Spell Index");
             return;
         }
 
-        SpellManager.Update(request.SpellInfo.Id, request.SpellInfo);
+        SpellRepository.Update(request.SpellInfo.Id, request.SpellInfo);
 
         Log.Information("{CharacterName} saving spell #{SpellId}.", player.Character.Name, request.SpellInfo.Id);
 
@@ -978,13 +963,13 @@ public static class NetworkHandlers
 
     public static void HandleShop(GamePlayer player, ShopRequest request)
     {
-        var mapInfo = MapManager.Get(player.Character.MapId);
+        var mapInfo = MapRepository.Get(player.Character.MapId);
         if (mapInfo is null)
         {
             return;
         }
 
-        var shopInfo = ShopManager.Get(mapInfo.ShopId);
+        var shopInfo = ShopRepository.Get(mapInfo.ShopId);
         if (shopInfo is null)
         {
             player.Tell("There is no shop here.", Color.BrightRed);
@@ -993,13 +978,13 @@ public static class NetworkHandlers
 
         foreach (var tradeInfo in shopInfo.Trades)
         {
-            var itemInfo = ItemManager.Get(tradeInfo.GetItemId);
+            var itemInfo = ItemRepository.Get(tradeInfo.GetItemId);
             if (itemInfo is null || itemInfo.Type != ItemType.Spell)
             {
                 continue;
             }
 
-            var spellInfo = SpellManager.Get(itemInfo.Data1);
+            var spellInfo = SpellRepository.Get(itemInfo.Data1);
             if (spellInfo is null)
             {
                 continue;
@@ -1007,7 +992,7 @@ public static class NetworkHandlers
 
             player.Tell(spellInfo.RequiredClassId == 0
                     ? $"{itemInfo.Name} can be used by all classes."
-                    : $"{itemInfo.Name} can only be used by a {ClassManager.GetName(spellInfo.RequiredClassId - 1)};",
+                    : $"{itemInfo.Name} can only be used by a {ClassRepository.GetName(spellInfo.RequiredClassId - 1)};",
                 Color.Yellow);
         }
 
@@ -1022,13 +1007,13 @@ public static class NetworkHandlers
             return;
         }
 
-        var mapInfo = MapManager.Get(player.Character.MapId);
+        var mapInfo = MapRepository.Get(player.Character.MapId);
         if (mapInfo is null)
         {
             return;
         }
 
-        var shopInfo = ShopManager.Get(mapInfo.ShopId);
+        var shopInfo = ShopRepository.Get(mapInfo.ShopId);
         if (shopInfo is null)
         {
             return;
@@ -1036,7 +1021,7 @@ public static class NetworkHandlers
 
         var tradeInfo = shopInfo.Trades[request.Slot];
 
-        var getItemInfo = ItemManager.Get(tradeInfo.GetItemId);
+        var getItemInfo = ItemRepository.Get(tradeInfo.GetItemId);
         if (getItemInfo is null)
         {
             return;
@@ -1067,7 +1052,7 @@ public static class NetworkHandlers
 
         var slotInfo = player.Character.Inventory[request.InventorySlot];
 
-        var itemInfo = ItemManager.Get(slotInfo.ItemId);
+        var itemInfo = ItemRepository.Get(slotInfo.ItemId);
         if (itemInfo is null)
         {
             return;
@@ -1181,7 +1166,7 @@ public static class NetworkHandlers
         var item = player.Map.GetItemAt(request.X, request.Y);
         if (item is not null)
         {
-            var itemInfo = ItemManager.Get(item.ItemId);
+            var itemInfo = ItemRepository.Get(item.ItemId);
             if (itemInfo is null)
             {
                 return;

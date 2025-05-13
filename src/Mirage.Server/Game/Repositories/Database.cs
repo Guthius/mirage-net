@@ -1,8 +1,8 @@
 ﻿using MongoDB.Driver;
 
-namespace Mirage.Server.Game.Managers;
+namespace Mirage.Server.Game.Repositories;
 
-public static class DatabaseManager
+public static class Database
 {
     private const string ConnectionString = "mongodb://localhost/mirage";
 

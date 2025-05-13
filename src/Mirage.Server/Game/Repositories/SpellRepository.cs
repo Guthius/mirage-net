@@ -1,19 +1,22 @@
 ﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Mirage.Game.Constants;
 using Mirage.Game.Data;
-using Mirage.Server.Modules;
 using MongoDB.Driver;
 using Serilog;
 
-namespace Mirage.Server.Game.Managers;
+namespace Mirage.Server.Game.Repositories;
 
-public static class SpellManager
+public static class SpellRepository
 {
+    private static readonly SpellInfo[] Spells = new SpellInfo[Limits.MaxSpells + 1];
+
     private static IMongoCollection<SpellInfo> GetCollection()
     {
-        return DatabaseManager.GetCollection<SpellInfo>("spells");
+        return Database.GetCollection<SpellInfo>("spells");
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static SpellInfo? Get(int spellId)
     {
         if (spellId is <= 0 or > Limits.MaxSpells)
@@ -21,7 +24,7 @@ public static class SpellManager
             return null;
         }
 
-        return modTypes.Spells[spellId];
+        return Spells[spellId];
     }
 
     public static void Update(int spellId, SpellInfo spellInfo)
@@ -31,14 +34,14 @@ public static class SpellManager
             return;
         }
 
-        modTypes.Spells[spellId] = spellInfo;
+        Spells[spellId] = spellInfo;
 
         Save(spellId);
     }
 
     private static void Save(int spellId)
     {
-        GetCollection().ReplaceOne(x => x.Id == spellId, modTypes.Spells[spellId], new ReplaceOptions
+        GetCollection().ReplaceOne(x => x.Id == spellId, Spells[spellId], new ReplaceOptions
         {
             IsUpsert = true
         });
@@ -56,17 +59,15 @@ public static class SpellManager
 
             for (var spellId = 1; spellId <= Limits.MaxSpells; spellId++)
             {
-                modTypes.Spells[spellId] = spellInfos.FirstOrDefault(x => x.Id == spellId) ?? CreateSpell(spellId);
+                Spells[spellId] = spellInfos.FirstOrDefault(x => x.Id == spellId) ?? CreateSpell(spellId);
             }
         }
         finally
         {
             stopwatch.Stop();
 
-            Log.Information("Loaded {Count} spells in {ElapsedMs}ms", modTypes.Spells.Length, stopwatch.ElapsedMilliseconds);
+            Log.Information("Loaded {Count} spells in {ElapsedMs}ms", Spells.Length, stopwatch.ElapsedMilliseconds);
         }
-
-        return;
 
         static SpellInfo CreateSpell(int spellId)
         {

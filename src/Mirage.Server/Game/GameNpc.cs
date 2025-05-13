@@ -125,6 +125,21 @@ public sealed class GameNpc(int slot, GameMap map, NpcInfo? npcInfo)
             return;
         }
 
+        var distX = Math.Abs(X - targetPlayer.Character.X);
+        var distY = Math.Abs(Y - targetPlayer.Character.Y);
+        if (distX > Info.Range || distY > Info.Range)
+        {
+            Target = 0;
+            return;
+        }
+        
+        var totalDist = distX + distY;
+        if (totalDist <= 1)
+        {
+            return;
+        }
+        
+        
         // TODO: Implement path finding to target...
 
         throw new NotImplementedException();

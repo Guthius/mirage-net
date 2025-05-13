@@ -1,0 +1,4 @@
+﻿root = true
+
+[*.cs]
+resharper_separate_local_functions_with_jump_statement_highlighting = none
