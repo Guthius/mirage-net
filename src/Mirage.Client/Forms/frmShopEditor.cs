@@ -41,7 +41,7 @@ public partial class frmShopEditor : Form
         modTypes.Shop[modGameLogic.EditorIndex].LeaveSay = txtLeaveSay.Text.Trim();
         modTypes.Shop[modGameLogic.EditorIndex].FixesItems = chkFixesItems.Checked ? 1 : 0;
 
-        modClientTCP.SendSaveItem(modGameLogic.EditorIndex);
+        modClientTCP.SendSaveShop(modGameLogic.EditorIndex);
         modGameLogic.InShopEditor = false;
         Close();
     }

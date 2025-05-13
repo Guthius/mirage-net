@@ -1,11 +1,44 @@
-using Mirage.Modules;
+using Mirage.Game.Constants;
+using Mirage.Net.Protocol.FromServer;
+using Mirage.Server.Game;
+using Mirage.Server.Game.Managers;
+using Mirage.Server.Modules;
+using Mirage.Server.Net;
+using Serilog;
 
-namespace Mirage;
+namespace Mirage.Server;
 
 internal static class Program
 {
     private static readonly CancellationTokenSource CancellationTokenSource = new();
 
+    private static int _minPassed;
+    
+    // Used for respawning items
+    public static int SpawnSeconds;
+    
+    public static void CheckSpawnMapItems()
+    {
+        SpawnSeconds += 1;
+        if (SpawnSeconds < 120)
+        {
+            return;
+        }
+
+        for (var mapId = 1; mapId <= Limits.MaxMaps; mapId++)
+        {
+            var map = GameState.GetMap(mapId);
+            if (map.PlayersOnMap)
+            {
+                continue;
+            }
+
+            map.RespawnItems();
+        }
+
+        SpawnSeconds = 0;
+    }
+    
     public static async Task RunTimedEvents(CancellationToken cancellationToken)
     {
         const int savePlayersInterval = 60000;
@@ -21,39 +54,68 @@ internal static class Program
             savePlayerTimeLeft -= 500;
             if (savePlayerTimeLeft <= 0)
             {
-                modGeneral.PlayerSaveTimer();
+                _minPassed += 1;
+                if (_minPassed < 10)
+                {
+                    return;
+                }
+
+                if (GameState.OnlinePlayerCount() > 0)
+                {
+                    Network.SendToAll(new GlobalMessage("Saving all online players...", Color.Pink));
+
+                    GameState.SavePlayers();
+                }
+
+                _minPassed = 0;
+                
                 savePlayerTimeLeft += savePlayersInterval;
             }
 
             spawnMapItemsTimeLeft -= 500;
             if (spawnMapItemsTimeLeft <= 0)
             {
-                modGeneral.CheckSpawnMapItems();
+                CheckSpawnMapItems();
+                
                 spawnMapItemsTimeLeft += spawnMapItemsInterval;
             }
-            
-            modGeneral.ServerLogic();
+
+            GameState.Update();
         }
     }
 
     public static void Main()
     {
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .CreateLogger();
+
         AppDomain.CurrentDomain.ProcessExit += (_, _) =>
         {
             CancellationTokenSource.Cancel();
 
-            modGeneral.DestroyServer();
+            Log.Information("Shutting down server...");
+
+            GameState.SavePlayers();
+
+            Environment.Exit(0);
         };
+        
+        ClassManager.Load();
+        MapManager.Load();
+        ItemManager.Load();
+        NpcManager.Load();
+        ShopManager.Load();
+        SpellManager.Load();
+        
+        modGameLogic.SpawnAllMapsItems();
+        modGameLogic.SpawnAllMapNpcs();
 
-        modGeneral.InitServer();
+        Network.Start();
 
-        if (modTypes.Class.Length == 0)
-        {
-            Console.WriteLine("There are no character classes setup");
-            Console.WriteLine("The server will not function correctly without classes.");
-            Console.WriteLine("Please configure atleast one class in the Classes.json file");
-            return;
-        }
+        SpawnSeconds = 0;
+        
+        // TODO: Start game AI timers...
 
         _ = Task.Run(async () => await RunTimedEvents(CancellationTokenSource.Token));
 
@@ -72,12 +134,14 @@ internal static class Program
 
             if (command.Equals("reloadclasses", StringComparison.OrdinalIgnoreCase))
             {
-                modDatabase.LoadClasses();
-                Console.WriteLine("All classes reloaded.");
+                ClassManager.Load();
+
+                Log.Information("All classes reloaded");
+
                 continue;
             }
 
-            modServerTCP.GlobalMsg(command, modText.White);
+            Network.SendToAll(new GlobalMessage(command, Color.White));
         }
     }
 }
