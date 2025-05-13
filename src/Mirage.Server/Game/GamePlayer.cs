@@ -342,7 +342,37 @@ public sealed class GamePlayer
         switch (itemInfo.Type)
         {
             case ItemType.Armor:
-                if (slot != Character.ArmorSlot)
+            case ItemType.Weapon:
+            case ItemType.Helmet:
+            case ItemType.Shield:
+                UseEquipment(slot, itemInfo);
+                break;
+
+            case ItemType.PotionAddHp:
+            case ItemType.PotionAddMp:
+            case ItemType.PotionAddSp:
+            case ItemType.PotionSubHp:
+            case ItemType.PotionSubMp:
+            case ItemType.PotionSubSp:
+                UsePotion(slot, itemInfo.Type, itemInfo.Data1);
+                break;
+
+            case ItemType.Key:
+                UseKey(slot, itemInfo);
+                break;
+
+            case ItemType.Spell:
+                UseSpell(slot, itemInfo);
+                break;
+        }
+    }
+
+    private void UseEquipment(int inventorySlot, ItemInfo itemInfo)
+    {
+        switch (itemInfo.Type)
+        {
+            case ItemType.Armor:
+                if (inventorySlot != Character.ArmorSlot)
                 {
                     if (Character.Defense < itemInfo.Data2)
                     {
@@ -350,7 +380,7 @@ public sealed class GamePlayer
                         return;
                     }
 
-                    Character.ArmorSlot = slot;
+                    Character.ArmorSlot = inventorySlot;
                 }
                 else
                 {
@@ -361,7 +391,7 @@ public sealed class GamePlayer
                 break;
 
             case ItemType.Weapon:
-                if (slot != Character.WeaponSlot)
+                if (inventorySlot != Character.WeaponSlot)
                 {
                     if (Character.Strength < itemInfo.Data2)
                     {
@@ -369,7 +399,7 @@ public sealed class GamePlayer
                         return;
                     }
 
-                    Character.WeaponSlot = slot;
+                    Character.WeaponSlot = inventorySlot;
                 }
                 else
                 {
@@ -380,7 +410,7 @@ public sealed class GamePlayer
                 break;
 
             case ItemType.Helmet:
-                if (slot != Character.HelmetSlot)
+                if (inventorySlot != Character.HelmetSlot)
                 {
                     if (Character.Speed < itemInfo.Data2)
                     {
@@ -388,7 +418,7 @@ public sealed class GamePlayer
                         return;
                     }
 
-                    Character.HelmetSlot = slot;
+                    Character.HelmetSlot = inventorySlot;
                 }
                 else
                 {
@@ -399,158 +429,130 @@ public sealed class GamePlayer
                 break;
 
             case ItemType.Shield:
-                Character.ShieldSlot = slot != Character.ShieldSlot ? slot : 0;
+                Character.ShieldSlot = inventorySlot != Character.ShieldSlot ? inventorySlot : 0;
                 SendEquipment();
                 break;
+        }
+    }
 
+    private void UsePotion(int inventorySlot, ItemType itemType, int value)
+    {
+        switch (itemType)
+        {
             case ItemType.PotionAddHp:
-                Character.HP += itemInfo.Data1;
-                ClearInventorySlot(slot);
+                Character.HP += value;
+                ClearInventorySlot(inventorySlot);
                 SendHP();
                 break;
 
             case ItemType.PotionAddMp:
-                Character.MP += itemInfo.Data1;
-                ClearInventorySlot(slot);
+                Character.MP += value;
+                ClearInventorySlot(inventorySlot);
                 SendMP();
                 break;
 
             case ItemType.PotionAddSp:
-                Character.SP += itemInfo.Data1;
-                ClearInventorySlot(slot);
+                Character.SP += value;
+                ClearInventorySlot(inventorySlot);
                 SendSP();
                 break;
 
             case ItemType.PotionSubHp:
-                Character.HP -= itemInfo.Data1;
-                ClearInventorySlot(slot);
+                Character.HP -= value;
+                ClearInventorySlot(inventorySlot);
                 SendHP();
                 break;
 
             case ItemType.PotionSubMp:
-                Character.MP -= itemInfo.Data1;
-                ClearInventorySlot(slot);
+                Character.MP -= value;
+                ClearInventorySlot(inventorySlot);
                 SendMP();
                 break;
 
             case ItemType.PotionSubSp:
-                Character.SP -= itemInfo.Data1;
-                ClearInventorySlot(slot);
+                Character.SP -= value;
+                ClearInventorySlot(inventorySlot);
                 SendSP();
                 break;
-
-            case ItemType.Key:
-                int x = 0, y = 0;
-
-                switch (Character.Direction)
-                {
-                    case Direction.Up:
-                        if (Character.X > 0)
-                        {
-                            x = Character.X;
-                            y = Character.Y - 1;
-                        }
-                        else return;
-
-                        break;
-
-                    case Direction.Down:
-                        if (Character.Y < Limits.MaxMapHeight)
-                        {
-                            x = Character.X;
-                            y = Character.Y + 1;
-                        }
-                        else return;
-
-                        break;
-
-                    case Direction.Left:
-                        if (Character.X > 0)
-                        {
-                            x = Character.X - 1;
-                            y = Character.Y;
-                        }
-                        else return;
-
-                        break;
-
-                    case Direction.Right:
-                        if (Character.X < Limits.MaxMapWidth)
-                        {
-                            x = Character.X + 1;
-                            y = Character.Y;
-                        }
-                        else return;
-
-                        break;
-                }
-
-                var mapInfo = MapRepository.Get(Character.MapId);
-                if (mapInfo is null)
-                {
-                    return;
-                }
-
-                if (mapInfo.Tiles[x, y].Type == TileType.Key && itemInfo.Id == mapInfo.Tiles[x, y].Data1)
-                {
-                    Map.DoorOpen[x, y] = true;
-                    Map.DoorTimer = Environment.TickCount;
-
-                    Map.Send(new MapKey(x, y, true));
-                    Map.SendMessage("A door has been unlocked.", Color.White);
-
-                    if (Map.Info.Tiles[x, y].Data2 == 1)
-                    {
-                        ClearInventorySlot(slot);
-
-                        Tell("The key disolves.", Color.Yellow);
-                    }
-                }
-
-                break;
-
-            case ItemType.Spell:
-                var spellInfo = SpellRepository.Get(itemInfo.Data1);
-                if (spellInfo is null)
-                {
-                    Tell("This scroll is not connected to a spell, please inform an admin!", Color.White);
-                    break;
-                }
-
-                if (spellInfo.RequiredClassId != 0 && spellInfo.RequiredClassId - 1 != Character.ClassId)
-                {
-                    Tell($"This spell can only be learned by a {ClassRepository.GetName(spellInfo.RequiredClassId - 1)}.", Color.White);
-                    return;
-                }
-
-                if (spellInfo.RequiredLevel > Character.Level)
-                {
-                    Tell($"You must be level {spellInfo.RequiredLevel} to learn this spell.", Color.White);
-                    return;
-                }
-
-                var spellSlot = GetFreeSpellSlot();
-                if (spellSlot <= 0)
-                {
-                    Tell("You have learned all that you can learn!", Color.BrightRed);
-                    return;
-                }
-
-                ClearInventorySlot(slot);
-
-                if (HasSpell(spellInfo.Id))
-                {
-                    Tell("You have already learned this spell! The spells crumbles into dust.", Color.BrightRed);
-                    return;
-                }
-
-                Character.SpellIds[spellSlot] = spellInfo.Id;
-
-                Tell("You study the spell carefully...", Color.Yellow);
-                Tell("You have learned a new spell!", Color.White);
-
-                break;
         }
+    }
+
+    private void UseKey(int inventorySlot, ItemInfo itemInfo)
+    {
+        var (x, y) = GetAdjacentPosition(Character.X, Character.Y, Character.Direction);
+        if (!Map.InBounds(x, y))
+        {
+            return;
+        }
+
+        var mapInfo = MapRepository.Get(Character.MapId);
+        if (mapInfo is null)
+        {
+            return;
+        }
+
+        if (mapInfo.Tiles[x, y].Type != TileType.Key ||
+            mapInfo.Tiles[x, y].Data1 != itemInfo.Id)
+        {
+            return;
+        }
+
+        Map.DoorOpen[x, y] = true;
+        Map.DoorTimer = Environment.TickCount;
+
+        Map.Send(new MapKey(x, y, true));
+        Map.SendMessage("A door has been unlocked.", Color.White);
+
+        if (Map.Info.Tiles[x, y].Data2 != 1)
+        {
+            return;
+        }
+
+        ClearInventorySlot(inventorySlot);
+
+        Tell("The key disolves.", Color.Yellow);
+    }
+
+    private void UseSpell(int inventorySlot, ItemInfo itemInfo)
+    {
+        var spellInfo = SpellRepository.Get(itemInfo.Data1);
+        if (spellInfo is null)
+        {
+            Tell("This scroll is not connected to a spell, please inform an admin!", Color.White);
+            return;
+        }
+
+        if (spellInfo.RequiredClassId != 0 && spellInfo.RequiredClassId - 1 != Character.ClassId)
+        {
+            Tell($"This spell can only be learned by a {ClassRepository.GetName(spellInfo.RequiredClassId - 1)}.", Color.White);
+            return;
+        }
+
+        if (spellInfo.RequiredLevel > Character.Level)
+        {
+            Tell($"You must be level {spellInfo.RequiredLevel} to learn this spell.", Color.White);
+            return;
+        }
+
+        var spellSlot = GetFreeSpellSlot();
+        if (spellSlot <= 0)
+        {
+            Tell("You have learned all that you can learn!", Color.BrightRed);
+            return;
+        }
+
+        ClearInventorySlot(inventorySlot);
+
+        if (HasSpell(spellInfo.Id))
+        {
+            Tell("You have already learned this spell! The spells crumbles into dust.", Color.BrightRed);
+            return;
+        }
+
+        Character.SpellIds[spellSlot] = spellInfo.Id;
+
+        Tell("You study the spell carefully...", Color.Yellow);
+        Tell("You have learned a new spell!", Color.White);
     }
 
     public void DropItem(int inventorySlot, int quantity = 0)
@@ -1157,59 +1159,9 @@ public sealed class GamePlayer
 
         Map.Send(Id, new Attack(Id));
 
-        if (damage >= npc.HP)
-        {
-            Tell(weaponInfo is null
-                    ? $"You hit a {npc.Info.Name} for {damage} hit points, killing it."
-                    : $"You hit a {npc.Info.Name} with a {weaponInfo.Name} for {damage} hit points, killing it.",
-                Color.BrightRed);
+        AttackTimer = Environment.TickCount;
 
-            var exp = Math.Min(1, npc.Info.Strength * npc.Info.Defense * 2);
-
-            if (!InParty)
-            {
-                Character.Exp += exp;
-                Tell($"You have gained {exp} experience points.", Color.BrightBlue);
-            }
-            else
-            {
-                exp = Math.Min(1, exp / 2);
-
-                Character.Exp += exp;
-                Tell($"You have gained {exp} party experience points.", Color.BrightBlue);
-
-                var partyPlayer = PartyMember;
-                if (partyPlayer is not null)
-                {
-                    partyPlayer.Character.Exp += exp;
-                    partyPlayer.Tell($"You have gained {exp} party experience points.", Color.BrightBlue);
-                }
-            }
-
-            var dropChance = Random.Shared.Next(npc.Info.DropChance) + 1;
-            if (dropChance == 1)
-            {
-                Map.SpawnItem(npc.X, npc.Y,
-                    npc.Info.DropItemId,
-                    npc.Info.DropItemQuantity);
-            }
-
-            npc.Kill();
-
-            CheckLevelUp();
-
-            if (InParty && PartyMember is not null)
-            {
-                PartyMember.CheckLevelUp();
-            }
-
-            if (TargetType == TargetType.Npc && Target == npc.Slot)
-            {
-                Target = 0;
-                TargetType = TargetType.Player;
-            }
-        }
-        else
+        if (damage < npc.HP)
         {
             npc.HP -= damage;
 
@@ -1224,18 +1176,70 @@ public sealed class GamePlayer
             }
 
             npc.Target = Id;
-
-            // Now check for guard ai and if so have all onmap guards come after'm
-            if (npc.Info.Behavior == NpcBehavior.Guard)
+            if (npc.Info.Behavior != NpcBehavior.Guard)
             {
-                foreach (var otherNpc in Map.AliveNpcs().Where(x => x.Info.Id == npc.Info.Id))
-                {
-                    otherNpc.Target = Id;
-                }
+                return;
+            }
+
+            foreach (var otherNpc in Map.AliveNpcs().Where(x => x.Info.Id == npc.Info.Id))
+            {
+                otherNpc.Target = Id;
+            }
+
+            return;
+        }
+
+        Tell(weaponInfo is null
+                ? $"You hit a {npc.Info.Name} for {damage} hit points, killing it."
+                : $"You hit a {npc.Info.Name} with a {weaponInfo.Name} for {damage} hit points, killing it.",
+            Color.BrightRed);
+
+        var exp = Math.Min(1, npc.Info.Strength * npc.Info.Defense * 2);
+
+        if (!InParty)
+        {
+            Character.Exp += exp;
+            Tell($"You have gained {exp} experience points.", Color.BrightBlue);
+        }
+        else
+        {
+            exp = Math.Min(1, exp / 2);
+
+            Character.Exp += exp;
+            Tell($"You have gained {exp} party experience points.", Color.BrightBlue);
+
+            var partyPlayer = PartyMember;
+            if (partyPlayer is not null)
+            {
+                partyPlayer.Character.Exp += exp;
+                partyPlayer.Tell($"You have gained {exp} party experience points.", Color.BrightBlue);
             }
         }
 
-        AttackTimer = Environment.TickCount;
+        var dropChance = Random.Shared.Next(npc.Info.DropChance) + 1;
+        if (dropChance == 1)
+        {
+            Map.SpawnItem(npc.X, npc.Y,
+                npc.Info.DropItemId,
+                npc.Info.DropItemQuantity);
+        }
+
+        npc.Kill();
+
+        CheckLevelUp();
+
+        if (InParty && PartyMember is not null)
+        {
+            PartyMember.CheckLevelUp();
+        }
+
+        if (TargetType != TargetType.Npc || Target != npc.Slot)
+        {
+            return;
+        }
+
+        Target = 0;
+        TargetType = TargetType.Player;
     }
 
     public void Cast(int spellSlot)

@@ -1,4 +1,7 @@
-﻿using Mirage.Game.Constants;
+﻿using AStarNavigator;
+using AStarNavigator.Algorithms;
+using AStarNavigator.Providers;
+using Mirage.Game.Constants;
 using Mirage.Game.Data;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromServer;
@@ -7,19 +10,50 @@ using Mirage.Server.Net;
 
 namespace Mirage.Server.Game;
 
-public sealed class GameMap
+public sealed class GameMap : IBlockedProvider
 {
+    private sealed class NeighborProvider : INeighborProvider
+    {
+        private static readonly double[,] Neighbors = new double[,]
+        {
+            {0, -1}, {1, 0}, {0, 1}, {-1, 0}
+        };
+
+        public IEnumerable<Tile> GetNeighbors(Tile tile)
+        {
+            for (var i = 0; i < Neighbors.GetLength(0); i++)
+            {
+                var x = tile.X + Neighbors[i, 0];
+                var y = tile.Y + Neighbors[i, 1];
+
+                if (x < 0 || x > Limits.MaxMapWidth || y < 0 || y > Limits.MaxMapHeight)
+                {
+                    continue;
+                }
+
+                yield return new Tile(x, y);
+            }
+        }
+    }
+
+    private static readonly NeighborProvider DefaultNeighborProvider = new();
+
     private readonly MapItemInfo?[] _items = new MapItemInfo?[Limits.MaxMapItems + 1];
     private readonly GameNpc[] _npcs;
 
     public MapInfo Info { get; private set; }
+    public ITileNavigator Navigator { get; }
     public bool PlayersOnMap { get; set; }
     public bool[,] DoorOpen { get; } = new bool[Limits.MaxMapWidth + 1, Limits.MaxMapHeight + 1];
     public long DoorTimer { get; set; }
-    
+
     public GameMap(MapInfo mapInfo)
     {
         Info = mapInfo;
+
+        Navigator = new TileNavigator(this, DefaultNeighborProvider,
+            new PythagorasAlgorithm(),
+            new ManhattanHeuristicAlgorithm());
 
         _npcs = new GameNpc[Limits.MaxMapNpcs + 1];
 
@@ -50,7 +84,7 @@ public sealed class GameMap
         {
             return null;
         }
-        
+
         return _items[slot];
     }
 
@@ -83,6 +117,11 @@ public sealed class GameMap
         MapRepository.Update(Info.Id, Info);
 
         RespawnNpcs();
+    }
+
+    public bool InBounds(int x, int y)
+    {
+        return x is >= 0 and <= Limits.MaxMapWidth && y is >= 0 and <= Limits.MaxMapHeight;
     }
 
     public void RespawnItems()
@@ -237,7 +276,7 @@ public sealed class GameMap
     {
         return _items;
     }
-    
+
     public MapNpcInfo[] GetNpcData()
     {
         return _npcs.Skip(1)
@@ -287,5 +326,19 @@ public sealed class GameMap
     public void SendMessage(string message, int color)
     {
         Send(new MapMessage(message, color));
+    }
+    
+    public bool IsBlocked(Tile coord)
+    {
+        var x = (int) coord.X;
+        var y = (int) coord.Y;
+
+        if (Info.Tiles[x, y].Type == TileType.Walkable || 
+            Info.Tiles[x, y].Type == TileType.Item)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

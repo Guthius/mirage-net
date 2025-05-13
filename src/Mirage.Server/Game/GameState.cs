@@ -18,11 +18,15 @@ public static class GameState
         for (var mapId = 1; mapId <= Limits.MaxMaps; mapId++)
         {
             var mapInfo = MapRepository.Get(mapId) ?? new MapInfo();
+            var map = new GameMap(mapInfo);
 
-            Maps[mapId] = new GameMap(mapInfo);
+            Maps[mapId] = map;
+            
+            map.RespawnItems();
+            map.RespawnNpcs();
         }
     }
-
+    
     public static void Update()
     {
         CheckGiveHP();

@@ -8,8 +8,8 @@ namespace Mirage.Server.Game;
 
 public sealed class GameService : BackgroundService
 {
-    private static int _minPassed;
-    private static int _spawnSeconds;
+    private int _minPassed;
+    private int _spawnSeconds;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -22,9 +22,6 @@ public sealed class GameService : BackgroundService
         NpcRepository.Load();
         ShopRepository.Load();
         SpellRepository.Load();
-
-        SpawnAllMapsItems();
-        SpawnAllMapNpcs();
 
         Network.Start();
 
@@ -72,31 +69,7 @@ public sealed class GameService : BackgroundService
         GameState.SavePlayers();
     }
 
-    public static void SpawnAllMapsItems()
-    {
-        Log.Information("Spawning map items...");
-
-        for (var i = 1; i <= Limits.MaxMaps; i++)
-        {
-            var map = GameState.GetMap(i);
-
-            map.RespawnItems();
-        }
-    }
-
-    public static void SpawnAllMapNpcs()
-    {
-        Log.Information("Spawning map npcs...");
-
-        for (var mapId = 1; mapId <= Limits.MaxMaps; mapId++)
-        {
-            var map = GameState.GetMap(mapId);
-
-            map.RespawnNpcs();
-        }
-    }
-
-    public static void CheckSpawnMapItems()
+    public void CheckSpawnMapItems()
     {
         _spawnSeconds += 1;
         if (_spawnSeconds < 120)
@@ -116,9 +89,5 @@ public sealed class GameService : BackgroundService
         }
 
         _spawnSeconds = 0;
-    }
-
-    public static async Task RunTimedEvents(CancellationToken cancellationToken)
-    {
     }
 }

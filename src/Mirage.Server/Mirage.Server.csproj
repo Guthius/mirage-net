@@ -5,6 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="AStarNavigator" Version="1.0.63" />
         <PackageReference Include="BCrypt.Net-Next" Version="4.0.3"/>
         <PackageReference Include="LanguageExt.Core" Version="4.4.9" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.5" />

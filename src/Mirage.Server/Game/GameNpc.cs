@@ -1,4 +1,5 @@
-﻿using Mirage.Game.Constants;
+﻿using AStarNavigator;
+using Mirage.Game.Constants;
 using Mirage.Game.Data;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Net;
@@ -132,17 +133,14 @@ public sealed class GameNpc(int slot, GameMap map, NpcInfo? npcInfo)
             Target = 0;
             return;
         }
-        
-        var totalDist = distX + distY;
-        if (totalDist <= 1)
+
+        if (distX + distY <= 1)
         {
+            
             return;
         }
-        
-        
-        // TODO: Implement path finding to target...
 
-        throw new NotImplementedException();
+        MoveTo(targetPlayer.Character.X, targetPlayer.Character.Y);
     }
 
     private bool CanMove(Direction direction)
@@ -181,6 +179,27 @@ public sealed class GameNpc(int slot, GameMap map, NpcInfo? npcInfo)
         }
     }
 
+    private void MoveTo(int x, int y)
+    {
+        var path = Map.Navigator.Navigate(new Tile(X, Y), new Tile(x, y)).ToList();
+        if (path.Count == 0)
+        {
+            return;
+        }
+
+        Move(GetDirection(X, Y, (int) path[0].X, (int) path[0].Y), MovementType.Walking);
+
+        static Direction GetDirection(int sx, int sy, int dx, int dy)
+        {
+            if (Math.Abs(dx - sx) >= Math.Abs(dy - sy))
+            {
+                return dx > sx ? Direction.Right : Direction.Left;
+            }
+
+            return dy > sy ? Direction.Down : Direction.Up;
+        }
+    }
+
     private void Move(Direction direction, MovementType movementType)
     {
         Direction = direction;
@@ -211,6 +230,12 @@ public sealed class GameNpc(int slot, GameMap map, NpcInfo? npcInfo)
     {
         SpawnWait = Environment.TickCount;
         HP = 0;
+
+        var dropChance = Random.Shared.Next(Info.DropChance) + 1;
+        if (dropChance == 1)
+        {
+            Map.SpawnItem(X, Y, Info.DropItemId, Info.DropItemQuantity);
+        }
 
         Map.Send(new NpcDead(Slot));
     }
