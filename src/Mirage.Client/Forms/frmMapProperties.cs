@@ -1,6 +1,7 @@
-using Mirage.Modules;
+using Mirage.Client.Modules;
+using Mirage.Game.Constants;
 
-namespace Mirage.Forms;
+namespace Mirage.Client.Forms;
 
 public partial class frmMapProperties : Form
 {
@@ -23,7 +24,7 @@ public partial class frmMapProperties : Form
         txtBootY.Text = modTypes.Map.BootY.ToString();
 
         cmbShop.Items.Add("No Shop");
-        for (var i = 1; i <= modTypes.MAX_SHOPS; i++)
+        for (var i = 1; i <= Limits.MaxShops; i++)
         {
             cmbShop.Items.Add($"{i}: {modTypes.Shop[i].Name.Trim()}");
         }
@@ -36,7 +37,7 @@ public partial class frmMapProperties : Form
         cmbNpc_3.Items.Add("No NPC");
         cmbNpc_4.Items.Add("No NPC");
 
-        for (var i = 1; i <= modTypes.MAX_NPCS; i++)
+        for (var i = 1; i <= Limits.MaxNpcs; i++)
         {
             cmbNpc_0.Items.Add($"{i}: {modTypes.Npc[i].Name.Trim()}");
             cmbNpc_1.Items.Add($"{i}: {modTypes.Npc[i].Name.Trim()}");

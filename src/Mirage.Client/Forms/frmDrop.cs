@@ -1,6 +1,4 @@
-using Mirage.Modules;
-
-namespace Mirage.Forms;
+namespace Mirage.Client.Forms;
 
 public partial class frmDrop : Form
 {
@@ -13,22 +11,10 @@ public partial class frmDrop : Form
 
     private void frmDrop_Load(object sender, EventArgs e)
     {
-        _amount = 1;
-
-        var invNum = My.Forms.frmMirage.lstInv.SelectedIndex + 1;
-
-        lblName.Text = modTypes.Item[modTypes.GetPlayerInvItemNum(modGameLogic.MyIndex, invNum)].Name.Trim();
-
-        AddAmount(0);
     }
 
     private void cmdOk_Click(object sender, EventArgs e)
     {
-        var invNum = My.Forms.frmMirage.lstInv.SelectedIndex + 1;
-
-        modClientTCP.SendDropItem(invNum, _amount);
-
-        Close();
     }
 
     private void cmdCancel_Click(object sender, EventArgs e)
@@ -78,25 +64,7 @@ public partial class frmDrop : Form
 
     private void AddAmount(int change)
     {
-        _amount += change;
-
-        var invNum = My.Forms.frmMirage.lstInv.SelectedIndex + 1;
-
-        // Check if more then max and set back to max if so
-        var maxAmount = modTypes.GetPlayerInvItemValue(modGameLogic.MyIndex, invNum);
-        if (_amount > maxAmount)
-        {
-            _amount = maxAmount;
-        }
-
-        // Make sure its not 0
-        if (_amount < 1)
-        {
-            _amount = 1;
-        }
-
-
-        lblAmount.Text = $"{_amount}/{maxAmount}";
+        //lblAmount.Text = $"{_amount}/{maxAmount}";
     }
 
 }

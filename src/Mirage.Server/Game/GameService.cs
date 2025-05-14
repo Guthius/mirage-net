@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Mirage.Game.Constants;
-using Mirage.Server.Game.Repositories;
 using Mirage.Server.Net;
+using Mirage.Server.Repositories;
 using Serilog;
 
 namespace Mirage.Server.Game;
@@ -18,10 +18,13 @@ public sealed class GameService : BackgroundService
 
         ClassRepository.Load();
         MapRepository.Load();
+        NewMapRepository.Load();
         ItemRepository.Load();
         NpcRepository.Load();
         ShopRepository.Load();
         SpellRepository.Load();
+
+        MapManager.Initialize();
 
         Network.Start();
 

@@ -1,6 +1,8 @@
-using Mirage.Modules;
+using Mirage.Client.Net;
+using Mirage.Game.Data;
+using Mirage.Net.Protocol.FromClient;
 
-namespace Mirage.Forms;
+namespace Mirage.Client.Forms;
 
 public partial class frmTraining : Form
 {
@@ -16,10 +18,7 @@ public partial class frmTraining : Form
 
     private void picTrain_Click(object sender, EventArgs e)
     {
-        modClientTCP.SendData(
-            "usestatpoint" +
-            modTypes.SEP_CHAR + cmbStat.SelectedIndex +
-            modTypes.SEP_CHAR);
+        Network.Send(new UseStatPointRequest((StatType) cmbStat.SelectedIndex));
     }
 
     private void picCancel_Click(object sender, EventArgs e)

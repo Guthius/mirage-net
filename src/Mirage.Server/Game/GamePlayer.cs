@@ -3,8 +3,8 @@ using Mirage.Game.Constants;
 using Mirage.Game.Data;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromServer;
-using Mirage.Server.Game.Repositories;
 using Mirage.Server.Net;
+using Mirage.Server.Repositories;
 using Serilog;
 
 namespace Mirage.Server.Game;
@@ -25,7 +25,11 @@ public sealed class GamePlayer
     public GamePlayer? PartyMember { get; set; }
     public bool GettingMap { get; set; }
 
-    public GamePlayer(int id, GameSession session, CharacterInfo character)
+
+    public Map NewMap { get; private set; }
+
+
+    public GamePlayer(int id, GameSession session, CharacterInfo character, Map map)
     {
         Id = id;
         Character = character;
@@ -33,46 +37,48 @@ public sealed class GamePlayer
 
         _session = session;
 
-        CheckEquippedItems();
+        NewMap = map;
+        NewMap.Add(this);
 
-        var color = Character.AccessLevel <= AccessLevel.Moderator ? Color.JoinLeftColor : Color.White;
 
-        Network.SendGlobalMessage($"{Character.Name} has joined {Options.GameName}!", color);
+        // CheckEquippedItems();
+        //
+        // var color = Character.AccessLevel <= AccessLevel.Moderator ? Color.JoinLeftColor : Color.White;
+        //
+        // Network.SendGlobalMessage($"{Character.Name} has joined {Options.GameName}!", color);
+        //
+        // SendItems();
+        // SendNpcs();
+        // SendShops();
+        // SendSpells();
+        // Send(new PlayerInventory(Character.Inventory.Skip(1).ToArray()));
+        // SendEquipment();
+        // Send(new PlayerHp(Character.MaxHP, Character.HP));
+        // Send(new PlayerMp(Character.MaxMP, Character.MP));
+        // Send(new PlayerSp(Character.MaxSP, Character.SP));
+        //
+        // Send(new PlayerStats(
+        //     Character.Strength,
+        //     Character.Defense,
+        //     Character.Speed,
+        //     Character.Intelligence));
+        //
+        // WarpTo(Character.MapId, Character.X, Character.Y);
+        // Tell($"Welcome to {Options.GameName}!  Programmed from scratch by yours truely Consty!  Version {Options.VersionMajor}.{Options.VersionMinor}.{Options.VersionBuild}", Color.BrightBlue);
+        // Tell("Type /help for help on commands.  Use arrow keys to move, hold down shift to run, and use ctrl to attack.", Color.Cyan);
+        //
+        // if (File.Exists("Motd.txt"))
+        // {
+        //     var motd = File.ReadAllText("Motd.txt");
+        //     if (!string.IsNullOrWhiteSpace(motd))
+        //     {
+        //         Tell("MOTD: " + motd.Trim(), Color.BrightCyan);
+        //     }
+        // }
+        //
+        // SendWhosOnline();
 
-        Send(new LoginOk(Id));
-        Send(new ClassesData(ClassRepository.GetAll()));
-        SendItems();
-        SendNpcs();
-        SendShops();
-        SendSpells();
-        Send(new PlayerInventory(Character.Inventory));
-        SendEquipment();
-        Send(new PlayerHp(Character.MaxHP, Character.HP));
-        Send(new PlayerMp(Character.MaxMP, Character.MP));
-        Send(new PlayerSp(Character.MaxSP, Character.SP));
-
-        Send(new PlayerStats(
-            Character.Strength,
-            Character.Defense,
-            Character.Speed,
-            Character.Intelligence));
-
-        WarpTo(Character.MapId, Character.X, Character.Y);
-        Tell($"Welcome to {Options.GameName}!  Programmed from scratch by yours truely Consty!  Version {Options.VersionMajor}.{Options.VersionMinor}.{Options.VersionBuild}", Color.BrightBlue);
-        Tell("Type /help for help on commands.  Use arrow keys to move, hold down shift to run, and use ctrl to attack.", Color.Cyan);
-
-        if (File.Exists("Motd.txt"))
-        {
-            var motd = File.ReadAllText("Motd.txt");
-            if (!string.IsNullOrWhiteSpace(motd))
-            {
-                Tell("MOTD: " + motd.Trim(), Color.BrightCyan);
-            }
-        }
-
-        SendWhosOnline();
-
-        Send(new InGame());
+        Send<InGame>();
     }
 
     public void Destroy()
@@ -100,11 +106,11 @@ public sealed class GamePlayer
 
         var color = Character.AccessLevel <= AccessLevel.Moderator ? Color.JoinLeftColor : Color.White;
 
-        Network.SendGlobalMessage($"{Character.Name} has left {Options.GameName}!", color);
+        Network.SendToAll(new PlayerMessage($"{Character.Name} has left {Options.GameName}!", color));
 
         Log.Information("{CharacterName} has left {GameName}", Character.Name, Options.GameName);
 
-        Network.SendToAllBut(Id, PlayerData.Cleared(Id));
+        NewMap.Remove(this);
     }
 
     private bool TryPlayerMove(int x, int y, MovementType movementType)
@@ -522,9 +528,9 @@ public sealed class GamePlayer
             return;
         }
 
-        if (spellInfo.RequiredClassId != 0 && spellInfo.RequiredClassId - 1 != Character.ClassId)
+        if (!string.IsNullOrEmpty(spellInfo.RequiredClassId) && spellInfo.RequiredClassId != Character.JobId)
         {
-            Tell($"This spell can only be learned by a {ClassRepository.GetName(spellInfo.RequiredClassId - 1)}.", Color.White);
+            Tell($"This spell can only be learned by a {ClassRepository.GetName(spellInfo.RequiredClassId)}.", Color.White);
             return;
         }
 
@@ -1102,7 +1108,7 @@ public sealed class GamePlayer
             CheckLevelUp();
         }
 
-        victim.WarpTo(Options.StartMap, Options.StartX, Options.StartY);
+        victim.WarpTo(Options.StartMapId, Options.StartX, Options.StartY);
         victim.Character.HP = victim.Character.MaxHP;
         victim.Character.MP = victim.Character.MaxMP;
         victim.Character.SP = victim.Character.MaxSP;
@@ -1432,7 +1438,7 @@ public sealed class GamePlayer
 
     public void Send<TPacket>() where TPacket : IPacket<TPacket>, new()
     {
-        _session.Send(EmptyPacket<TPacket>.Value);
+        ((IPacketRecipient) _session).Send<TPacket>();
     }
 
     public void SendAlert(string alertMessage)
@@ -1495,7 +1501,7 @@ public sealed class GamePlayer
                 return;
             }
 
-            Send(new UpdateItem(itemId, itemInfo));
+            Send(new UpdateItem(itemInfo));
         }
     }
 

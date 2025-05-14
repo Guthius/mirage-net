@@ -30,6 +30,16 @@ public sealed class PacketWriter
         WriteInt32(Convert.ToInt32(value));
     }
 
+    public void WriteList<T>(List<T> list, Action<T> writer)
+    {
+        WriteInt32(list.Count);
+        
+        foreach (var item in list)
+        {
+            writer(item);
+        }
+    }
+
     public override string ToString()
     {
         return _stringBuilder.ToString();

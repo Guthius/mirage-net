@@ -12,18 +12,15 @@ public sealed record CharacterInfo
     
     [BsonElement("account_id"), BsonRepresentation(BsonType.String)]
     public string AccountId { get; set; } = string.Empty;
-
-    [BsonElement("slot"), BsonRepresentation(BsonType.Int32)]
-    public int Slot { get; set; }
-
+    
     [BsonElement("name"), BsonRepresentation(BsonType.String)]
     public string Name { get; set; } = string.Empty;
 
     [BsonElement("gender"), BsonRepresentation(BsonType.Int32)]
     public Gender Gender { get; set; }
 
-    [BsonElement("class_id"), BsonRepresentation(BsonType.Int32)]
-    public int ClassId { get; set; }
+    [BsonElement("job_id"), BsonRepresentation(BsonType.String)]
+    public string JobId { get; set; } = string.Empty;
 
     [BsonElement("sprite"), BsonRepresentation(BsonType.Int32)]
     public int Sprite { get; set; }
@@ -108,6 +105,9 @@ public sealed record CharacterInfo
 
     [BsonElement("map_id"), BsonRepresentation(BsonType.Int32)]
     public int MapId { get; set; }
+
+    [BsonElement("map"), BsonRepresentation(BsonType.String)]
+    public string Map { get; set; } = string.Empty;
 
     [BsonElement("x"), BsonRepresentation(BsonType.Int32)]
     public int X { get; set; }

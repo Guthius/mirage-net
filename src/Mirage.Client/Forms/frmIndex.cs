@@ -1,6 +1,8 @@
-using Mirage.Modules;
+using Mirage.Client.Modules;
+using Mirage.Client.Net;
+using Mirage.Net.Protocol.FromClient;
 
-namespace Mirage.Forms;
+namespace Mirage.Client.Forms;
 
 public partial class frmIndex : Form
 {
@@ -14,19 +16,19 @@ public partial class frmIndex : Form
 		modGameLogic.EditorIndex = lstIndex.SelectedIndex + 1;
 		if (modGameLogic.InItemsEditor)
 		{
-			modClientTCP.SendData("EDITITEM" + modTypes.SEP_CHAR + modGameLogic.EditorIndex + modTypes.SEP_CHAR);
+			Network.Send(new EditItemRequest(modGameLogic.EditorIndex));
 		}
 		if (modGameLogic.InNpcEditor)
 		{
-			modClientTCP.SendData("EDITNPC" + modTypes.SEP_CHAR + modGameLogic.EditorIndex + modTypes.SEP_CHAR);
+			Network.Send(new EditNpcRequest(modGameLogic.EditorIndex));
 		}
 		if (modGameLogic.InShopEditor)
 		{
-			modClientTCP.SendData("EDITSHOP" + modTypes.SEP_CHAR + modGameLogic.EditorIndex + modTypes.SEP_CHAR);
+			Network.Send(new EditShopRequest(modGameLogic.EditorIndex));
 		}
 		if (modGameLogic.InSpellEditor)
 		{
-			modClientTCP.SendData("EDITSPELL" + modTypes.SEP_CHAR + modGameLogic.EditorIndex + modTypes.SEP_CHAR);
+			Network.Send(new EditSpellRequest(modGameLogic.EditorIndex));
 		}
 		Close();
 	}

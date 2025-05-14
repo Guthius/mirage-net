@@ -1,6 +1,6 @@
-using Mirage.Modules;
+using Mirage.Client.Modules;
 
-namespace Mirage.Forms;
+namespace Mirage.Client.Forms;
 
 public partial class frmMapWarp : Form
 {

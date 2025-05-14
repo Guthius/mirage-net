@@ -3,26 +3,23 @@
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <TargetFramework>net9.0-windows</TargetFramework>
-        <Nullable>enable</Nullable>
         <UseWindowsForms>true</UseWindowsForms>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <RootNamespace>Mirage</RootNamespace>
         <GenerateResourceUsePreserializedResources>True</GenerateResourceUsePreserializedResources>
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
         <IsPackable>false</IsPackable>
-        <Product>Mirage</Product>
-        <AssemblyVersion>3.0.0.3</AssemblyVersion>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="MessagePack" Version="3.1.1" />
-        <PackageReference Include="SFML.Audio" Version="2.6.0" />
-        <PackageReference Include="SFML.Graphics" Version="2.6.0" />
+        <PackageReference Include="MessagePack" Version="3.1.1"/>
+        <PackageReference Include="SFML.Audio" Version="2.6.0"/>
         <PackageReference Include="System.Resources.Extensions" Version="9.0.0"/>
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Mirage.Client.Core\Mirage.Client.Core.csproj"/>
         <ProjectReference Include="..\Mirage.Compat\Mirage.Compat.csproj"/>
+        <ProjectReference Include="..\Mirage.Net.Protocol\Mirage.Net.Protocol.csproj"/>
+        <ProjectReference Include="..\Mirage.Net\Mirage.Net.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

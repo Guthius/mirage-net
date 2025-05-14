@@ -1,10 +1,11 @@
-﻿using LanguageExt.Common;
-using Mirage.Game.Constants;
+﻿using Mirage.Game.Constants;
 using Mirage.Game.Data;
 using Mirage.Net.Protocol.FromClient;
+using Mirage.Net.Protocol.FromClient.New;
 using Mirage.Net.Protocol.FromServer;
+using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Game;
-using Mirage.Server.Game.Repositories;
+using Mirage.Server.Repositories;
 using Serilog;
 using static Mirage.Server.Net.Network;
 
@@ -12,13 +13,81 @@ namespace Mirage.Server.Net;
 
 public static class NetworkHandlers
 {
-    public static void HandleGetClasses(GameSession session, GetClassesRequest request)
+    public static void HandleAuth(GameSession session, AuthRequest request)
     {
-        if (session.Player is null)
+        if (session.Account is not null)
         {
-            session.Send(new NewCharClasses(ClassRepository.GetAll()));
+            return;
         }
+
+        if (request.ProtocolVersion != ProtocolVersion)
+        {
+            session.Send(new AuthResponse(AuthResult.InvalidProtocolVersion));
+            return;
+        }
+
+        var account = AccountRepository.Authenticate(request.AccountName, request.Password);
+        if (account is null)
+        {
+            session.Send(new AuthResponse(AuthResult.InvalidAccountNameOrPassword));
+            return;
+        }
+
+        if (GameState.IsAccountLoggedIn(request.AccountName))
+        {
+            session.Send(new AuthResponse(AuthResult.AlreadyLoggedIn));
+            return;
+        }
+
+        session.Account = account;
+        session.Send(new AuthResponse(AuthResult.Ok));
+        session.Send(new JobList(ClassRepository.GetAll()));
+        session.Send(new CharacterList(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
+
+        Log.Information("Account {AccountName} has logged in from {RemoteIp}", account.Name, GetIP(session.Id));
     }
+
+    public static void HandleCreateCharacter(GameSession session, AccountInfo account, CreateCharacterRequest request)
+    {
+        var result = CharacterRepository.Create(account.Id, request.CharacterName, request.Gender, request.JobId);
+
+        session.Send(new CreateCharacterResponse(result));
+        if (result != CreateCharacterResult.Ok)
+        {
+            return;
+        }
+
+        Log.Information("Character {CharacterName} created by account {AccountName}", request.CharacterName, account.Name);
+
+        session.Send(new CharacterList(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
+    }
+
+    public static void HandleDeleteCharacter(GameSession session, AccountInfo account, DeleteCharacterRequest request)
+    {
+        CharacterRepository.Delete(request.CharacterId, account.Id);
+
+        Log.Information("Character deleted on account {AccountName}", account.Name);
+
+        session.Send(new CharacterList(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
+    }
+
+    public static void HandleSelectCharacter(GameSession session, AccountInfo account, SelectCharacterRequest request)
+    {
+        var character = CharacterRepository.Get(request.CharacterId, account.Id);
+        if (character is null)
+        {
+            session.Send(new SelectCharacterResponse(SelectCharacterResult.InvalidCharacter, -1));
+            return;
+        }
+
+        session.Send(new SelectCharacterResponse(SelectCharacterResult.Ok, session.Id));
+        session.CreatePlayer(character);
+
+        Log.Information("Player {CharacterName} started playing {GameName} [Account: {AccountName}]",
+            character.Name, Options.GameName, account.Name);
+    }
+
+    //----
 
     public static void HandleCreateAccount(GameSession session, CreateAccountRequest request)
     {
@@ -83,110 +152,6 @@ public static class NetworkHandlers
         session.SendAlert("Your account has been deleted!");
     }
 
-    public static void HandleLogin(GameSession session, LoginRequest request)
-    {
-        if (session.Account is not null)
-        {
-            return;
-        }
-
-        if (request.Version.Major != Options.VersionMajor ||
-            request.Version.Minor != Options.VersionMinor ||
-            request.Version.Build != Options.VersionBuild)
-        {
-            session.SendAlert("Version outdated, please visit https://github.com/guthius/mirage-net/");
-            return;
-        }
-
-        if (request.AccountName.Length < 3 || request.Password.Length < 3)
-        {
-            session.SendAlert("Account name and password must each contain at least 3 characters");
-            return;
-        }
-
-        var account = AccountRepository.Authenticate(request.AccountName, request.Password);
-        if (account is null)
-        {
-            session.SendAlert("Invalid account name or password.");
-            return;
-        }
-
-        if (GameState.IsAccountLoggedIn(request.AccountName))
-        {
-            session.SendAlert("Multiple account logins is not authorized.");
-            return;
-        }
-
-        session.Account = account;
-
-        Log.Information("{AccountName} has logged in from {RemoteIp}", account.Name, GetIP(session.Id));
-
-        var characterSlotInfos = CharacterRepository.GetCharacterSlots(account.Id);
-
-        var emptyCharacterSlot = new CharacterSlotInfo();
-
-        var characterSlots = Enumerable
-            .Range(1, Limits.MaxCharacters)
-            .Select(slot => { return characterSlotInfos.FirstOrDefault(c => c.Slot == slot) ?? emptyCharacterSlot; })
-            .ToList();
-
-        session.Send(new CharacterList(characterSlots));
-    }
-
-    public static void HandleCreateCharacter(GameSession session, AccountInfo account, CreateCharacterRequest request)
-    {
-        if (request.CharacterName.Length < 3)
-        {
-            session.SendAlert("Character name must be at least three characters in length.");
-            return;
-        }
-
-        foreach (var ch in request.CharacterName)
-        {
-            if (char.IsLetterOrDigit(ch) || ch == '_' || ch == ' ')
-            {
-                continue;
-            }
-
-            session.SendAlert("Invalid name, only letters, numbers, spaces, and _ allowed in names.");
-            return;
-        }
-
-        var result = CharacterRepository.Create(account.Id, request.CharacterName, request.Gender, request.ClassId, request.Slot);
-        if (result.Case is Error error)
-        {
-            session.SendAlert(error.Message);
-            return;
-        }
-
-        Log.Information("Character '{CharacterName}' added to account '{AccountName}'", request.CharacterName, account.Name);
-
-        session.SendAlert("Character has been created!");
-    }
-
-    public static void HandleDeleteCharacter(GameSession session, AccountInfo account, DeleteCharacterRequest request)
-    {
-        CharacterRepository.Delete(account.Id, request.Slot);
-
-        Log.Information("Character deleted on account '{AccountName}'", account.Name);
-
-        session.SendAlert("Character has been deleted!");
-    }
-
-    public static void HandleSelectCharacter(GameSession session, AccountInfo account, SelectCharacterRequest request)
-    {
-        var character = CharacterRepository.Get(account.Id, request.Slot);
-        if (character is null)
-        {
-            session.SendAlert("Character does not exist!");
-            return;
-        }
-
-        session.CreatePlayer(character);
-
-        Log.Information("{AccountName}/{CharacterName} has began playing {GameName}", account.Name, character.Name, Options.GameName);
-    }
-
     public static void HandleSay(GamePlayer player, SayRequest request)
     {
         foreach (var ch in request.Message)
@@ -244,7 +209,7 @@ public static class NetworkHandlers
 
         Log.Information("{CharacterName}: {Message}", player.Character.Name, request.Message);
 
-        SendToAll(new GlobalMessage($"{player.Character.Name}: {request.Message}", Color.BroadcastColor));
+        SendToAll(new PlayerMessage($"{player.Character.Name}: {request.Message}", Color.BroadcastColor));
     }
 
     public static void HandleGlobalMessage(GamePlayer player, GlobalMessageRequest request)
@@ -267,7 +232,7 @@ public static class NetworkHandlers
 
         Log.Information("(global) {CharacterName}: {Message}", player.Character.Name, request.Message);
 
-        SendToAll(new GlobalMessage($"(global) {player.Character.Name}: {request.Message}", Color.GlobalColor));
+        SendToAll(new PlayerMessage($"(global) {player.Character.Name}: {request.Message}", Color.GlobalColor));
     }
 
     public static void HandleAdminMessage(GamePlayer player, AdminMessageRequest request)
@@ -290,7 +255,7 @@ public static class NetworkHandlers
 
         Log.Information("(admin {CharacterName}) {Message}", player.Character.Name, request.Message);
 
-        SendToAll(new GlobalMessage($"(admin {player.Character.Name}) {request.Message}", Color.AdminColor));
+        SendToAll(new PlayerMessage($"(admin {player.Character.Name}) {request.Message}", Color.AdminColor));
     }
 
     public static void HandlePlayerMessage(GamePlayer player, PlayerMessageRequest request)
@@ -361,7 +326,7 @@ public static class NetworkHandlers
 
     public static void HandleUseItem(GamePlayer player, UseItemRequest request)
     {
-        player.UseItem(request.Slot);
+        player.UseItem(request.InventorySlot);
     }
 
     public static void HandleAttack(GamePlayer player, AttackRequest request)
@@ -772,7 +737,7 @@ public static class NetworkHandlers
         targetPlayer.SendAlert($"You have been banned by {player.Character.Name}!");
     }
 
-    public static void HandleOpenMapEditor(GamePlayer player, OpenManEditorRequest request)
+    public static void HandleOpenMapEditor(GamePlayer player, OpenMapEditorRequest request)
     {
         player.Send<OpenMapEditor>();
     }
@@ -809,7 +774,7 @@ public static class NetworkHandlers
 
         Log.Information("{CharacterName} saved item #{ItemId}.", player.Character.Name, request.ItemInfo.Id);
 
-        SendToAll(new UpdateItem(request.ItemInfo.Id, request.ItemInfo));
+        SendToAll(new UpdateItem(request.ItemInfo));
     }
 
     public static void HandleOpenNpcEditor(GamePlayer player, OpenNpcEditorRequest request)
@@ -883,7 +848,7 @@ public static class NetworkHandlers
 
         Log.Information("{CharacterName} changed MOTD to: {NewMotd}", player.Character.Name, request.Motd);
 
-        SendToAll(new GlobalMessage($"MOTD changed to: {request.Motd}", Color.BrightCyan));
+        SendToAll(new PlayerMessage($"MOTD changed to: {request.Motd}", Color.BrightCyan));
     }
 
     public static void HandleOpenShopEditor(GamePlayer player, OpenShopEditorRequest request)
@@ -990,9 +955,9 @@ public static class NetworkHandlers
                 continue;
             }
 
-            player.Tell(spellInfo.RequiredClassId == 0
+            player.Tell(!string.IsNullOrEmpty(spellInfo.RequiredClassId)
                     ? $"{itemInfo.Name} can be used by all classes."
-                    : $"{itemInfo.Name} can only be used by a {ClassRepository.GetName(spellInfo.RequiredClassId - 1)};",
+                    : $"{itemInfo.Name} can only be used by a {ClassRepository.GetName(spellInfo.RequiredClassId)};",
                 Color.Yellow);
         }
 

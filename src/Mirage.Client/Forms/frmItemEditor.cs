@@ -1,6 +1,9 @@
-using Mirage.Modules;
+using Mirage.Client.Modules;
+using Mirage.Client.Net;
+using Mirage.Game.Data;
+using Mirage.Net.Protocol.FromClient;
 
-namespace Mirage.Forms;
+namespace Mirage.Client.Forms;
 
 public partial class frmItemEditor : Form
 {
@@ -85,8 +88,20 @@ public partial class frmItemEditor : Form
                 modTypes.Item[modGameLogic.EditorIndex].Data3 = 0;
                 break;
         }
-
-        modClientTCP.SendSaveItem(modGameLogic.EditorIndex);
+        
+        var itemId = modGameLogic.EditorIndex;
+        
+        Network.Send(new UpdateItemRequest(new ItemInfo
+        {
+            Id = itemId,
+            Name = modTypes.Item[itemId].Name.Trim(),
+            Sprite = modTypes.Item[itemId].Pic,
+            Type = (ItemType) modTypes.Item[itemId].Type,
+            Data1 = modTypes.Item[itemId].Data1,
+            Data2 = modTypes.Item[itemId].Data2,
+            Data3 = modTypes.Item[itemId].Data3
+        }));
+        
         modGameLogic.InItemsEditor = false;
         Close();
     }

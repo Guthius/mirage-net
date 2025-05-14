@@ -1,8 +1,7 @@
-﻿using SFML.Graphics;
-using SFML.System;
-using Color = System.Drawing.Color;
+﻿using System.Numerics;
+using CommunityToolkit.Mvvm.DependencyInjection;
 
-namespace Mirage.Modules;
+namespace Mirage.Client.Modules;
 
 public static class modText
 {
@@ -23,20 +22,12 @@ public static class modText
     public const int Yellow = 14;
     public const int White = 15;
 
-    public const int SayColor = Grey;
-    public const int GlobalColor = BrightGreen;
-    public const int TellColor = Cyan;
-    public const int EmoteColor = BrightCyan;
     public const int HelpColor = Magenta;
-    public const int WhoColor = Pink;
-    public const int JoinLeftColor = DarkGrey;
-    public const int NpcColor = Brown;
     public const int AlertColor = Red;
-    public const int NewMapColor = Pink;
 
-    public static Color GetColor(int color)
+    private static Color GetColorInternal(int colorCode)
     {
-        return color switch
+        return colorCode switch
         {
             Black => Color.Black,
             Blue => Color.Blue,
@@ -58,38 +49,37 @@ public static class modText
         };
     }
 
-    private static SFML.Graphics.Color GetSfmlColor(Color color)
+    public static Vector4 GetColor(int colorCode)
     {
-        return new SFML.Graphics.Color(color.R, color.G, color.B, color.A);
+        var color = GetColorInternal(colorCode);
+
+        return new Vector4(
+            color.R / 255f,
+            color.G / 255f,
+            color.B / 255f,
+            1.0f);
     }
 
-    private static SFML.Graphics.Color GetSfmlColor(int color)
-    {
-        return GetSfmlColor(GetColor(color));
-    }
-
-    public static void DrawText(int x, int y, string text, int color)
-    {
-        var s = new Text(text, modDirectX.Font, 14);
-        s.Position = new Vector2f(x, y);
-        s.FillColor = GetSfmlColor(color);
-        s.OutlineColor = SFML.Graphics.Color.Black;
-        s.OutlineThickness = 1;
-        modDirectX.Renderer.Draw(s);
-    }
+    // public static void DrawText(int x, int y, string text, int color)
+    // {
+    //     var s = new Text(text, modDirectX.Font, 14);
+    //     s.Position = new Vector2f(x, y);
+    //     s.FillColor = GetSfmlColor(color);
+    //     s.OutlineColor = SFML.Graphics.Color.Black;
+    //     s.OutlineThickness = 1;
+    //     modDirectX.Renderer.Draw(s);
+    // }
 
     public static int MeasureText(string text)
     {
-        var s = new Text(text, modDirectX.Font, 14);
-        return (int) s.GetLocalBounds().Width;
+        return 0;
     }
 
-    public static void AddText(string msg, int color)
+    public static void AddText(string message, int colorCode)
     {
-        My.Forms.frmMirage.txtChat.SelectionStart = My.Forms.frmMirage.txtChat.TextLength;
-        My.Forms.frmMirage.txtChat.SelectionColor = GetColor(color);
-        My.Forms.frmMirage.txtChat.SelectedText = $"\r\n{msg}";
-        My.Forms.frmMirage.txtChat.SelectionStart = My.Forms.frmMirage.txtChat.TextLength;
-        My.Forms.frmMirage.txtChat.ScrollToCaret();
+        var gameState = Ioc.Default.GetRequiredService<IGameState>();
+
+        gameState.ChatHistory.Add(new Chat(message, colorCode));
+        gameState.ChatHistoryUpdated = true;
     }
 }

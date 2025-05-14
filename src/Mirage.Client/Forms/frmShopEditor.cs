@@ -1,6 +1,7 @@
-using Mirage.Modules;
+using Mirage.Client.Modules;
+using Mirage.Game.Constants;
 
-namespace Mirage.Forms;
+namespace Mirage.Client.Forms;
 
 public partial class frmShopEditor : Form
 {
@@ -22,7 +23,7 @@ public partial class frmShopEditor : Form
         cmbItemGet.Items.Clear();
         cmbItemGet.Items.Add("None");
 
-        for (var i = 1; i <= modTypes.MAX_ITEMS; i++)
+        for (var i = 1; i <= Limits.MaxItems; i++)
         {
             cmbItemGive.Items.Add($"{i}: {modTypes.Item[i].Name.Trim()}");
             cmbItemGet.Items.Add($"{i}: {modTypes.Item[i].Name.Trim()}");
@@ -69,7 +70,7 @@ public partial class frmShopEditor : Form
         lstTradeItem.BeginUpdate();
         lstTradeItem.Items.Clear();
 
-        for (var i = 1; i <= modTypes.MAX_TRADES; i++)
+        for (var i = 1; i <= Limits.MaxShopTrades; i++)
         {
             var tradeItem = modTypes.Shop[modGameLogic.EditorIndex].TradeItem[i];
 

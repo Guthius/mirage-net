@@ -1,6 +1,4 @@
-using Mirage.Modules;
-
-namespace Mirage.Forms;
+namespace Mirage.Client.Forms;
 
 public partial class frmLogin : Form
 {
@@ -9,17 +7,15 @@ public partial class frmLogin : Form
 		InitializeComponent();
 	}
     
-    private void picCancel_Click(object sender, EventArgs e)
+	private void picCancel_Click(object sender, EventArgs e)
 	{
-		My.Forms.frmMainMenu.Show();
 		Hide();
 	}
 
 	private void picConnect_Click(object sender, EventArgs e)
 	{
-        if (txtName.Text.Trim().Length > 0 && txtPassword.Text.Trim().Length > 0)
-        {
-            modGameLogic.MenuState(modGameLogic.MENU_STATE_LOGIN);
-        }
+		if (txtName.Text.Trim().Length > 0 && txtPassword.Text.Trim().Length > 0)
+		{
+		}
 	}
 }

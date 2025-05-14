@@ -1,21 +1,22 @@
-using Mirage.Modules;
+using Mirage.Client.Net;
+using Mirage.Net.Protocol.FromClient;
 
-namespace Mirage.Forms;
+namespace Mirage.Client.Forms;
 
 public partial class frmFixItem : Form
 {
-	public frmFixItem()
-	{
-		InitializeComponent();
-	}
+    public frmFixItem()
+    {
+        InitializeComponent();
+    }
 
-	private void chkFix_Click(object sender, EventArgs e)
-	{
-		modClientTCP.SendData("fixitem" + modTypes.SEP_CHAR + (cmbItem.SelectedIndex + 1) + modTypes.SEP_CHAR);
-	}
-	
-	private void picCancel_Click(object sender, EventArgs e)
-	{
-		Close();
-	}
+    private void chkFix_Click(object sender, EventArgs e)
+    {
+        Network.Send(new FixItemRequest(cmbItem.SelectedIndex + 1));
+    }
+
+    private void picCancel_Click(object sender, EventArgs e)
+    {
+        Close();
+    }
 }

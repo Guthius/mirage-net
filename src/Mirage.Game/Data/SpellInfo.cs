@@ -12,8 +12,8 @@ public sealed record SpellInfo
     [BsonElement("name"), BsonRepresentation(BsonType.String)]
     public string Name { get; set; } = string.Empty;
 
-    [BsonElement("req_class_id"), BsonRepresentation(BsonType.Int32)]
-    public int RequiredClassId { get; set; }
+    [BsonElement("req_class_id"), BsonRepresentation(BsonType.String)]
+    public string RequiredClassId { get; set; } = string.Empty;
 
     [BsonElement("req_level"), BsonRepresentation(BsonType.Int32)]
     public int RequiredLevel { get; set; }

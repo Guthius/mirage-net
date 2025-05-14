@@ -1,6 +1,9 @@
-using Mirage.Modules;
+using Mirage.Client.Modules;
+using Mirage.Client.Net;
+using Mirage.Game.Data;
+using Mirage.Net.Protocol.FromClient;
 
-namespace Mirage.Forms;
+namespace Mirage.Client.Forms;
 
 public partial class frmSpellEditor : Form
 {
@@ -79,22 +82,36 @@ public partial class frmSpellEditor : Form
 
     private void cmdOk_Click(object sender, EventArgs e)
     {
-        modTypes.Spell[modGameLogic.EditorIndex].Name = txtName.Text;
-        modTypes.Spell[modGameLogic.EditorIndex].ClassReq = cmbClassReq.SelectedIndex;
-        modTypes.Spell[modGameLogic.EditorIndex].LevelReq = scrlLevelReq.Value;
-        modTypes.Spell[modGameLogic.EditorIndex].Type = cmbType.SelectedIndex;
+        ref var spell = ref modTypes.Spell[modGameLogic.EditorIndex];
+
+
+        spell.Name = txtName.Text;
+        spell.ClassReq = cmbClassReq.SelectedIndex;
+        spell.LevelReq = scrlLevelReq.Value;
+        spell.Type = cmbType.SelectedIndex;
 
         if (cmbType.SelectedIndex != modTypes.SPELL_TYPE_GIVEITEM)
         {
-            modTypes.Spell[modGameLogic.EditorIndex].Data1 = scrlVitalMod.Value;
+            spell.Data1 = scrlVitalMod.Value;
         }
         else
         {
-            modTypes.Spell[modGameLogic.EditorIndex].Data1 = scrlItemNum.Value;
-            modTypes.Spell[modGameLogic.EditorIndex].Data2 = scrlItemValue.Value;
+            spell.Data1 = scrlItemNum.Value;
+            spell.Data2 = scrlItemValue.Value;
         }
 
-        modClientTCP.SendSaveSpell(modGameLogic.EditorIndex);
+        Network.Send(new UpdateSpellRequest(new SpellInfo
+        {
+            Id = modGameLogic.EditorIndex,
+            Name = spell.Name.Trim(),
+            RequiredClassId = string.Empty, // spell.ClassReq,
+            RequiredLevel = spell.LevelReq,
+            Type = (SpellType) spell.Type,
+            Data1 = spell.Data1,
+            Data2 = spell.Data2,
+            Data3 = spell.Data3
+        }));
+
         modGameLogic.InSpellEditor = false;
         Close();
     }

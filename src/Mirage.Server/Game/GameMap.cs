@@ -5,8 +5,8 @@ using Mirage.Game.Constants;
 using Mirage.Game.Data;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromServer;
-using Mirage.Server.Game.Repositories;
 using Mirage.Server.Net;
+using Mirage.Server.Repositories;
 
 namespace Mirage.Server.Game;
 
@@ -325,7 +325,7 @@ public sealed class GameMap : IBlockedProvider
 
     public void SendMessage(string message, int color)
     {
-        Send(new MapMessage(message, color));
+        Send(new PlayerMessage(message, color));
     }
     
     public bool IsBlocked(Tile coord)

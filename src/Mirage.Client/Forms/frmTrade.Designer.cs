@@ -1,4 +1,4 @@
-namespace Mirage.Forms
+namespace Mirage.Client.Forms
 {
 	partial class frmTrade
 	{

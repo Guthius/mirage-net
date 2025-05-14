@@ -2,7 +2,7 @@ namespace Mirage.Net.Protocol.FromClient;
 
 public sealed record PlayerMessageRequest(string TargetName, string Message) : IPacket<PlayerMessageRequest>
 {
-    public static string PacketId => "adminmsg";
+    public static string PacketId => "playermsg";
 
     public static PlayerMessageRequest ReadFrom(PacketReader reader)
     {

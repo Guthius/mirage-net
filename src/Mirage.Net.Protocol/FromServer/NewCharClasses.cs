@@ -2,13 +2,13 @@
 
 namespace Mirage.Net.Protocol.FromServer;
 
-public sealed record NewCharClasses(IReadOnlyList<ClassInfo> Classes) : IPacket<NewCharClasses>
+public sealed record NewCharClasses(IReadOnlyList<JobInfo> Classes) : IPacket<NewCharClasses>
 {
     public static string PacketId => "newcharclasses";
 
     public static NewCharClasses ReadFrom(PacketReader reader)
     {
-        var classInfos = new List<ClassInfo>();
+        var classInfos = new List<JobInfo>();
         var classCount = reader.ReadInt32();
 
         for (var i = 0; i < classCount; i++)
@@ -19,7 +19,7 @@ public sealed record NewCharClasses(IReadOnlyList<ClassInfo> Classes) : IPacket<
             _ = reader.ReadInt32(); // Max MP
             _ = reader.ReadInt32(); // Max SP
 
-            var classInfo = new ClassInfo
+            var classInfo = new JobInfo
             {
                 Name = name,
                 Strength = reader.ReadInt32(),

@@ -215,7 +215,7 @@ db.spells.insertMany([
         data2: 0,
         data3: 0,
         name: "Minor Heal",
-        req_class_id: 0,
+        req_class_id: '',
         req_level: 0,
         type: 0
     }

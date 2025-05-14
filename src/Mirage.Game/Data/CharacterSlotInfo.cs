@@ -5,18 +5,16 @@ namespace Mirage.Game.Data;
 
 public sealed record CharacterSlotInfo
 {
-    [BsonElement("slot"), BsonRepresentation(BsonType.Int32)]
-    public int Slot { get; set; }
+    [BsonId]
+    [BsonElement("_id"), BsonRepresentation(BsonType.ObjectId)]
+    public string CharacterId { get; set; } = string.Empty;
 
     [BsonElement("name"), BsonRepresentation(BsonType.String)]
     public string Name { get; set; } = string.Empty;
-    
-    [BsonElement("class_id"), BsonRepresentation(BsonType.Int32)]
-    public int ClassId { get; set; }
-    
-    [BsonIgnore]
-    public string ClassName { get; set; } = string.Empty;
-    
+
+    [BsonElement("job_id"), BsonRepresentation(BsonType.String)]
+    public string JobId { get; set; } = string.Empty;
+
     [BsonElement("level"), BsonRepresentation(BsonType.Int32)]
     public int Level { get; set; } = 1;
 }

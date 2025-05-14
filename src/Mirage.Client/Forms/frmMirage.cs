@@ -1,7 +1,8 @@
-using Mirage.Compat;
-using Mirage.Modules;
+using Mirage.Client.Modules;
+using Mirage.Client.Net;
+using Mirage.Net.Protocol.FromClient;
 
-namespace Mirage.Forms;
+namespace Mirage.Client.Forms;
 
 public partial class frmMirage : Form
 {
@@ -12,7 +13,6 @@ public partial class frmMirage : Form
 
     private void frmMirage_FormClosed(object sender, FormClosedEventArgs e)
     {
-        modGameLogic.GameDestroy();
     }
 
     private void picScreen_MouseDown(object sender, MouseEventArgs e)
@@ -26,19 +26,8 @@ public partial class frmMirage : Form
         modGameLogic.EditorMouseDown(e.Button, e.X, e.Y);
     }
 
-    private void Socket_DataArrival(object sender, DataArrivalEventArgs e)
-    {
-        if (modClientTCP.IsConnected())
-        {
-            modClientTCP.IncomingData(e.Bytes);
-        }
-    }
-
     private void frmMirage_KeyPress(object sender, KeyPressEventArgs e)
     {
-        modGameLogic.HandleKeypresses(e.KeyChar);
-
-        e.Handled = true;
     }
 
     private void picScreen_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
@@ -55,49 +44,18 @@ public partial class frmMirage : Form
     {
         picScreen.Focus();
     }
-
-    private void picInventory_Click(object sender, EventArgs e)
-    {
-        modGameLogic.UpdateInventory();
-        picInv.Visible = true;
-    }
-
-    private void lblUseItem_Click(object sender, EventArgs e)
-    {
-        modClientTCP.SendUseItem(lstInv.SelectedIndex + 1);
-    }
-
-    private void lblDropItem_Click(object sender, EventArgs e)
-    {
-        var invNum = lstInv.SelectedIndex + 1;
-
-        var invItemNum = modTypes.GetPlayerInvItemNum(modGameLogic.MyIndex, invNum);
-        if (invItemNum is > 0 and <= modTypes.MAX_ITEMS)
-        {
-            if (modTypes.Item[invItemNum].Type == modTypes.ITEM_TYPE_CURRENCY)
-            {
-                using var frmDrop = new frmDrop();
-
-                frmDrop.ShowDialog();
-            }
-            else
-            {
-                modClientTCP.SendDropItem(invNum, 0);
-            }
-        }
-    }
-
+    
     private void lblCast_Click(object sender, EventArgs e)
     {
         if (modTypes.Player[modGameLogic.MyIndex].Spell[lstSpells.SelectedIndex] > 0)
         {
-            if (modGameLogic.GetTickCount() > modTypes.Player[modGameLogic.MyIndex].AttackTimer + 1000)
+            if (Environment.TickCount > modTypes.Player[modGameLogic.MyIndex].AttackTimer + 1000)
             {
                 if (modTypes.Player[modGameLogic.MyIndex].Moving == 0)
                 {
-                    modClientTCP.SendData("cast" + modTypes.SEP_CHAR + (lstSpells.SelectedIndex + 1) + modTypes.SEP_CHAR);
+                    Network.Send(new CastRequest(lstSpells.SelectedIndex + 1));
                     modTypes.Player[modGameLogic.MyIndex].Attacking = 1;
-                    modTypes.Player[modGameLogic.MyIndex].AttackTimer = modGameLogic.GetTickCount();
+                    modTypes.Player[modGameLogic.MyIndex].AttackTimer = Environment.TickCount;
                     modTypes.Player[modGameLogic.MyIndex].CastedSpell = modTypes.YES;
                 }
                 else
@@ -111,42 +69,10 @@ public partial class frmMirage : Form
             modText.AddText("No spell here.", modText.BrightRed);
         }
     }
-
-    private void lblCancel_Click(object sender, EventArgs e)
-    {
-        picInv.Visible = false;
-    }
-
+    
     private void lblSpellsCancel_Click(object sender, EventArgs e)
     {
         picPlayerSpells.Visible = false;
-    }
-
-    private void picSpells_Click(object sender, EventArgs e)
-    {
-        modClientTCP.SendData("spells" + modTypes.SEP_CHAR);
-    }
-
-    private void picStats_Click(object sender, EventArgs e)
-    {
-        modClientTCP.SendData("getstats" + modTypes.SEP_CHAR);
-    }
-
-    private void picTrain_Click(object sender, EventArgs e)
-    {
-        using var frmTraining = new frmTraining();
-
-        frmTraining.ShowDialog();
-    }
-
-    private void picTrade_Click(object sender, EventArgs e)
-    {
-        modClientTCP.SendData("trade" + modTypes.SEP_CHAR);
-    }
-
-    private void picQuit_Click(object sender, EventArgs e)
-    {
-        modGameLogic.GameDestroy();
     }
 
     private void optLayers_Click(object sender, EventArgs e)

@@ -53,4 +53,17 @@ public sealed class PacketReader(ReadOnlyMemory<byte> data)
     {
         return (TEnum) Enum.ToObject(typeof(TEnum), ReadInt32());
     }
+
+    public List<T> ReadList<T>(Func<T> itemReader)
+    {
+        var itemCount = ReadInt32();
+        var items = new List<T>(itemCount);
+
+        for (var i = 0; i < itemCount; i++)
+        {
+            items.Add(itemReader());
+        }
+
+        return items;
+    }
 }

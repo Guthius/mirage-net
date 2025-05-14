@@ -1,6 +1,9 @@
-using Mirage.Modules;
+using Mirage.Client.Modules;
+using Mirage.Client.Net;
+using Mirage.Game.Constants;
+using Mirage.Net.Protocol.FromClient;
 
-namespace Mirage.Forms;
+namespace Mirage.Client.Forms;
 
 public partial class frmTrade : Form
 {
@@ -13,10 +16,7 @@ public partial class frmTrade : Form
 	{
 		if (lstTrade.Items.Count > 0)
 		{
-			modClientTCP.SendData(
-				"traderequest" + 
-				modTypes.SEP_CHAR + (lstTrade.SelectedIndex + 1) + 
-				modTypes.SEP_CHAR);
+			Network.Send(new ShopTradeRequest(lstTrade.SelectedIndex + 1));
 		}
 	}
 
@@ -24,7 +24,7 @@ public partial class frmTrade : Form
 	{
 		using var frmFixItem = new frmFixItem();
 		
-		for (var i = 0; i <= modTypes.MAX_INV; i++)
+		for (var i = 0; i <= Limits.MaxInventory; i++)
 		{
 			if (modTypes.GetPlayerInvItemNum(modGameLogic.MyIndex, i) > 0)
 			{

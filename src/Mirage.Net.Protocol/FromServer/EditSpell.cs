@@ -12,7 +12,7 @@ public sealed record EditSpell(SpellInfo SpellInfo) : IPacket<EditSpell>
         {
             Id = reader.ReadInt32(),
             Name = reader.ReadString(),
-            RequiredClassId = reader.ReadInt32(),
+            RequiredClassId = reader.ReadString(),
             RequiredLevel = reader.ReadInt32(),
             Type = reader.ReadEnum<SpellType>(),
             Data1 = reader.ReadInt32(),
@@ -25,7 +25,7 @@ public sealed record EditSpell(SpellInfo SpellInfo) : IPacket<EditSpell>
     {
         writer.WriteInt32(SpellInfo.Id);
         writer.WriteString(SpellInfo.Name);
-        writer.WriteInt32(SpellInfo.RequiredClassId);
+        writer.WriteString(SpellInfo.RequiredClassId);
         writer.WriteInt32(SpellInfo.RequiredLevel);
         writer.WriteEnum(SpellInfo.Type);
         writer.WriteInt32(SpellInfo.Data1);

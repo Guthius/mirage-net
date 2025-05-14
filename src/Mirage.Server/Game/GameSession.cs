@@ -5,7 +5,7 @@ using Mirage.Server.Net;
 
 namespace Mirage.Server.Game;
 
-public sealed record GameSession(int Id)
+public sealed record GameSession(int Id) : IPacketRecipient
 {
     public readonly byte[] Buffer = new byte[0xFFFF];
 
@@ -29,7 +29,13 @@ public sealed record GameSession(int Id)
 
     public void CreatePlayer(CharacterInfo character)
     {
-        Player = new GamePlayer(Id, this, character);
+        var map = MapManager.GetMap(character.Map);
+        if (map is null)
+        {
+            throw new NotImplementedException(); // TODO: Map not available...
+        }
+        
+        Player = new GamePlayer(Id, this, character, map);
     }
 
     public void Destroy()

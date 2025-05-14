@@ -411,7 +411,7 @@ public sealed class GameNpc(int slot, GameMap map, NpcInfo? npcInfo)
             victim.Tell($"You lost {exp} experience points.", Color.BrightRed);
         }
 
-        victim.WarpTo(Options.StartMap, Options.StartX, Options.StartY);
+        victim.WarpTo(Options.StartMapId, Options.StartX, Options.StartY);
         victim.Character.HP = victim.Character.MaxHP;
         victim.Character.MP = victim.Character.MaxMP;
         victim.Character.SP = victim.Character.MaxSP;

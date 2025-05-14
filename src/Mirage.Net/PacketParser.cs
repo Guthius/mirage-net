@@ -9,13 +9,41 @@ public sealed class PacketParser
     /// </summary>
     /// <param name="handler">The handler.</param>
     /// <typeparam name="TPacket">The packet type.</typeparam>
-    public void Register<TPacket>(PacketHandler<TPacket> handler) where TPacket : IPacket<TPacket>
+    public void Register<TPacket>(ServerPacketHandler<TPacket> handler) where TPacket : IPacket<TPacket>
     {
         _handlers[TPacket.PacketId] = (playerId, packetReader) =>
         {
             var packet = TPacket.ReadFrom(packetReader);
 
             handler(playerId, packet);
+        };
+    }
+
+    /// <summary>
+    /// Registers a handler for packets of type <typeparamref name="TPacket"/>.
+    /// </summary>
+    /// <param name="handler">The handler.</param>
+    /// <typeparam name="TPacket">The packet type.</typeparam>
+    public void Register<TPacket>(ClientPacketHandler<TPacket> handler) where TPacket : IPacket<TPacket>
+    {
+        _handlers[TPacket.PacketId] = (_, packetReader) =>
+        {
+            var packet = TPacket.ReadFrom(packetReader);
+
+            handler(packet);
+        };
+    }
+    
+    /// <summary>
+    /// Registers a handler for packets of type <typeparamref name="TPacket"/>.
+    /// </summary>
+    /// <param name="handler">The handler.</param>
+    /// <typeparam name="TPacket">The packet type.</typeparam>
+    public void Register<TPacket>(Action handler) where TPacket : IPacket<TPacket>
+    {
+        _handlers[TPacket.PacketId] = (_, _) =>
+        {
+            handler();
         };
     }
 
@@ -53,4 +81,11 @@ public sealed class PacketParser
 
         return byteCount - bytes.Length;
     }
+    
+    /// <summary>
+    /// Parses the specified <paramref name="bytes"/> for data packets and calls the registered handler for each packet.
+    /// </summary>
+    /// <param name="bytes">The raw packet data.</param>
+    /// <returns>The number of bytes processed from the input bytes.</returns>
+    public int Parse(ReadOnlyMemory<byte> bytes) => Parse(0, bytes);
 }

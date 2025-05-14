@@ -6,16 +6,19 @@ using Mirage.Game.Constants;
 using Mirage.Game.Data;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromClient;
+using Mirage.Net.Protocol.FromClient.New;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Extensions;
 using Mirage.Server.Game;
-using Mirage.Server.Game.Repositories;
+using Mirage.Server.Repositories;
 using Serilog;
 
 namespace Mirage.Server.Net;
 
 public static class Network
 {
+    public const int ProtocolVersion = 1;
+
     private static readonly PacketParser Parser = new();
     private static readonly CancellationTokenSource CancellationTokenSource = new();
     private static readonly Connection?[] Connections = new Connection?[Limits.MaxPlayers + 1];
@@ -26,13 +29,14 @@ public static class Network
 
     static Network()
     {
-        Parser.Register<GetClassesRequest>(NetworkHandlers.HandleGetClasses);
-        Parser.Register<CreateAccountRequest>(NetworkHandlers.HandleCreateAccount);
-        Parser.Register<DeleteAccountRequest>(NetworkHandlers.HandleDeleteAccount);
-        Parser.Register<LoginRequest>(NetworkHandlers.HandleLogin);
+        Parser.Register<AuthRequest>(NetworkHandlers.HandleAuth);
         Parser.Register<CreateCharacterRequest>(NetworkHandlers.HandleCreateCharacter);
         Parser.Register<DeleteCharacterRequest>(NetworkHandlers.HandleDeleteCharacter);
         Parser.Register<SelectCharacterRequest>(NetworkHandlers.HandleSelectCharacter);
+        
+        //---
+        Parser.Register<CreateAccountRequest>(NetworkHandlers.HandleCreateAccount);
+        Parser.Register<DeleteAccountRequest>(NetworkHandlers.HandleDeleteAccount);
         Parser.Register<SayRequest>(NetworkHandlers.HandleSay);
         Parser.Register<EmoteRequest>(NetworkHandlers.HandleEmote);
         Parser.Register<BroadcastRequest>(NetworkHandlers.HandleBroadcast);
@@ -61,7 +65,7 @@ public static class Network
         Parser.Register<BanListRequest>(NetworkHandlers.HandleBanList, AccessLevel.Mapper);
         Parser.Register<BanDestroyRequest>(NetworkHandlers.HandleBanDestroy, AccessLevel.Administrator);
         Parser.Register<BanPlayerRequest>(NetworkHandlers.HandleBanPlayer, AccessLevel.Mapper);
-        Parser.Register<OpenManEditorRequest>(NetworkHandlers.HandleOpenMapEditor, AccessLevel.Mapper);
+        Parser.Register<OpenMapEditorRequest>(NetworkHandlers.HandleOpenMapEditor, AccessLevel.Mapper);
         Parser.Register<OpenItemEditorRequest>(NetworkHandlers.HandleOpenItemEditor, AccessLevel.Developer);
         Parser.Register<EditItemRequest>(NetworkHandlers.HandleEditItem, AccessLevel.Developer);
         Parser.Register<UpdateItemRequest>(NetworkHandlers.HandleUpdateItem, AccessLevel.Developer);
@@ -277,7 +281,7 @@ public static class Network
 
     public static void SendGlobalMessage(string message, int color)
     {
-        SendToAll(new GlobalMessage(message, color));
+        SendToAll(new PlayerMessage(message, color));
     }
 
     public static void SendAlert(int connectionId, string message)
@@ -301,7 +305,7 @@ public static class Network
         var player = GameState.Sessions[connectionId];
         if (player is {Account: not null, Player: not null})
         {
-            SendToAll(new GlobalMessage($"{player.Account.Name}/{player.Player.Character.Name} has been booted for ({reason})", Color.White));
+            SendToAll(new PlayerMessage($"{player.Account.Name}/{player.Player.Character.Name} has been booted for ({reason})", Color.White));
         }
     }
 

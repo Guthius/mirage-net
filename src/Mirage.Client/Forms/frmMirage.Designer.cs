@@ -1,4 +1,4 @@
-namespace Mirage.Forms
+namespace Mirage.Client.Forms
 {
 	partial class frmMirage
 	{
@@ -57,23 +57,11 @@ namespace Mirage.Forms
             picMapEditor = new PictureBox();
             txtChat = new RichTextBox();
             picScreen = new PictureBox();
-            lstInv = new ListBox();
-            lblCancel = new Label();
-            lblDropItem = new Label();
-            lblUseItem = new Label();
-            Label1 = new Label();
-            picInv = new PictureBox();
             lstSpells = new ListBox();
             Label5 = new Label();
             lblCast = new Label();
             lblSpellsCancel = new Label();
             picPlayerSpells = new PictureBox();
-            picInventory = new PictureBox();
-            picSpells = new PictureBox();
-            picStats = new PictureBox();
-            picTrain = new PictureBox();
-            picTrade = new PictureBox();
-            picQuit = new PictureBox();
             lblName = new Label();
             lblHP = new Label();
             lblMP = new Label();
@@ -89,16 +77,8 @@ namespace Mirage.Forms
             ((System.ComponentModel.ISupportInitialize)picMapEditor).BeginInit();
             picMapEditor.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)picScreen).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)picInv).BeginInit();
-            picInv.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)picPlayerSpells).BeginInit();
             picPlayerSpells.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)picInventory).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)picSpells).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)picStats).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)picTrain).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)picTrade).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)picQuit).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picGUI).BeginInit();
             picGUI.SuspendLayout();
             SuspendLayout();
@@ -386,7 +366,7 @@ namespace Mirage.Forms
             picMapEditor.Controls.Add(fraLayers);
             picMapEditor.Controls.Add(fraAttribs);
             picMapEditor.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            picMapEditor.Location = new Point(512, 0);
+            picMapEditor.Location = new Point(73, 12);
             picMapEditor.Name = "picMapEditor";
             picMapEditor.Size = new Size(257, 427);
             picMapEditor.TabIndex = 13;
@@ -400,7 +380,7 @@ namespace Mirage.Forms
             txtChat.Location = new Point(0, 384);
             txtChat.Name = "txtChat";
             txtChat.ScrollBars = RichTextBoxScrollBars.Vertical;
-            txtChat.Size = new Size(641, 119);
+            txtChat.Size = new Size(903, 119);
             txtChat.TabIndex = 1;
             txtChat.Text = "";
             txtChat.Enter += txtChat_Enter;
@@ -417,83 +397,6 @@ namespace Mirage.Forms
             picScreen.MouseDown += picScreen_MouseDown;
             picScreen.MouseMove += picScreen_MouseMove;
             picScreen.PreviewKeyDown += picScreen_PreviewKeyDown;
-            // 
-            // lstInv
-            // 
-            lstInv.BackColor = Color.FromArgb(0, 0, 0);
-            lstInv.BorderStyle = BorderStyle.FixedSingle;
-            lstInv.Font = new Font("Arial", 8.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lstInv.Location = new Point(0, 16);
-            lstInv.Name = "lstInv";
-            lstInv.Size = new Size(257, 128);
-            lstInv.TabIndex = 38;
-            // 
-            // lblCancel
-            // 
-            lblCancel.BackColor = Color.Transparent;
-            lblCancel.Font = new Font("Arial", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblCancel.ForeColor = Color.FromArgb(255, 0, 255);
-            lblCancel.Location = new Point(0, 192);
-            lblCancel.Name = "lblCancel";
-            lblCancel.Size = new Size(129, 17);
-            lblCancel.TabIndex = 41;
-            lblCancel.Text = "Cancel";
-            lblCancel.TextAlign = ContentAlignment.TopCenter;
-            lblCancel.Click += lblCancel_Click;
-            // 
-            // lblDropItem
-            // 
-            lblDropItem.BackColor = Color.Transparent;
-            lblDropItem.Font = new Font("Arial", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblDropItem.ForeColor = Color.FromArgb(255, 0, 255);
-            lblDropItem.Location = new Point(0, 168);
-            lblDropItem.Name = "lblDropItem";
-            lblDropItem.Size = new Size(129, 17);
-            lblDropItem.TabIndex = 40;
-            lblDropItem.Text = "Drop Item";
-            lblDropItem.TextAlign = ContentAlignment.TopCenter;
-            lblDropItem.Click += lblDropItem_Click;
-            // 
-            // lblUseItem
-            // 
-            lblUseItem.BackColor = Color.Transparent;
-            lblUseItem.Font = new Font("Arial", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblUseItem.ForeColor = Color.FromArgb(255, 0, 255);
-            lblUseItem.Location = new Point(0, 144);
-            lblUseItem.Name = "lblUseItem";
-            lblUseItem.Size = new Size(129, 17);
-            lblUseItem.TabIndex = 39;
-            lblUseItem.Text = "Use Item";
-            lblUseItem.TextAlign = ContentAlignment.TopCenter;
-            lblUseItem.Click += lblUseItem_Click;
-            // 
-            // Label1
-            // 
-            Label1.BackColor = Color.Transparent;
-            Label1.Font = new Font("Arial", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            Label1.ForeColor = Color.FromArgb(255, 0, 255);
-            Label1.Location = new Point(0, 0);
-            Label1.Name = "Label1";
-            Label1.Size = new Size(129, 17);
-            Label1.TabIndex = 37;
-            Label1.Text = "Backpack";
-            Label1.TextAlign = ContentAlignment.TopCenter;
-            // 
-            // picInv
-            // 
-            picInv.BackColor = Color.FromArgb(0, 0, 64);
-            picInv.Controls.Add(lstInv);
-            picInv.Controls.Add(lblCancel);
-            picInv.Controls.Add(lblDropItem);
-            picInv.Controls.Add(lblUseItem);
-            picInv.Controls.Add(Label1);
-            picInv.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            picInv.Location = new Point(512, 168);
-            picInv.Name = "picInv";
-            picInv.Size = new Size(257, 219);
-            picInv.TabIndex = 36;
-            picInv.TabStop = false;
-            picInv.Visible = false;
             // 
             // lstSpells
             // 
@@ -551,84 +454,12 @@ namespace Mirage.Forms
             picPlayerSpells.Controls.Add(lblCast);
             picPlayerSpells.Controls.Add(lblSpellsCancel);
             picPlayerSpells.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            picPlayerSpells.Location = new Point(512, 168);
+            picPlayerSpells.Location = new Point(630, 133);
             picPlayerSpells.Name = "picPlayerSpells";
             picPlayerSpells.Size = new Size(257, 219);
             picPlayerSpells.TabIndex = 42;
             picPlayerSpells.TabStop = false;
             picPlayerSpells.Visible = false;
-            // 
-            // picInventory
-            // 
-            picInventory.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            picInventory.Image = (Image)resources.GetObject("picInventory.Image");
-            picInventory.Location = new Point(16, 200);
-            picInventory.Name = "picInventory";
-            picInventory.Size = new Size(40, 40);
-            picInventory.SizeMode = PictureBoxSizeMode.AutoSize;
-            picInventory.TabIndex = 8;
-            picInventory.TabStop = false;
-            picInventory.Click += picInventory_Click;
-            // 
-            // picSpells
-            // 
-            picSpells.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            picSpells.Image = (Image)resources.GetObject("picSpells.Image");
-            picSpells.Location = new Point(72, 200);
-            picSpells.Name = "picSpells";
-            picSpells.Size = new Size(40, 40);
-            picSpells.SizeMode = PictureBoxSizeMode.AutoSize;
-            picSpells.TabIndex = 7;
-            picSpells.TabStop = false;
-            picSpells.Click += picSpells_Click;
-            // 
-            // picStats
-            // 
-            picStats.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            picStats.Image = (Image)resources.GetObject("picStats.Image");
-            picStats.Location = new Point(16, 256);
-            picStats.Name = "picStats";
-            picStats.Size = new Size(40, 40);
-            picStats.SizeMode = PictureBoxSizeMode.AutoSize;
-            picStats.TabIndex = 6;
-            picStats.TabStop = false;
-            picStats.Click += picStats_Click;
-            // 
-            // picTrain
-            // 
-            picTrain.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            picTrain.Image = (Image)resources.GetObject("picTrain.Image");
-            picTrain.Location = new Point(72, 256);
-            picTrain.Name = "picTrain";
-            picTrain.Size = new Size(40, 40);
-            picTrain.SizeMode = PictureBoxSizeMode.AutoSize;
-            picTrain.TabIndex = 5;
-            picTrain.TabStop = false;
-            picTrain.Click += picTrain_Click;
-            // 
-            // picTrade
-            // 
-            picTrade.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            picTrade.Image = (Image)resources.GetObject("picTrade.Image");
-            picTrade.Location = new Point(16, 312);
-            picTrade.Name = "picTrade";
-            picTrade.Size = new Size(40, 40);
-            picTrade.SizeMode = PictureBoxSizeMode.AutoSize;
-            picTrade.TabIndex = 4;
-            picTrade.TabStop = false;
-            picTrade.Click += picTrade_Click;
-            // 
-            // picQuit
-            // 
-            picQuit.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            picQuit.Image = (Image)resources.GetObject("picQuit.Image");
-            picQuit.Location = new Point(72, 312);
-            picQuit.Name = "picQuit";
-            picQuit.Size = new Size(40, 40);
-            picQuit.SizeMode = PictureBoxSizeMode.AutoSize;
-            picQuit.TabIndex = 3;
-            picQuit.TabStop = false;
-            picQuit.Click += picQuit_Click;
             // 
             // lblName
             // 
@@ -680,12 +511,6 @@ namespace Mirage.Forms
             // 
             // picGUI
             // 
-            picGUI.Controls.Add(picInventory);
-            picGUI.Controls.Add(picSpells);
-            picGUI.Controls.Add(picStats);
-            picGUI.Controls.Add(picTrain);
-            picGUI.Controls.Add(picTrade);
-            picGUI.Controls.Add(picQuit);
             picGUI.Controls.Add(lblName);
             picGUI.Controls.Add(lblHP);
             picGUI.Controls.Add(lblMP);
@@ -703,17 +528,15 @@ namespace Mirage.Forms
             // 
             Socket.RemoteHost = "";
             Socket.RemotePort = 0;
-            Socket.DataArrival += Socket_DataArrival;
             // 
             // frmMirage
             // 
             AutoScaleMode = AutoScaleMode.None;
             BackColor = Color.FromArgb(0, 0, 0);
-            ClientSize = new Size(641, 505);
+            ClientSize = new Size(903, 505);
             Controls.Add(picMapEditor);
             Controls.Add(picScreen);
             Controls.Add(txtChat);
-            Controls.Add(picInv);
             Controls.Add(picPlayerSpells);
             Controls.Add(picGUI);
             Font = new Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
@@ -733,19 +556,10 @@ namespace Mirage.Forms
             ((System.ComponentModel.ISupportInitialize)picMapEditor).EndInit();
             picMapEditor.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)picScreen).EndInit();
-            ((System.ComponentModel.ISupportInitialize)picInv).EndInit();
-            picInv.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)picPlayerSpells).EndInit();
             picPlayerSpells.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)picInventory).EndInit();
-            ((System.ComponentModel.ISupportInitialize)picSpells).EndInit();
-            ((System.ComponentModel.ISupportInitialize)picStats).EndInit();
-            ((System.ComponentModel.ISupportInitialize)picTrain).EndInit();
-            ((System.ComponentModel.ISupportInitialize)picTrade).EndInit();
-            ((System.ComponentModel.ISupportInitialize)picQuit).EndInit();
             ((System.ComponentModel.ISupportInitialize)picGUI).EndInit();
             picGUI.ResumeLayout(false);
-            picGUI.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -780,23 +594,11 @@ namespace Mirage.Forms
 		public System.Windows.Forms.PictureBox picMapEditor;
 		public System.Windows.Forms.RichTextBox txtChat;
 		public System.Windows.Forms.PictureBox picScreen;
-        public System.Windows.Forms.ListBox lstInv;
-		private System.Windows.Forms.Label lblCancel;
-		private System.Windows.Forms.Label lblDropItem;
-		private System.Windows.Forms.Label lblUseItem;
-		private System.Windows.Forms.Label Label1;
-		public System.Windows.Forms.PictureBox picInv;
 		public System.Windows.Forms.ListBox lstSpells;
 		private System.Windows.Forms.Label Label5;
 		private System.Windows.Forms.Label lblCast;
 		private System.Windows.Forms.Label lblSpellsCancel;
 		public System.Windows.Forms.PictureBox picPlayerSpells;
-		private System.Windows.Forms.PictureBox picInventory;
-		private System.Windows.Forms.PictureBox picSpells;
-		private System.Windows.Forms.PictureBox picStats;
-		private System.Windows.Forms.PictureBox picTrain;
-		private System.Windows.Forms.PictureBox picTrade;
-		private System.Windows.Forms.PictureBox picQuit;
 		private System.Windows.Forms.Label lblName;
 		public System.Windows.Forms.Label lblHP;
 		public System.Windows.Forms.Label lblMP;

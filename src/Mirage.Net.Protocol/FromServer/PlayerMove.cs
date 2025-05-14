@@ -2,7 +2,7 @@
 
 namespace Mirage.Net.Protocol.FromServer;
 
-public sealed record PlayerMove(int PlayerId, int X, int Y, Direction Direction, MovementType Movement) : IPacket<PlayerMove>
+public sealed record PlayerMove(int PlayerId, int X, int Y, Direction Direction, MovementType MovementType) : IPacket<PlayerMove>
 {
     public static string PacketId => "playermove";
 
@@ -13,7 +13,7 @@ public sealed record PlayerMove(int PlayerId, int X, int Y, Direction Direction,
             X: reader.ReadInt32(),
             Y: reader.ReadInt32(),
             Direction: reader.ReadEnum<Direction>(),
-            Movement: reader.ReadEnum<MovementType>());
+            MovementType: reader.ReadEnum<MovementType>());
     }
 
     public void WriteTo(PacketWriter writer)
@@ -22,6 +22,6 @@ public sealed record PlayerMove(int PlayerId, int X, int Y, Direction Direction,
         writer.WriteInt32(X);
         writer.WriteInt32(Y);
         writer.WriteEnum(Direction);
-        writer.WriteEnum(Movement);
+        writer.WriteEnum(MovementType);
     }
 }
