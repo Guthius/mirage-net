@@ -18,14 +18,14 @@ public static class MapManager
         CreateStartMapIfNotExist();
     }
 
-    public static void Update()
+    public static void Update(float dt)
     {
         foreach (var map in Maps.Values)
         {
-            map.Update();
+            map.Update(dt);
         }
     }
-    
+
     private static void CreateStartMapIfNotExist()
     {
         if (Maps.ContainsKey(Options.StartMapName))

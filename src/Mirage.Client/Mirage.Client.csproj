@@ -2,22 +2,24 @@
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
-        <TargetFramework>net9.0-windows</TargetFramework>
-        <UseWindowsForms>true</UseWindowsForms>
-        <GenerateResourceUsePreserializedResources>True</GenerateResourceUsePreserializedResources>
+        <TargetFramework>net9.0</TargetFramework>
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
         <IsPackable>false</IsPackable>
+        <RollForward>Major</RollForward>
+        <PublishReadyToRun>false</PublishReadyToRun>
+        <TieredCompilation>false</TieredCompilation>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="MessagePack" Version="3.1.1"/>
-        <PackageReference Include="SFML.Audio" Version="2.6.0"/>
         <PackageReference Include="System.Resources.Extensions" Version="9.0.0"/>
+        <PackageReference Include="TiledSharp" Version="1.0.1"/>
+        <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.1.303"/>
+        <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Mirage.Client.Core\Mirage.Client.Core.csproj"/>
-        <ProjectReference Include="..\Mirage.Compat\Mirage.Compat.csproj"/>
         <ProjectReference Include="..\Mirage.Net.Protocol\Mirage.Net.Protocol.csproj"/>
         <ProjectReference Include="..\Mirage.Net\Mirage.Net.csproj"/>
     </ItemGroup>
@@ -26,6 +28,14 @@
         <None Update="Assets\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="Content\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
+
+    <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
+        <Message Text="Restoring dotnet tools" Importance="High"/>
+        <Exec Command="dotnet tool restore"/>
+    </Target>
 
 </Project>

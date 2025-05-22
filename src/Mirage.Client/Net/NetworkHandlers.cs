@@ -1,13 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.DependencyInjection;
-using Mirage.Client.Forms;
-using Mirage.Client.Game;
 using Mirage.Client.Modules;
 using Mirage.Client.Repositories;
 using Mirage.Client.Scenes;
 using Mirage.Client.Services;
 using Mirage.Game.Constants;
 using Mirage.Net.Protocol.FromClient;
-using Mirage.Net.Protocol.FromClient.New;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Net.Protocol.FromServer.New;
 
@@ -15,7 +12,7 @@ namespace Mirage.Client.Net;
 
 public static class NetworkHandlers
 {
-    private static readonly IGameState GameState = Ioc.Default.GetRequiredService<IGameState>();
+    private static readonly GameClient GameState = Ioc.Default.GetRequiredService<GameClient>();
     private static readonly ISceneManager SceneManager = Ioc.Default.GetRequiredService<ISceneManager>();
 
     public static void HandleAuth(AuthResponse response)
@@ -45,15 +42,15 @@ public static class NetworkHandlers
         }
     }
 
-    public static void HandleJobList(JobList jobs)
+    public static void HandleUpdateJobList(UpdateJobListCommand command)
     {
-        GameState.Jobs = jobs.Jobs;
+        GameState.Jobs = command.Jobs;
     }
 
-    public static void HandleCharacterList(CharacterList characterList)
+    public static void HandleUpdateCharacterList(UpdateCharacterListCommand command)
     {
-        GameState.MaxCharacters = characterList.MaxCharacters;
-        GameState.Characters = characterList.Characters;
+        GameState.MaxCharacters = command.MaxCharacters;
+        GameState.Characters = command.Characters;
 
         SceneManager.SwitchTo<CharacterSelectScene>();
     }
@@ -99,7 +96,7 @@ public static class NetworkHandlers
         {
             case SelectCharacterResult.Ok:
                 GameState.SetStatus("Entering game...");
-                modGameLogic.MyIndex = response.PlayerId;
+                GameState.LocalPlayerId = response.PlayerId;
                 SceneManager.SwitchTo<LoadingScene>();
                 return;
 
@@ -115,18 +112,41 @@ public static class NetworkHandlers
 
     public static void HandleLoadMap(LoadMapCommand command)
     {
-        var map = MapManager.LoadMap(command.MapName, command.Revision);
-        if (map is null)
-        {
-            Network.Send(new DownloadMapRequest(command.MapName));
-        }
+        GameState.Map.Load(command.MapName, command.Revision);
     }
 
     public static void HandleCreatePlayer(CreatePlayerCommand command)
     {
-        
+        var player = GameState.Map.CreatePlayer(
+            command.PlayerId,
+            command.Name,
+            command.JobId,
+            command.Sprite,
+            command.IsPlayerKiller,
+            command.AccessLevel,
+            command.X,
+            command.Y,
+            command.Direction);
+
+        if (player.IsLocalPlayer)
+        {
+            GameState.LocalPlayer = player;
+        }
     }
-    
+
+    public static void HandleMovePlayer(MovePlayerCommand command)
+    {
+        GameState.Map.MovePlayer(
+            command.PlayerId,
+            command.Direction,
+            command.MovementType);
+    }
+
+    public static void HandleDestroyPlayer(DestroyPlayerCommand command)
+    {
+        GameState.Map.DestroyPlayer(command.PlayerId);
+    }
+
     //---
 
     public static void HandleAlertMessage(AlertMessage alertMessage)
@@ -144,9 +164,6 @@ public static class NetworkHandlers
 
     public static void HandleInGame(InGame inGame)
     {
-        // modGameLogic.GameInit();
-        // modGameLogic.GameLoop();
-
         SceneManager.SwitchTo<GameScene>();
     }
 
@@ -204,23 +221,6 @@ public static class NetworkHandlers
         modTypes.Player[modGameLogic.MyIndex].MAGI = (byte) playerStats.Magi;
     }
 
-    public static void HandlePlayerData(PlayerData playerData)
-    {
-        var playerId = playerData.PlayerId;
-
-        modTypes.Player[playerId].Name = playerData.Name;
-        modTypes.Player[playerId].Sprite = playerData.Sprite;
-        modTypes.Player[playerId].Map = playerData.MapId;
-        modTypes.Player[playerId].X = (byte) playerData.X;
-        modTypes.Player[playerId].Y = (byte) playerData.Y;
-        modTypes.Player[playerId].Dir = (byte) playerData.Dir;
-        modTypes.Player[playerId].Access = (byte) playerData.Access;
-        modTypes.Player[playerId].PK = (byte) (playerData.PlayerKiller ? 1 : 0);
-        modTypes.Player[playerId].Moving = 0;
-        modTypes.Player[playerId].XOffset = 0;
-        modTypes.Player[playerId].YOffset = 0;
-    }
-
     public static void HandlePlayerMove(PlayerMove playerMove)
     {
         var playerId = playerMove.PlayerId;
@@ -230,7 +230,7 @@ public static class NetworkHandlers
         modTypes.Player[playerId].Dir = (byte) playerMove.Direction;
         modTypes.Player[playerId].XOffset = 0;
         modTypes.Player[playerId].YOffset = 0;
-        modTypes.Player[playerId].Moving = (byte) playerMove.MovementType;
+        // modTypes.Player[playerId].Moving = (byte) playerMove.MovementType;
 
         switch (modTypes.GetPlayerDir(playerId))
         {
@@ -256,7 +256,7 @@ public static class NetworkHandlers
         modTypes.Player[playerId].Dir = (byte) playerDir.Direction;
         modTypes.Player[playerId].XOffset = 0;
         modTypes.Player[playerId].YOffset = 0;
-        modTypes.Player[playerId].Moving = 0;
+        // modTypes.Player[playerId].Moving = 0;
     }
 
     public static void HandleNpcMove(NpcMove npcMove)
@@ -303,15 +303,15 @@ public static class NetworkHandlers
         modTypes.Player[modGameLogic.MyIndex].Y = (byte) playerPosition.Y;
         modTypes.Player[modGameLogic.MyIndex].XOffset = 0;
         modTypes.Player[modGameLogic.MyIndex].YOffset = 0;
-        modTypes.Player[modGameLogic.MyIndex].Moving = 0;
+        // modTypes.Player[modGameLogic.MyIndex].Moving = 0;
     }
 
     public static void HandleAttack(Attack attack)
     {
-        var playerId = attack.PlayerId;
+        // var playerId = attack.PlayerId;
 
-        modTypes.Player[playerId].Attacking = 1;
-        modTypes.Player[playerId].AttackTimer = Environment.TickCount;
+        // modTypes.Player[playerId].Attacking = 1;
+        // modTypes.Player[playerId].AttackTimer = Environment.TickCount;
     }
 
     public static void HandleNpcAttack(NpcAttack npcAttack)
@@ -396,11 +396,6 @@ public static class NetworkHandlers
         }
 
         modGameLogic.InEditor = false;
-
-        My.Forms.frmMirage.picMapEditor.Visible = false;
-
-        Application.OpenForms.OfType<frmMapWarp>().FirstOrDefault()?.Close();
-        Application.OpenForms.OfType<frmMapProperties>().FirstOrDefault()?.Close();
     }
 
     public static void HandleMapItemData(MapItemData mapItemData)
@@ -447,7 +442,7 @@ public static class NetworkHandlers
             modTypes.MapNpc[slot] = modGameLogic.SaveMapNpc[slot];
         }
 
-        modGameLogic.GettingMap = false;
+        GameState.GettingMap = false;
 
         SoundService.StopMusic();
 
@@ -473,17 +468,17 @@ public static class NetworkHandlers
 
     public static void HandleOpenItemEditor()
     {
-        modGameLogic.InItemsEditor = true;
-
-        using var frmIndex = new frmIndex();
-
-        for (var slot = 1; slot <= Limits.MaxInventory; slot++)
-        {
-            frmIndex.lstIndex.Items.Add($"{slot}: {modTypes.Item[slot].Name}");
-        }
-
-        frmIndex.lstIndex.SelectedIndex = 0;
-        frmIndex.ShowDialog();
+        // modGameLogic.InItemsEditor = true;
+        //
+        // using var frmIndex = new frmIndex();
+        //
+        // for (var slot = 1; slot <= Limits.MaxInventory; slot++)
+        // {
+        //     frmIndex.lstIndex.Items.Add($"{slot}: {modTypes.Item[slot].Name}");
+        // }
+        //
+        // frmIndex.lstIndex.SelectedIndex = 0;
+        // frmIndex.ShowDialog();
     }
 
     public static void HandleUpdateItem(UpdateItem updateItem)
@@ -501,19 +496,19 @@ public static class NetworkHandlers
 
     public static void HandleEditItem(EditItem editItem)
     {
-        var itemInfo = editItem.ItemInfo;
-        var itemId = itemInfo.Id;
-
-        modTypes.Item[itemId].Name = itemInfo.Name;
-        modTypes.Item[itemId].Pic = itemInfo.Sprite;
-        modTypes.Item[itemId].Type = (int) itemInfo.Type;
-        modTypes.Item[itemId].Data1 = itemInfo.Data1;
-        modTypes.Item[itemId].Data2 = itemInfo.Data2;
-        modTypes.Item[itemId].Data3 = itemInfo.Data3;
-
-        using var frmItemEditor = new frmItemEditor();
-
-        frmItemEditor.ShowDialog();
+        // var itemInfo = editItem.ItemInfo;
+        // var itemId = itemInfo.Id;
+        //
+        // modTypes.Item[itemId].Name = itemInfo.Name;
+        // modTypes.Item[itemId].Pic = itemInfo.Sprite;
+        // modTypes.Item[itemId].Type = (int) itemInfo.Type;
+        // modTypes.Item[itemId].Data1 = itemInfo.Data1;
+        // modTypes.Item[itemId].Data2 = itemInfo.Data2;
+        // modTypes.Item[itemId].Data3 = itemInfo.Data3;
+        //
+        // using var frmItemEditor = new frmItemEditor();
+        //
+        // frmItemEditor.ShowDialog();
     }
 
     public static void HandleSpawnNpc(SpawnNpc spawnNpc)
@@ -544,17 +539,17 @@ public static class NetworkHandlers
 
     public static void HandleOpenNpcEditor()
     {
-        modGameLogic.InNpcEditor = true;
-
-        using var frmIndex = new frmIndex();
-
-        for (var npcId = 1; npcId <= Limits.MaxNpcs; npcId++)
-        {
-            frmIndex.lstIndex.Items.Add($"{npcId}: {modTypes.Npc[npcId].Name}");
-        }
-
-        frmIndex.lstIndex.SelectedIndex = 0;
-        frmIndex.ShowDialog();
+        // modGameLogic.InNpcEditor = true;
+        //
+        // using var frmIndex = new frmIndex();
+        //
+        // for (var npcId = 1; npcId <= Limits.MaxNpcs; npcId++)
+        // {
+        //     frmIndex.lstIndex.Items.Add($"{npcId}: {modTypes.Npc[npcId].Name}");
+        // }
+        //
+        // frmIndex.lstIndex.SelectedIndex = 0;
+        // frmIndex.ShowDialog();
     }
 
     public static void HandleUpdateNpc(UpdateNpc updateNpc)
@@ -578,26 +573,26 @@ public static class NetworkHandlers
 
     public static void HandleEditNpc(EditNpc editNpc)
     {
-        var npcInfo = editNpc.NpcInfo;
-        var npcId = npcInfo.Id;
-
-        modTypes.Npc[npcId].Name = npcInfo.Name;
-        modTypes.Npc[npcId].AttackSay = npcInfo.AttackSay;
-        modTypes.Npc[npcId].Sprite = npcInfo.Sprite;
-        modTypes.Npc[npcId].SpawnSecs = npcInfo.SpawnSecs;
-        modTypes.Npc[npcId].Behavior = (int) npcInfo.Behavior;
-        modTypes.Npc[npcId].Range = npcInfo.Range;
-        modTypes.Npc[npcId].DropChance = npcInfo.DropChance;
-        modTypes.Npc[npcId].DropItem = npcInfo.DropItemId;
-        modTypes.Npc[npcId].DropItemValue = npcInfo.DropItemQuantity;
-        modTypes.Npc[npcId].STR = npcInfo.Strength;
-        modTypes.Npc[npcId].DEF = npcInfo.Defense;
-        modTypes.Npc[npcId].SPEED = npcInfo.Speed;
-        modTypes.Npc[npcId].MAGI = npcInfo.Intelligence;
-
-        using var frmNpcEditor = new frmNpcEditor();
-
-        frmNpcEditor.ShowDialog();
+        // var npcInfo = editNpc.NpcInfo;
+        // var npcId = npcInfo.Id;
+        //
+        // modTypes.Npc[npcId].Name = npcInfo.Name;
+        // modTypes.Npc[npcId].AttackSay = npcInfo.AttackSay;
+        // modTypes.Npc[npcId].Sprite = npcInfo.Sprite;
+        // modTypes.Npc[npcId].SpawnSecs = npcInfo.SpawnSecs;
+        // modTypes.Npc[npcId].Behavior = (int) npcInfo.Behavior;
+        // modTypes.Npc[npcId].Range = npcInfo.Range;
+        // modTypes.Npc[npcId].DropChance = npcInfo.DropChance;
+        // modTypes.Npc[npcId].DropItem = npcInfo.DropItemId;
+        // modTypes.Npc[npcId].DropItemValue = npcInfo.DropItemQuantity;
+        // modTypes.Npc[npcId].STR = npcInfo.Strength;
+        // modTypes.Npc[npcId].DEF = npcInfo.Defense;
+        // modTypes.Npc[npcId].SPEED = npcInfo.Speed;
+        // modTypes.Npc[npcId].MAGI = npcInfo.Intelligence;
+        //
+        // using var frmNpcEditor = new frmNpcEditor();
+        //
+        // frmNpcEditor.ShowDialog();
     }
 
     public static void HandleMapKey(MapKey mapKey)
@@ -610,22 +605,22 @@ public static class NetworkHandlers
 
     public static void HandleOpenMapEditor()
     {
-        modGameLogic.EditorInit();
+        // modGameLogic.EditorInit();
     }
 
     public static void HandleOpenShopEditor()
     {
-        modGameLogic.InShopEditor = true;
-
-        using var frmIndex = new frmIndex();
-
-        for (var shopId = 1; shopId <= Limits.MaxShops; shopId++)
-        {
-            frmIndex.lstIndex.Items.Add($"{shopId}: {modTypes.Shop[shopId].Name}");
-        }
-
-        frmIndex.lstIndex.SelectedIndex = 0;
-        frmIndex.ShowDialog();
+        // modGameLogic.InShopEditor = true;
+        //
+        // using var frmIndex = new frmIndex();
+        //
+        // for (var shopId = 1; shopId <= Limits.MaxShops; shopId++)
+        // {
+        //     frmIndex.lstIndex.Items.Add($"{shopId}: {modTypes.Shop[shopId].Name}");
+        // }
+        //
+        // frmIndex.lstIndex.SelectedIndex = 0;
+        // frmIndex.ShowDialog();
     }
 
     public static void HandleUpdateShop(UpdateShop updateShop)
@@ -637,42 +632,42 @@ public static class NetworkHandlers
 
     public static void HandleEditShop(EditShop editShop)
     {
-        var shopInfo = editShop.ShopInfo;
-        var shopId = shopInfo.Id;
-
-        modTypes.Shop[shopId].Name = shopInfo.Name;
-        modTypes.Shop[shopId].JoinSay = shopInfo.JoinSay;
-        modTypes.Shop[shopId].LeaveSay = shopInfo.LeaveSay;
-        modTypes.Shop[shopId].FixesItems = shopInfo.FixesItems ? 1 : 0;
-
-        for (var slot = 1; slot <= Limits.MaxShopTrades; slot++)
-        {
-            var trade = shopInfo.Trades[slot];
-
-            modTypes.Shop[shopId].TradeItem[slot].GiveItem = trade.GiveItemId;
-            modTypes.Shop[shopId].TradeItem[slot].GiveValue = trade.GiveItemQuantity;
-            modTypes.Shop[shopId].TradeItem[slot].GetItem = trade.GetItemId;
-            modTypes.Shop[shopId].TradeItem[slot].GetValue = trade.GetItemQuantity;
-        }
-
-        using var frmShopEditor = new frmShopEditor();
-
-        frmShopEditor.ShowDialog();
+        // var shopInfo = editShop.ShopInfo;
+        // var shopId = shopInfo.Id;
+        //
+        // modTypes.Shop[shopId].Name = shopInfo.Name;
+        // modTypes.Shop[shopId].JoinSay = shopInfo.JoinSay;
+        // modTypes.Shop[shopId].LeaveSay = shopInfo.LeaveSay;
+        // modTypes.Shop[shopId].FixesItems = shopInfo.FixesItems ? 1 : 0;
+        //
+        // for (var slot = 1; slot <= Limits.MaxShopTrades; slot++)
+        // {
+        //     var trade = shopInfo.Trades[slot];
+        //
+        //     modTypes.Shop[shopId].TradeItem[slot].GiveItem = trade.GiveItemId;
+        //     modTypes.Shop[shopId].TradeItem[slot].GiveValue = trade.GiveItemQuantity;
+        //     modTypes.Shop[shopId].TradeItem[slot].GetItem = trade.GetItemId;
+        //     modTypes.Shop[shopId].TradeItem[slot].GetValue = trade.GetItemQuantity;
+        // }
+        //
+        // using var frmShopEditor = new frmShopEditor();
+        //
+        // frmShopEditor.ShowDialog();
     }
 
     public static void HandleOpenSpellEditor()
     {
-        modGameLogic.InSpellEditor = true;
-
-        using var frmIndex = new frmIndex();
-
-        for (var spellId = 1; spellId <= Limits.MaxSpells; spellId++)
-        {
-            frmIndex.lstIndex.Items.Add($"{spellId}: {modTypes.Spell[spellId].Name}");
-        }
-
-        frmIndex.lstIndex.SelectedIndex = 0;
-        frmIndex.ShowDialog();
+        // modGameLogic.InSpellEditor = true;
+        //
+        // using var frmIndex = new frmIndex();
+        //
+        // for (var spellId = 1; spellId <= Limits.MaxSpells; spellId++)
+        // {
+        //     frmIndex.lstIndex.Items.Add($"{spellId}: {modTypes.Spell[spellId].Name}");
+        // }
+        //
+        // frmIndex.lstIndex.SelectedIndex = 0;
+        // frmIndex.ShowDialog();
     }
 
     public static void HandleUpdateSpell(UpdateSpell updateSpell)
@@ -684,65 +679,65 @@ public static class NetworkHandlers
 
     public static void HandleEditSpell(EditSpell editSpell)
     {
-        var spellInfo = editSpell.SpellInfo;
-        var spellId = spellInfo.Id;
-
-        modTypes.Spell[spellId].Name = spellInfo.Name;
-        modTypes.Spell[spellId].ClassReq = 0; // spellInfo.RequiredClassId;
-        modTypes.Spell[spellId].LevelReq = spellInfo.RequiredLevel;
-        modTypes.Spell[spellId].Type = (int) spellInfo.Type;
-        modTypes.Spell[spellId].Data1 = spellInfo.Data1;
-        modTypes.Spell[spellId].Data2 = spellInfo.Data2;
-        modTypes.Spell[spellId].Data3 = spellInfo.Data3;
-
-        using var frmSpellEditor = new frmSpellEditor();
-
-        frmSpellEditor.ShowDialog();
+        // var spellInfo = editSpell.SpellInfo;
+        // var spellId = spellInfo.Id;
+        //
+        // modTypes.Spell[spellId].Name = spellInfo.Name;
+        // modTypes.Spell[spellId].ClassReq = 0; // spellInfo.RequiredClassId;
+        // modTypes.Spell[spellId].LevelReq = spellInfo.RequiredLevel;
+        // modTypes.Spell[spellId].Type = (int) spellInfo.Type;
+        // modTypes.Spell[spellId].Data1 = spellInfo.Data1;
+        // modTypes.Spell[spellId].Data2 = spellInfo.Data2;
+        // modTypes.Spell[spellId].Data3 = spellInfo.Data3;
+        //
+        // using var frmSpellEditor = new frmSpellEditor();
+        //
+        // frmSpellEditor.ShowDialog();
     }
 
     public static void HandleTrade(Trade trade)
     {
-        var shopId = trade.ShopId;
-
-        using var frmTrade = new frmTrade();
-
-        frmTrade.picFixItems.Visible = trade.FixesItems;
-
-        for (var i = 1; i <= Limits.MaxShopTrades; i++)
-        {
-            var tradeInfo = trade.Trades[i];
-
-            var giveItemId = tradeInfo.GiveItemId;
-            var getItemId = tradeInfo.GetItemId;
-
-            if (giveItemId > 0 && getItemId > 0)
-            {
-                frmTrade.lstTrade.Items.Add($"Give {modTypes.Shop[shopId].Name} {tradeInfo.GiveItemQuantity} {modTypes.Item[giveItemId].Name} for {tradeInfo.GetItemQuantity} {modTypes.Item[getItemId].Name.Trim()}");
-            }
-        }
-
-        if (frmTrade.lstTrade.Items.Count > 0)
-        {
-            frmTrade.lstTrade.SelectedItem = 0;
-        }
-
-        frmTrade.ShowDialog();
+        // var shopId = trade.ShopId;
+        //
+        // using var frmTrade = new frmTrade();
+        //
+        // frmTrade.picFixItems.Visible = trade.FixesItems;
+        //
+        // for (var i = 1; i <= Limits.MaxShopTrades; i++)
+        // {
+        //     var tradeInfo = trade.Trades[i];
+        //
+        //     var giveItemId = tradeInfo.GiveItemId;
+        //     var getItemId = tradeInfo.GetItemId;
+        //
+        //     if (giveItemId > 0 && getItemId > 0)
+        //     {
+        //         frmTrade.lstTrade.Items.Add($"Give {modTypes.Shop[shopId].Name} {tradeInfo.GiveItemQuantity} {modTypes.Item[giveItemId].Name} for {tradeInfo.GetItemQuantity} {modTypes.Item[getItemId].Name.Trim()}");
+        //     }
+        // }
+        //
+        // if (frmTrade.lstTrade.Items.Count > 0)
+        // {
+        //     frmTrade.lstTrade.SelectedItem = 0;
+        // }
+        //
+        // frmTrade.ShowDialog();
     }
 
     public static void HandlePlayerSpells(PlayerSpells playerSpells)
     {
-        My.Forms.frmMirage.picPlayerSpells.Visible = true;
-        My.Forms.frmMirage.lstSpells.Items.Clear();
-
-        for (var slot = 1; slot <= Limits.MaxPlayerSpells; slot++)
-        {
-            modTypes.Player[modGameLogic.MyIndex].Spell[slot] = playerSpells.SpellIds[slot];
-
-            My.Forms.frmMirage.lstSpells.Items.Add(modTypes.Player[modGameLogic.MyIndex].Spell[slot] != 0
-                ? $"{slot}: {modTypes.Spell[modTypes.Player[modGameLogic.MyIndex].Spell[slot]].Name}"
-                : "<free spells slot>");
-        }
-
-        My.Forms.frmMirage.lstSpells.SelectedIndex = 0;
+        // My.Forms.frmMirage.picPlayerSpells.Visible = true;
+        // My.Forms.frmMirage.lstSpells.Items.Clear();
+        //
+        // for (var slot = 1; slot <= Limits.MaxPlayerSpells; slot++)
+        // {
+        //     modTypes.Player[modGameLogic.MyIndex].Spell[slot] = playerSpells.SpellIds[slot];
+        //
+        //     My.Forms.frmMirage.lstSpells.Items.Add(modTypes.Player[modGameLogic.MyIndex].Spell[slot] != 0
+        //         ? $"{slot}: {modTypes.Spell[modTypes.Player[modGameLogic.MyIndex].Spell[slot]].Name}"
+        //         : "<free spells slot>");
+        // }
+        //
+        // My.Forms.frmMirage.lstSpells.SelectedIndex = 0;
     }
 }

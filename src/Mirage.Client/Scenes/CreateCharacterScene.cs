@@ -2,14 +2,13 @@
 using Microsoft.Xna.Framework;
 using Mirage.Client.Net;
 using Mirage.Game.Data;
-using Mirage.Net.Protocol.FromClient;
 using Mirage.Net.Protocol.FromClient.New;
 using ImGuiVec2 = System.Numerics.Vector2;
 using ImGuiVec4 = System.Numerics.Vector4;
 
 namespace Mirage.Client.Scenes;
 
-public sealed class CreateCharacterScene(ISceneManager sceneManager, IGameState gameState) : Scene
+public sealed class CreateCharacterScene(ISceneManager sceneManager, GameClient gameState) : Scene
 {
     private bool _disabled;
     private string _characterName = string.Empty;

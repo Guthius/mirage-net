@@ -41,8 +41,8 @@ public static class NetworkHandlers
 
         session.Account = account;
         session.Send(new AuthResponse(AuthResult.Ok));
-        session.Send(new JobList(ClassRepository.GetAll()));
-        session.Send(new CharacterList(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
+        session.Send(new UpdateJobListCommand(ClassRepository.GetAll()));
+        session.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
 
         Log.Information("Account {AccountName} has logged in from {RemoteIp}", account.Name, GetIP(session.Id));
     }
@@ -59,7 +59,7 @@ public static class NetworkHandlers
 
         Log.Information("Character {CharacterName} created by account {AccountName}", request.CharacterName, account.Name);
 
-        session.Send(new CharacterList(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
+        session.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
     }
 
     public static void HandleDeleteCharacter(GameSession session, AccountInfo account, DeleteCharacterRequest request)
@@ -68,7 +68,7 @@ public static class NetworkHandlers
 
         Log.Information("Character deleted on account {AccountName}", account.Name);
 
-        session.Send(new CharacterList(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
+        session.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
     }
 
     public static void HandleSelectCharacter(GameSession session, AccountInfo account, SelectCharacterRequest request)
@@ -85,6 +85,25 @@ public static class NetworkHandlers
 
         Log.Information("Player {CharacterName} started playing {GameName} [Account: {AccountName}]",
             character.Name, Options.GameName, account.Name);
+    }
+
+    public static void HandleMove(GamePlayer player, MoveRequest request)
+    {
+        if (player.CastedSpell)
+        {
+            if (Environment.TickCount > player.AttackTimer + 1000)
+            {
+                player.CastedSpell = false;
+            }
+            else
+            {
+                player.Send(new PlayerPosition(player.Character.X, player.Character.Y));
+
+                return;
+            }
+        }
+        
+        player.NewMap.Move(player, request.Direction, request.Movement);
     }
 
     //----
@@ -297,25 +316,6 @@ public static class NetworkHandlers
         targetPlayerId.Tell($"{player.Character.Name} tells you, '{request.Message}'", Color.TellColor);
 
         player.Tell($"You tell {targetPlayerId.Character.Name}, '{request.Message}'", Color.TellColor);
-    }
-
-    public static void HandleMove(GamePlayer player, MoveRequest request)
-    {
-        if (player.CastedSpell)
-        {
-            if (Environment.TickCount > player.AttackTimer + 1000)
-            {
-                player.CastedSpell = false;
-            }
-            else
-            {
-                player.Send(new PlayerPosition(player.Character.X, player.Character.Y));
-
-                return;
-            }
-        }
-
-        player.Move(request.Direction, request.Movement);
     }
 
     public static void HandleSetDirection(GamePlayer player, SetDirectionRequest request)

@@ -17,14 +17,25 @@ public static class Network
 
     static Network()
     {
+        // Authentication & Account Management
         Parser.Register<AuthResponse>(NetworkHandlers.HandleAuth);
-        Parser.Register<JobList>(NetworkHandlers.HandleJobList);
-        Parser.Register<CharacterList>(NetworkHandlers.HandleCharacterList);
+
+        // Data Transfer
+        Parser.Register<UpdateJobListCommand>(NetworkHandlers.HandleUpdateJobList);
+        Parser.Register<UpdateCharacterListCommand>(NetworkHandlers.HandleUpdateCharacterList);
+
+        // Character Management
         Parser.Register<CreateCharacterResponse>(NetworkHandlers.HandleCreateCharacter);
         Parser.Register<SelectCharacterResponse>(NetworkHandlers.HandleSelectCharacter);
 
+        // Map Management
         Parser.Register<LoadMapCommand>(NetworkHandlers.HandleLoadMap);
+
+        // Players
         Parser.Register<CreatePlayerCommand>(NetworkHandlers.HandleCreatePlayer);
+        Parser.Register<MovePlayerCommand>(NetworkHandlers.HandleMovePlayer);
+        Parser.Register<DestroyPlayerCommand>(NetworkHandlers.HandleDestroyPlayer);
+
 
         //---
         Parser.Register<AlertMessage>(NetworkHandlers.HandleAlertMessage);
@@ -37,7 +48,6 @@ public static class Network
         Parser.Register<PlayerMp>(NetworkHandlers.HandlePlayerMP);
         Parser.Register<PlayerSp>(NetworkHandlers.HandlePlayerSP);
         Parser.Register<PlayerStats>(NetworkHandlers.HandlePlayerStats);
-        Parser.Register<PlayerData>(NetworkHandlers.HandlePlayerData);
         Parser.Register<PlayerMove>(NetworkHandlers.HandlePlayerMove);
         Parser.Register<PlayerDir>(NetworkHandlers.HandlePlayerDir);
         Parser.Register<NpcMove>(NetworkHandlers.HandleNpcMove);
@@ -187,6 +197,11 @@ public static class Network
         }
     }
 
+    public static void Send(byte[] bytes)
+    {
+        _writeChannel?.Writer.TryWrite(bytes);
+    }
+    
     public static void Send<TPacket>(TPacket packet) where TPacket : IPacket<TPacket>
     {
         var bytes = PacketSerializer.GetBytes(packet);

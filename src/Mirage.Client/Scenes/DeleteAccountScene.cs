@@ -6,7 +6,7 @@ using ImGuiVec2 = System.Numerics.Vector2;
 
 namespace Mirage.Client.Scenes;
 
-public sealed class DeleteAccountScene(ISceneManager sceneManager, IGameState gameState) : Scene
+public sealed class DeleteAccountScene(ISceneManager sceneManager, GameClient gameState) : Scene
 {
     private string _accountName = string.Empty;
     private string _password = string.Empty;

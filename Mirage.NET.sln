@@ -6,8 +6,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mirage.Client", "src\Mirage
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mirage.Server", "src\Mirage.Server\Mirage.Server.csproj", "{0F0899F4-91EA-4EC0-A78E-1570D2D03DC9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mirage.Compat", "src\Mirage.Compat\Mirage.Compat.csproj", "{5920BF94-EAB8-4BEF-94A8-7E5572FED0AA}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mirage.Net.Protocol", "src\Mirage.Net.Protocol\Mirage.Net.Protocol.csproj", "{BC701BBC-439A-4C3D-BB68-240723446D21}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mirage.Net", "src\Mirage.Net\Mirage.Net.csproj", "{66D95256-83CA-4CEF-8560-E6C2EC16B472}"
@@ -25,6 +23,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{2A9B2A
 		docker-compose.yml = docker-compose.yml
 		LICENSE = LICENSE
 		README.md = README.md
+		.config\dotnet-tools.json = .config\dotnet-tools.json
+		.editorconfig = .editorconfig
+		.gitignore = .gitignore
 	EndProjectSection
 EndProject
 Global
@@ -35,7 +36,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{C011609A-4638-4F6C-9348-FBFA787D1535} = {D9C5A85C-0CC4-41EA-83F8-4168DE9B01D6}
 		{0F0899F4-91EA-4EC0-A78E-1570D2D03DC9} = {D9C5A85C-0CC4-41EA-83F8-4168DE9B01D6}
-		{5920BF94-EAB8-4BEF-94A8-7E5572FED0AA} = {D9C5A85C-0CC4-41EA-83F8-4168DE9B01D6}
 		{17AA3D80-44E4-4FE4-8D4F-3736034E75D2} = {D9C5A85C-0CC4-41EA-83F8-4168DE9B01D6}
 		{66D95256-83CA-4CEF-8560-E6C2EC16B472} = {D9C5A85C-0CC4-41EA-83F8-4168DE9B01D6}
 		{BC701BBC-439A-4C3D-BB68-240723446D21} = {D9C5A85C-0CC4-41EA-83F8-4168DE9B01D6}
@@ -49,10 +49,6 @@ Global
 		{0F0899F4-91EA-4EC0-A78E-1570D2D03DC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F0899F4-91EA-4EC0-A78E-1570D2D03DC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F0899F4-91EA-4EC0-A78E-1570D2D03DC9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5920BF94-EAB8-4BEF-94A8-7E5572FED0AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5920BF94-EAB8-4BEF-94A8-7E5572FED0AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5920BF94-EAB8-4BEF-94A8-7E5572FED0AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5920BF94-EAB8-4BEF-94A8-7E5572FED0AA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BC701BBC-439A-4C3D-BB68-240723446D21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BC701BBC-439A-4C3D-BB68-240723446D21}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BC701BBC-439A-4C3D-BB68-240723446D21}.Release|Any CPU.ActiveCfg = Release|Any CPU

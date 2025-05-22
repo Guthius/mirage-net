@@ -144,52 +144,52 @@ public sealed class GamePlayer
 
     public void Move(Direction direction, MovementType movementType)
     {
-        Character.Direction = direction;
-
-        var x = Character.X;
-        var y = Character.Y;
-
-        var moved = direction switch
-        {
-            Direction.Up => TryPlayerMove(x, y - 1, movementType),
-            Direction.Down => TryPlayerMove(x, y + 1, movementType),
-            Direction.Left => TryPlayerMove(x - 1, y, movementType),
-            Direction.Right => TryPlayerMove(x + 1, y, movementType),
-            _ => false
-        };
-
-        x = Character.X;
-        y = Character.Y;
-
-        if (Map.Info.Tiles[x, y].Type == TileType.Warp)
-        {
-            var targetMapId = Map.Info.Tiles[x, y].Data1;
-            var targetX = Map.Info.Tiles[x, y].Data2;
-            var targetY = Map.Info.Tiles[x, y].Data3;
-
-            WarpTo(targetMapId, targetX, targetY);
-
-            moved = true;
-        }
-
-        if (Map.Info.Tiles[x, y].Type == TileType.KeyOpen)
-        {
-            x = Map.Info.Tiles[x, y].Data1;
-            y = Map.Info.Tiles[x, y].Data2;
-
-            if (Map.Info.Tiles[x, y].Type == TileType.Key && !Map.DoorOpen[x, y])
-            {
-                Map.DoorOpen[x, y] = true;
-                Map.DoorTimer = Environment.TickCount;
-                Map.Send(new MapKey(x, y, true));
-                Map.SendMessage("A door has been unlocked.", Color.White);
-            }
-        }
-
-        if (!moved)
-        {
-            Network.ReportHackAttempt(Id, "Position Modification");
-        }
+        // Character.Direction = direction;
+        //
+        // var x = Character.X;
+        // var y = Character.Y;
+        //
+        // var moved = direction switch
+        // {
+        //     Direction.Up => TryPlayerMove(x, y - 1, movementType),
+        //     Direction.Down => TryPlayerMove(x, y + 1, movementType),
+        //     Direction.Left => TryPlayerMove(x - 1, y, movementType),
+        //     Direction.Right => TryPlayerMove(x + 1, y, movementType),
+        //     _ => false
+        // };
+        //
+        // x = Character.X;
+        // y = Character.Y;
+        //
+        // if (Map.Info.Tiles[x, y].Type == TileType.Warp)
+        // {
+        //     var targetMapId = Map.Info.Tiles[x, y].Data1;
+        //     var targetX = Map.Info.Tiles[x, y].Data2;
+        //     var targetY = Map.Info.Tiles[x, y].Data3;
+        //
+        //     WarpTo(targetMapId, targetX, targetY);
+        //
+        //     moved = true;
+        // }
+        //
+        // if (Map.Info.Tiles[x, y].Type == TileType.KeyOpen)
+        // {
+        //     x = Map.Info.Tiles[x, y].Data1;
+        //     y = Map.Info.Tiles[x, y].Data2;
+        //
+        //     if (Map.Info.Tiles[x, y].Type == TileType.Key && !Map.DoorOpen[x, y])
+        //     {
+        //         Map.DoorOpen[x, y] = true;
+        //         Map.DoorTimer = Environment.TickCount;
+        //         Map.Send(new MapKey(x, y, true));
+        //         Map.SendMessage("A door has been unlocked.", Color.White);
+        //     }
+        // }
+        //
+        // if (!moved)
+        // {
+        //     Network.ReportHackAttempt(Id, "Position Modification");
+        // }
     }
 
     public int GetItemQuantity(int itemId)

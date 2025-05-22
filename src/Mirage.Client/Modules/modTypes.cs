@@ -6,7 +6,6 @@ namespace Mirage.Client.Modules;
 public static class modTypes
 {
     public const int NO = 0;
-    public const int YES = 1;
 
     // Map constants
     public const int MAX_MAPS = 1000;
@@ -17,41 +16,20 @@ public static class modTypes
     // Image constants
     public const int PIC_X = 32;
     public const int PIC_Y = 32;
-
-    // Tile consants
-    public const int TILE_TYPE_WALKABLE = 0;
-    public const int TILE_TYPE_BLOCKED = 1;
-    public const int TILE_TYPE_WARP = 2;
-    public const int TILE_TYPE_ITEM = 3;
-    public const int TILE_TYPE_NPCAVOID = 4;
-    public const int TILE_TYPE_KEY = 5;
-    public const int TILE_TYPE_KEYOPEN = 6;
-
+    
     // Item constants
-    public const int ITEM_TYPE_WEAPON = 1;
-    public const int ITEM_TYPE_SHIELD = 4;
-    public const int ITEM_TYPE_POTIONADDHP = 5;
-    public const int ITEM_TYPE_POTIONSUBSP = 10;
     public const int ITEM_TYPE_CURRENCY = 12;
-    public const int ITEM_TYPE_SPELL = 13;
 
     // Direction constants
     public const int DIR_UP = 0;
     public const int DIR_DOWN = 1;
     public const int DIR_LEFT = 2;
     public const int DIR_RIGHT = 3;
-
-    // Constants for player movement
-    public const int MOVING_WALKING = 1;
-    public const int MOVING_RUNNING = 2;
-
+    
     // Admin constants
     public const int ADMIN_MAPPER = 2;
     public const int ADMIN_DEVELOPER = 3;
     public const int ADMIN_CREATOR = 4;
-
-    // Spell constants
-    public const int SPELL_TYPE_GIVEITEM = 6;
 
     public struct PlayerInvRec
     {
@@ -105,11 +83,6 @@ public static class modTypes
         public int MaxSP;
         public int XOffset;
         public int YOffset;
-        public int Moving;
-        public byte Attacking;
-        public int AttackTimer;
-        public int MapGetTimer;
-        public byte CastedSpell;
     }
 
     [MessagePackObject]
@@ -142,21 +115,6 @@ public static class modTypes
         [Key(11)] public int Shop;
         [Key(12)] public TileRec[,] Tile = new TileRec[Limits.MaxMapWidth + 1, Limits.MaxMapHeight + 1];
         [Key(13)] public int[] Npc = new int[Limits.MaxMapNpcs + 1];
-    }
-
-    public struct ClassRec()
-    {
-        public string Name = string.Empty;
-
-        public int STR;
-        public int DEF;
-        public int SPEED;
-        public int MAGI;
-
-        // For client use
-        public int HP;
-        public int MP;
-        public int SP;
     }
 
     public struct ItemRec()
@@ -244,17 +202,10 @@ public static class modTypes
     {
         public int DoorOpen;
     }
-
-    // Used for parsing
-    public static readonly char SEP_CHAR = (char) 0;
-
-    // Maximum classes
-    public static int Max_Classes;
-
+    
     public static MapRec Map = new();
     public static readonly TempTileRec[,] TempTile = new TempTileRec[MAX_MAPX + 1, MAX_MAPY + 1];
     public static readonly PlayerRec[] Player = new PlayerRec[Limits.MaxPlayers + 1];
-    public static ClassRec[] Class = [];
     public static readonly ItemRec[] Item = new ItemRec[Limits.MaxItems + 1];
     public static readonly NpcRec[] Npc = new NpcRec[Limits.MaxNpcs + 1];
     public static readonly MapItemRec[] MapItem = new MapItemRec[Limits.MaxMapItems + 1];
@@ -313,11 +264,6 @@ public static class modTypes
         }
     }
 
-    public static string GetPlayerName(int index)
-    {
-        return Player[index].Name;
-    }
-
     public static int GetPlayerAccess(int index)
     {
         return Player[index].Access;
@@ -368,78 +314,8 @@ public static class modTypes
         return Player[index].MaxSP;
     }
 
-    public static int GetPlayerMap(int index)
-    {
-        return Player[index].Map;
-    }
-
     public static int GetPlayerDir(int index)
     {
         return Player[index].Dir;
-    }
-
-    public static int GetPlayerInvItemNum(int index, int invSlot)
-    {
-        return Player[index].Inv[invSlot].Num;
-    }
-
-    public static void SetPlayerInvItemNum(int index, int invSlot, int itemNum)
-    {
-        Player[index].Inv[invSlot].Num = itemNum;
-    }
-
-    public static int GetPlayerInvItemValue(int index, int invSlot)
-    {
-        return Player[index].Inv[invSlot].Value;
-    }
-
-    public static void SetPlayerInvItemValue(int index, int invSlot, int itemValue)
-    {
-        Player[index].Inv[invSlot].Value = itemValue;
-    }
-
-    public static void SetPlayerInvItemDur(int index, int invSlot, int itemDur)
-    {
-        Player[index].Inv[invSlot].Dur = itemDur;
-    }
-
-    public static int GetPlayerArmorSlot(int index)
-    {
-        return Player[index].ArmorSlot;
-    }
-
-    public static void SetPlayerArmorSlot(int index, int invNum)
-    {
-        Player[index].ArmorSlot = invNum;
-    }
-
-    public static int GetPlayerWeaponSlot(int index)
-    {
-        return Player[index].WeaponSlot;
-    }
-
-    public static void SetPlayerWeaponSlot(int index, int invNum)
-    {
-        Player[index].WeaponSlot = invNum;
-    }
-
-    public static int GetPlayerHelmetSlot(int index)
-    {
-        return Player[index].HelmetSlot;
-    }
-
-    public static void SetPlayerHelmetSlot(int index, int invNum)
-    {
-        Player[index].HelmetSlot = invNum;
-    }
-
-    public static int GetPlayerShieldSlot(int index)
-    {
-        return Player[index].ShieldSlot;
-    }
-
-    public static void SetPlayerShieldSlot(int index, int invNum)
-    {
-        Player[index].ShieldSlot = invNum;
     }
 }

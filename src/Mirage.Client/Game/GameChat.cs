@@ -1,5 +1,4 @@
-﻿using Mirage.Client.Forms;
-using Mirage.Client.Modules;
+﻿using Mirage.Client.Modules;
 using Mirage.Client.Net;
 using Mirage.Game.Data;
 using Mirage.Net.Protocol.FromClient;
@@ -172,8 +171,8 @@ public static class GameChat
 
     private static void HandleTrain()
     {
-        using var frmTraining = new frmTraining();
-        frmTraining.ShowDialog();
+        // using var frmTraining = new frmTraining();
+        // frmTraining.ShowDialog();
     }
 
     private static void HandleTrade()

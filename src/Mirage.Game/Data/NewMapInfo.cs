@@ -1,5 +1,4 @@
-﻿using Mirage.Game.Constants;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Mirage.Game.Data;

@@ -11,6 +11,11 @@ public abstract class Scene : IScene
 
     protected bool IsKeyPressed(Keys key)
     {
+        return _currentKeyState.IsKeyDown(key);
+    }
+    
+    protected bool IsKeyJustPressed(Keys key)
+    {
         return _currentKeyState.IsKeyDown(key) && _oldKeyState.IsKeyUp(key);
     }
     

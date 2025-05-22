@@ -12,7 +12,7 @@ public sealed class Map(NewMapInfo info) : IPacketRecipient
     /// <summary>
     /// Updates the map and all objects on the map.
     /// </summary>
-    public void Update()
+    public void Update(float dt)
     {
         // TODO: Implement me: regen player health, regen NPC health, move NPCs, respawn NPCS, despawn items
     }
@@ -34,6 +34,7 @@ public sealed class Map(NewMapInfo info) : IPacketRecipient
                 otherPlayer.Character.Name,
                 otherPlayer.Character.JobId,
                 otherPlayer.Character.Sprite,
+                otherPlayer.Character.PlayerKiller,
                 otherPlayer.Character.AccessLevel,
                 otherPlayer.Character.X,
                 otherPlayer.Character.Y,
@@ -47,6 +48,7 @@ public sealed class Map(NewMapInfo info) : IPacketRecipient
             player.Character.Name,
             player.Character.JobId,
             player.Character.Sprite,
+            player.Character.PlayerKiller,
             player.Character.AccessLevel,
             player.Character.X,
             player.Character.Y,
@@ -64,7 +66,39 @@ public sealed class Map(NewMapInfo info) : IPacketRecipient
             return;
         }
 
-        Send(new RemovePlayerCommand(player.Id));
+        Send(new DestroyPlayerCommand(player.Id));
+    }
+
+    /// <summary>
+    /// Moves the specified <paramref name="player"/> in the specified <paramref name="direction"/>.
+    /// </summary>
+    /// <param name="player">The player to move.</param>
+    /// <param name="direction">The direction to move in.</param>
+    /// <param name="movementType">The movement type.</param>
+    public void Move(GamePlayer player, Direction direction, MovementType movementType)
+    {
+        // TODO: Check to ensure the move is valid...
+
+        switch (direction)
+        {
+            case Direction.Up:
+                player.Character.Y--;
+                break;
+
+            case Direction.Down:
+                player.Character.Y++;
+                break;
+
+            case Direction.Left:
+                player.Character.X--;
+                break;
+
+            case Direction.Right:
+                player.Character.X++;
+                break;
+        }
+
+        Send(new MovePlayerCommand(player.Id, direction, movementType), recipient => recipient.Id != player.Id);
     }
 
     /// <summary>
@@ -79,6 +113,25 @@ public sealed class Map(NewMapInfo info) : IPacketRecipient
         foreach (var player in _players)
         {
             Network.SendData(player.Id, bytes);
+        }
+    }
+
+    /// <summary>
+    /// Sends the specified <paramref name="packet"/> to all players on the map.
+    /// </summary>
+    /// <param name="packet">The packet to send.</param>
+    /// <param name="predicate"></param>
+    /// <typeparam name="TPacket">The packet type.</typeparam>
+    public void Send<TPacket>(TPacket packet, Func<GamePlayer, bool> predicate) where TPacket : IPacket<TPacket>
+    {
+        var bytes = PacketSerializer.GetBytes(packet);
+
+        foreach (var player in _players)
+        {
+            if (predicate(player))
+            {
+                Network.SendData(player.Id, bytes);
+            }
         }
     }
 }

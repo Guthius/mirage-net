@@ -29,10 +29,17 @@ public static class Network
 
     static Network()
     {
+        // Authentication & Account Management
         Parser.Register<AuthRequest>(NetworkHandlers.HandleAuth);
+        
+        // Character Management
         Parser.Register<CreateCharacterRequest>(NetworkHandlers.HandleCreateCharacter);
         Parser.Register<DeleteCharacterRequest>(NetworkHandlers.HandleDeleteCharacter);
         Parser.Register<SelectCharacterRequest>(NetworkHandlers.HandleSelectCharacter);
+        
+        // Player Actions
+        Parser.Register<MoveRequest>(NetworkHandlers.HandleMove);
+        
         
         //---
         Parser.Register<CreateAccountRequest>(NetworkHandlers.HandleCreateAccount);
@@ -43,7 +50,7 @@ public static class Network
         Parser.Register<GlobalMessageRequest>(NetworkHandlers.HandleGlobalMessage);
         Parser.Register<AdminMessageRequest>(NetworkHandlers.HandleAdminMessage);
         Parser.Register<PlayerMessageRequest>(NetworkHandlers.HandlePlayerMessage);
-        Parser.Register<MoveRequest>(NetworkHandlers.HandleMove);
+
         Parser.Register<SetDirectionRequest>(NetworkHandlers.HandleSetDirection);
         Parser.Register<UseItemRequest>(NetworkHandlers.HandleUseItem);
         Parser.Register<AttackRequest>(NetworkHandlers.HandleAttack);

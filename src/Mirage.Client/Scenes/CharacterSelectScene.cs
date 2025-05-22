@@ -6,7 +6,7 @@ using ImGuiVec2 = System.Numerics.Vector2;
 
 namespace Mirage.Client.Scenes;
 
-public sealed class CharacterSelectScene(ISceneManager sceneManager, IGameState gameState) : Scene
+public sealed class CharacterSelectScene(ISceneManager sceneManager, GameClient gameState) : Scene
 {
     private bool _disabled;
 

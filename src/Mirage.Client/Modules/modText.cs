@@ -1,5 +1,7 @@
-﻿using System.Numerics;
-using CommunityToolkit.Mvvm.DependencyInjection;
+﻿using CommunityToolkit.Mvvm.DependencyInjection;
+using Microsoft.Xna.Framework;
+using Mirage.Game.Data;
+using Vector4 = System.Numerics.Vector4;
 
 namespace Mirage.Client.Modules;
 
@@ -25,7 +27,7 @@ public static class modText
     public const int HelpColor = Magenta;
     public const int AlertColor = Red;
 
-    private static Color GetColorInternal(int colorCode)
+    public static Color GetColorInternal(int colorCode)
     {
         return colorCode switch
         {
@@ -77,9 +79,9 @@ public static class modText
 
     public static void AddText(string message, int colorCode)
     {
-        var gameState = Ioc.Default.GetRequiredService<IGameState>();
+        var gameState = Ioc.Default.GetRequiredService<GameClient>();
 
-        gameState.ChatHistory.Add(new Chat(message, colorCode));
+        gameState.ChatHistory.Add(new ChatInfo(message, colorCode));
         gameState.ChatHistoryUpdated = true;
     }
 }

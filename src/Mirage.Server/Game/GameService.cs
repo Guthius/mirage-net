@@ -13,6 +13,8 @@ public sealed class GameService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        const float deltaTime = 0.5f;
+
         const int savePlayersInterval = 60000;
         const int spawnMapItemsInterval = 1000;
 
@@ -63,6 +65,8 @@ public sealed class GameService : BackgroundService
 
                 spawnMapItemsTimeLeft += spawnMapItemsInterval;
             }
+
+            MapManager.Update(deltaTime);
 
             GameState.Update();
         }
