@@ -108,8 +108,6 @@ public sealed class CharacterSelectScene(ISceneManager sceneManager, GameClient 
 
         if (ImGui.Button("Back", new ImGuiVec2(70, 26)))
         {
-            Network.Disconnect();
-
             sceneManager.SwitchTo<LoginScene>();
         }
 

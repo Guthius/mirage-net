@@ -1,6 +1,6 @@
-﻿using Mirage.Game.Constants;
-using Mirage.Game.Data;
-using Mirage.Net.Protocol.FromServer.New;
+﻿using Mirage.Net.Protocol.FromServer.New;
+using Mirage.Shared.Constants;
+using Mirage.Shared.Data;
 using MongoDB.Driver;
 
 namespace Mirage.Server.Repositories;
@@ -75,7 +75,7 @@ public static class CharacterRepository
             JobId = jobId,
             Sprite = jobInfo.Sprite,
             Level = 1,
-            AccessLevel = AccessLevel.Player,
+            AccessLevel = AccessLevel.None,
             Strength = jobInfo.Strength,
             Defense = jobInfo.Defense,
             Speed = jobInfo.Speed,

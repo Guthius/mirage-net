@@ -1,8 +1,8 @@
 ﻿using AStarNavigator;
-using Mirage.Game.Constants;
-using Mirage.Game.Data;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Net;
+using Mirage.Shared.Constants;
+using Mirage.Shared.Data;
 
 namespace Mirage.Server.Game;
 
@@ -93,7 +93,7 @@ public sealed class GameNpc(int slot, GameMap map, NpcInfo? npcInfo)
 
             if (!string.IsNullOrWhiteSpace(Info.AttackSay))
             {
-                player.Tell($"{Info.Name} says, '{Info.AttackSay}' to you.", Color.SayColor);
+                player.Tell($"{Info.Name} says, '{Info.AttackSay}' to you.", ColorCode.SayColor);
             }
 
             Target = player.Id;
@@ -274,14 +274,14 @@ public sealed class GameNpc(int slot, GameMap map, NpcInfo? npcInfo)
 
         if (targetPlayer.TryBlockHit(out var shieldInfo))
         {
-            targetPlayer.Tell($"Your {shieldInfo.Name} blocks the {Info.Name}'s hit!", Color.BrightCyan);
+            targetPlayer.Tell($"Your {shieldInfo.Name} blocks the {Info.Name}'s hit!", ColorCode.BrightCyan);
             return;
         }
 
         var damage = Info.Strength - targetPlayer.CalculateProtection();
         if (damage <= 0)
         {
-            targetPlayer.Tell($"The {Info.Name}'s hit didn't even phase you!", Color.BrightBlue);
+            targetPlayer.Tell($"The {Info.Name}'s hit didn't even phase you!", ColorCode.BrightBlue);
             return;
         }
 
@@ -386,14 +386,14 @@ public sealed class GameNpc(int slot, GameMap map, NpcInfo? npcInfo)
         {
             victim.Character.HP -= damage;
             victim.SendHP();
-            victim.Tell($"A {Info.Name} hit you for {damage} hit points.", Color.BrightRed);
+            victim.Tell($"A {Info.Name} hit you for {damage} hit points.", ColorCode.BrightRed);
 
             return;
         }
 
-        victim.Tell($"A {Info.Name} hit you for {damage} hit points.", Color.BrightRed);
+        victim.Tell($"A {Info.Name} hit you for {damage} hit points.", ColorCode.BrightRed);
 
-        Network.SendGlobalMessage($"{victim.Character.Name} has been killed by a {Info.Name}.", Color.BrightRed);
+        Network.SendGlobalMessage($"{victim.Character.Name} has been killed by a {Info.Name}.", ColorCode.BrightRed);
 
         victim.DropItem(victim.Character.WeaponSlot);
         victim.DropItem(victim.Character.ArmorSlot);
@@ -403,12 +403,12 @@ public sealed class GameNpc(int slot, GameMap map, NpcInfo? npcInfo)
         var exp = Math.Max(0, victim.Character.Exp / 3);
         if (exp == 0)
         {
-            victim.Tell("You lost no experience points.", Color.BrightRed);
+            victim.Tell("You lost no experience points.", ColorCode.BrightRed);
         }
         else
         {
             victim.Character.Exp -= exp;
-            victim.Tell($"You lost {exp} experience points.", Color.BrightRed);
+            victim.Tell($"You lost {exp} experience points.", ColorCode.BrightRed);
         }
 
         victim.WarpTo(Options.StartMapId, Options.StartX, Options.StartY);

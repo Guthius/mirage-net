@@ -1,4 +1,4 @@
-﻿using Mirage.Game.Data;
+﻿using Mirage.Shared.Data;
 using MongoDB.Driver;
 
 namespace Mirage.Server.Repositories;

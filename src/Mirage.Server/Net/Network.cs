@@ -2,15 +2,16 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Channels;
-using Mirage.Game.Constants;
-using Mirage.Game.Data;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromClient;
 using Mirage.Net.Protocol.FromClient.New;
 using Mirage.Net.Protocol.FromServer;
+using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Extensions;
 using Mirage.Server.Game;
 using Mirage.Server.Repositories;
+using Mirage.Shared.Constants;
+using Mirage.Shared.Data;
 using Serilog;
 
 namespace Mirage.Server.Net;
@@ -31,6 +32,8 @@ public static class Network
     {
         // Authentication & Account Management
         Parser.Register<AuthRequest>(NetworkHandlers.HandleAuth);
+        Parser.Register<CreateAccountRequest>(NetworkHandlers.HandleCreateAccount);
+        Parser.Register<DeleteAccountRequest>(NetworkHandlers.HandleDeleteAccount);
 
         // Character Management
         Parser.Register<CreateCharacterRequest>(NetworkHandlers.HandleCreateCharacter);
@@ -39,16 +42,16 @@ public static class Network
 
         // Player Actions
         Parser.Register<MoveRequest>(NetworkHandlers.HandleMove);
+        Parser.Register<AttackRequest>(NetworkHandlers.HandleAttack);
 
+        // Social
 
         //---
-        Parser.Register<CreateAccountRequest>(NetworkHandlers.HandleCreateAccount);
-        Parser.Register<DeleteAccountRequest>(NetworkHandlers.HandleDeleteAccount);
+
+
         Parser.Register<SayRequest>(NetworkHandlers.HandleSay);
-        Parser.Register<PlayerMessageRequest>(NetworkHandlers.HandlePlayerMessage);
         Parser.Register<SetDirectionRequest>(NetworkHandlers.HandleSetDirection);
         Parser.Register<UseItemRequest>(NetworkHandlers.HandleUseItem);
-        Parser.Register<AttackRequest>(NetworkHandlers.HandleAttack);
         Parser.Register<UseStatPointRequest>(NetworkHandlers.HandleUseStatPoint);
         Parser.Register<GetStatsRequest>(NetworkHandlers.HandleGetStats);
         Parser.Register<NewMapRequest>(NetworkHandlers.HandleNewMap);
@@ -198,12 +201,12 @@ public static class Network
 
     private static async Task RunSend(Connection connection)
     {
+        var stream = connection.Client.GetStream();
+
         await foreach (var bytes in connection.SendQueue.Reader.ReadAllAsync(connection.Cts.Token))
         {
             try
             {
-                var stream = connection.Client.GetStream();
-
                 await stream.WriteAsync(bytes, connection.Cts.Token);
             }
             catch (Exception ex)
@@ -260,7 +263,7 @@ public static class Network
 
     public static void SendGlobalMessage(string message, int color)
     {
-        SendToAll(new PlayerMessage(message, color));
+        SendToAll(new ChatCommand(message, color));
     }
 
     public static void SendAlert(int connectionId, string message)
@@ -284,7 +287,7 @@ public static class Network
         var player = GameState.Sessions[connectionId];
         if (player is {Account: not null, Player: not null})
         {
-            SendToAll(new PlayerMessage($"{player.Account.Name}/{player.Player.Character.Name} has been booted for ({reason})", Color.White));
+            SendToAll(new ChatCommand($"{player.Account.Name}/{player.Player.Character.Name} has been booted for ({reason})", ColorCode.White));
         }
     }
 

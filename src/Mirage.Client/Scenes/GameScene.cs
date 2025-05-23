@@ -1,21 +1,31 @@
 ﻿using ImGuiNET;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Mirage.Client.Game;
-using Mirage.Client.Modules;
 using Mirage.Client.Net;
-using Mirage.Game.Constants;
-using Mirage.Game.Data;
 using Mirage.Net.Protocol.FromClient;
+using Mirage.Net.Protocol.FromClient.New;
+using Mirage.Shared.Constants;
+using Mirage.Shared.Data;
 using Keys = Microsoft.Xna.Framework.Input.Keys;
+using Vector2 = System.Numerics.Vector2;
 
 namespace Mirage.Client.Scenes;
 
 public sealed class GameScene : Scene
 {
+    private readonly GraphicsDevice _graphicsDevice;
+    private readonly GameClient _gameState;
+    private string _chatMessage = string.Empty;
     private int _itemPickupTimer;
-    private bool _attacking;
-    private int _attackTimer;
+
+    public GameScene(GraphicsDevice graphicsDevice, GameClient gameState)
+    {
+        _graphicsDevice = graphicsDevice;
+        _gameState = gameState;
+
+        Textures.Sprites = Texture2D.FromFile(graphicsDevice, "Assets/Sprites.png");
+        Textures.Items = Texture2D.FromFile(graphicsDevice, "Assets/Items.png");
+    }
 
     protected override void OnShow()
     {
@@ -44,8 +54,8 @@ public sealed class GameScene : Scene
             }
         }
 
-        CheckMovement();
         CheckAttack();
+        CheckMovement();
     }
 
     private void CheckMovement()
@@ -56,7 +66,7 @@ public sealed class GameScene : Scene
         }
 
         var localPlayer = _gameState.LocalPlayer;
-        if (localPlayer is null || localPlayer.Moving)
+        if (localPlayer is null || localPlayer.Busy)
         {
             return;
         }
@@ -67,7 +77,7 @@ public sealed class GameScene : Scene
             return;
         }
 
-        if (localPlayer.TryMoveNow(direction, movementType))
+        if (localPlayer.TryMove(direction, movementType))
         {
             Network.Send(new MoveRequest(direction, movementType));
             if (_gameState.Map.GetTileType(localPlayer.X, localPlayer.Y) == TileType.Warp)
@@ -90,7 +100,7 @@ public sealed class GameScene : Scene
 
     private (Direction, MovementType) CheckMovementKeys()
     {
-        var movementType = IsKeyJustPressed(Keys.LeftShift) || IsKeyJustPressed(Keys.RightShift)
+        var movementType = IsKeyPressed(Keys.LeftShift) || IsKeyPressed(Keys.RightShift)
             ? MovementType.Running
             : MovementType.Walking;
 
@@ -104,16 +114,27 @@ public sealed class GameScene : Scene
 
     private void CheckAttack()
     {
-        var controlDown = IsKeyJustPressed(Keys.LeftControl) || IsKeyJustPressed(Keys.RightControl);
-        if (!controlDown || _attackTimer + 1000 >= Environment.TickCount || _attacking)
+        if (_gameState.GettingMap)
         {
             return;
         }
 
-        _attacking = true;
-        _attackTimer = Environment.TickCount;
+        var localPlayer = _gameState.LocalPlayer;
+        if (localPlayer is null || localPlayer.Busy)
+        {
+            return;
+        }
 
-        Network.Send<AttackRequest>();
+        var controlDown = IsKeyPressed(Keys.LeftControl) || IsKeyPressed(Keys.RightControl);
+        if (!controlDown)
+        {
+            return;
+        }
+
+        if (localPlayer.TryAttack())
+        {
+            Network.Send<AttackRequest>();
+        }
     }
 
     public override void Draw(GameTime gameTime)
@@ -122,8 +143,8 @@ public sealed class GameScene : Scene
 
         spriteBatch.Begin();
 
-        _gameState.Map.Draw(spriteBatch, gameTime);
-        
+        _gameState.Map.Draw(spriteBatch);
+
         if (_gameState.GettingMap)
         {
             // TODO: modText.DrawText(50, 50, "Receiving Map...", modText.BrightCyan);
@@ -136,7 +157,22 @@ public sealed class GameScene : Scene
     {
         //ShowMenu();
         //ShowInventory();
-        //ShowChat();
+        ShowVitals();
+        ShowChat();
+    }
+
+    private void ShowVitals()
+    {
+        var p = _gameState.LocalPlayer;
+        if (p is null)
+        {
+            return;
+        }
+
+        ImGui.Begin("Vitals");
+        ImGui.ProgressBar((float) p.Health / p.MaxHealth, new Vector2(100, 16), "HP");
+        ImGui.ProgressBar((float) p.Mana / p.MaxMana, new Vector2(100, 16), "MP");
+        ImGui.ProgressBar((float) p.Stamina / p.MaxStamina, new Vector2(100, 16), "SP");
     }
 
     private void ShowMenu()
@@ -185,102 +221,102 @@ public sealed class GameScene : Scene
 
     private void ShowInventory()
     {
-        if (!_openInventory)
-        {
-            return;
-        }
-
-        if (!ImGui.Begin("Backpack", ref _openInventory, ImGuiWindowFlags.AlwaysAutoResize))
-        {
-            return;
-        }
-
-        var inventorySlots = GetInventorySlots().ToArray();
-
-        ImGui.ListBox("##Items", ref _selectedInventorySlot, inventorySlots, inventorySlots.Length);
-        ImGui.BeginDisabled(_gameState.Inventory[_selectedInventorySlot].ItemId <= 0);
-        if (ImGui.Button("Use Item"))
-        {
-            Network.Send(new UseItemRequest(_selectedInventorySlot + 1));
-        }
-
-        if (ImGui.Button("Drop Item"))
-        {
-            var selectedItemId = _gameState.Inventory[_selectedInventorySlot].ItemId;
-
-            _dropQuantity = 1;
-            _maxDropQuantity = Math.Max(1, _gameState.Inventory[_selectedInventorySlot].Quantity);
-            _dropItemName = modTypes.Item[selectedItemId].Name;
-
-            ImGui.OpenPopup("Drop");
-        }
-
-        ImGui.EndDisabled();
-
-        if (ImGui.BeginPopupModal("Drop"))
-        {
-            ImGui.Text($"Drop {_dropItemName}");
-            ImGui.InputInt("Quantity", ref _dropQuantity, 1, 10);
-            _dropQuantity = Math.Min(_dropQuantity, _maxDropQuantity);
-            ImGui.SameLine();
-            ImGui.Text($" of {_maxDropQuantity}");
-            ImGui.Separator();
-
-            if (ImGui.Button("OK"))
-            {
-                Network.Send(new DropItemRequest(_selectedInventorySlot + 1, _dropQuantity));
-                ImGui.CloseCurrentPopup();
-            }
-
-            ImGui.SameLine();
-            ImGui.SetItemDefaultFocus();
-            if (ImGui.Button("Cancel"))
-            {
-                ImGui.CloseCurrentPopup();
-            }
-
-            ImGui.EndPopup();
-        }
-
-        ImGui.End();
-
-        IEnumerable<string> GetInventorySlots()
-        {
-            var index = 0;
-
-            foreach (var slot in _gameState.Inventory)
-            {
-                index++;
-
-                var itemId = slot.ItemId;
-                if (itemId is <= 0 or > Limits.MaxItems)
-                {
-                    yield return $"{index}: <Free>";
-                    continue;
-                }
-
-                ref var itemInfo = ref modTypes.Item[itemId];
-                if (itemInfo.Type == modTypes.ITEM_TYPE_CURRENCY)
-                {
-                    yield return $"{index}: {itemInfo.Name} ({slot.Quantity})";
-                    continue;
-                }
-
-                var equipped =
-                    modTypes.Player[modGameLogic.MyIndex].ArmorSlot == index ||
-                    modTypes.Player[modGameLogic.MyIndex].WeaponSlot == index ||
-                    modTypes.Player[modGameLogic.MyIndex].ShieldSlot == index ||
-                    modTypes.Player[modGameLogic.MyIndex].HelmetSlot == index;
-
-                if (equipped)
-                {
-                    yield return $"{index}: {itemInfo.Name} (worn)";
-                    continue;
-                }
-
-                ImGui.Selectable($"{index}: {itemInfo.Name}");
-            }
-        }
+        // if (!_openInventory)
+        // {
+        //     return;
+        // }
+        //
+        // if (!ImGui.Begin("Backpack", ref _openInventory, ImGuiWindowFlags.AlwaysAutoResize))
+        // {
+        //     return;
+        // }
+        //
+        // var inventorySlots = GetInventorySlots().ToArray();
+        //
+        // ImGui.ListBox("##Items", ref _selectedInventorySlot, inventorySlots, inventorySlots.Length);
+        // ImGui.BeginDisabled(_gameState.Inventory[_selectedInventorySlot].ItemId <= 0);
+        // if (ImGui.Button("Use Item"))
+        // {
+        //     Network.Send(new UseItemRequest(_selectedInventorySlot + 1));
+        // }
+        //
+        // if (ImGui.Button("Drop Item"))
+        // {
+        //     var selectedItemId = _gameState.Inventory[_selectedInventorySlot].ItemId;
+        //
+        //     _dropQuantity = 1;
+        //     _maxDropQuantity = Math.Max(1, _gameState.Inventory[_selectedInventorySlot].Quantity);
+        //     _dropItemName = modTypes.Item[selectedItemId].Name;
+        //
+        //     ImGui.OpenPopup("Drop");
+        // }
+        //
+        // ImGui.EndDisabled();
+        //
+        // if (ImGui.BeginPopupModal("Drop"))
+        // {
+        //     ImGui.Text($"Drop {_dropItemName}");
+        //     ImGui.InputInt("Quantity", ref _dropQuantity, 1, 10);
+        //     _dropQuantity = Math.Min(_dropQuantity, _maxDropQuantity);
+        //     ImGui.SameLine();
+        //     ImGui.Text($" of {_maxDropQuantity}");
+        //     ImGui.Separator();
+        //
+        //     if (ImGui.Button("OK"))
+        //     {
+        //         Network.Send(new DropItemRequest(_selectedInventorySlot + 1, _dropQuantity));
+        //         ImGui.CloseCurrentPopup();
+        //     }
+        //
+        //     ImGui.SameLine();
+        //     ImGui.SetItemDefaultFocus();
+        //     if (ImGui.Button("Cancel"))
+        //     {
+        //         ImGui.CloseCurrentPopup();
+        //     }
+        //
+        //     ImGui.EndPopup();
+        // }
+        //
+        // ImGui.End();
+        //
+        // IEnumerable<string> GetInventorySlots()
+        // {
+        //     var index = 0;
+        //
+        //     foreach (var slot in _gameState.Inventory)
+        //     {
+        //         index++;
+        //
+        //         var itemId = slot.ItemId;
+        //         if (itemId is <= 0 or > Limits.MaxItems)
+        //         {
+        //             yield return $"{index}: <Free>";
+        //             continue;
+        //         }
+        //
+        //         ref var itemInfo = ref modTypes.Item[itemId];
+        //         if (itemInfo.Type == modTypes.ITEM_TYPE_CURRENCY)
+        //         {
+        //             yield return $"{index}: {itemInfo.Name} ({slot.Quantity})";
+        //             continue;
+        //         }
+        //
+        //         var equipped =
+        //             modTypes.Player[modGameLogic.MyIndex].ArmorSlot == index ||
+        //             modTypes.Player[modGameLogic.MyIndex].WeaponSlot == index ||
+        //             modTypes.Player[modGameLogic.MyIndex].ShieldSlot == index ||
+        //             modTypes.Player[modGameLogic.MyIndex].HelmetSlot == index;
+        //         
+        //         if (equipped)
+        //         {
+        //             yield return $"{index}: {itemInfo.Name} (worn)";
+        //             continue;
+        //         }
+        //
+        //         ImGui.Selectable($"{index}: {itemInfo.Name}");
+        //     }
+        // }
     }
 
     private void ShowChat()
@@ -296,7 +332,7 @@ public sealed class GameScene : Scene
 
         foreach (var chat in _gameState.ChatHistory)
         {
-            ImGui.PushStyleColor(ImGuiCol.Text, modText.GetColor(chat.ColorCode));
+            ImGui.PushStyleColor(ImGuiCol.Text, ColorCodeTranslator.GetImGuiColor(chat.ColorCode));
             ImGui.TextWrapped(chat.Message);
             ImGui.PopStyleColor();
         }
@@ -322,19 +358,5 @@ public sealed class GameScene : Scene
         }
 
         ImGui.End();
-    }
-
-    private string _chatMessage = string.Empty;
-    private readonly GraphicsDevice _graphicsDevice;
-    private readonly GameClient _gameState;
-
-    public GameScene(GraphicsDevice graphicsDevice, GameClient gameState)
-    {
-        _graphicsDevice = graphicsDevice;
-        _gameState = gameState;
-
-        Textures.Sprites = Texture2D.FromFile(graphicsDevice, "Assets/Sprites.png");
-        Textures.Tiles = Texture2D.FromFile(graphicsDevice, "Assets/Tiles.png");
-        Textures.Items = Texture2D.FromFile(graphicsDevice, "Assets/Items.png");
     }
 }

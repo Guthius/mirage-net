@@ -1,6 +1,6 @@
-﻿using Mirage.Game.Data;
-using Mirage.Net;
+﻿using Mirage.Net;
 using Mirage.Server.Game;
+using Mirage.Shared.Data;
 
 namespace Mirage.Server.Extensions;
 

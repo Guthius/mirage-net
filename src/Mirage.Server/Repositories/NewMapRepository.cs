@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-using Mirage.Game.Data;
+using Mirage.Shared.Data;
 using MongoDB.Driver;
 using Serilog;
 

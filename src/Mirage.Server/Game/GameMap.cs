@@ -1,12 +1,13 @@
 ﻿using AStarNavigator;
 using AStarNavigator.Algorithms;
 using AStarNavigator.Providers;
-using Mirage.Game.Constants;
-using Mirage.Game.Data;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromServer;
+using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Net;
 using Mirage.Server.Repositories;
+using Mirage.Shared.Constants;
+using Mirage.Shared.Data;
 
 namespace Mirage.Server.Game;
 
@@ -325,7 +326,7 @@ public sealed class GameMap : IBlockedProvider
 
     public void SendMessage(string message, int color)
     {
-        Send(new PlayerMessage(message, color));
+        Send(new ChatCommand(message, color));
     }
     
     public bool IsBlocked(Tile coord)

@@ -1,4 +1,4 @@
-﻿using Mirage.Game.Constants;
+﻿using Mirage.Shared.Constants;
 
 namespace Mirage.Net.Protocol.FromServer;
 

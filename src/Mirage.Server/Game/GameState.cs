@@ -1,6 +1,6 @@
-﻿using Mirage.Game.Constants;
-using Mirage.Game.Data;
-using Mirage.Server.Repositories;
+﻿using Mirage.Server.Repositories;
+using Mirage.Shared.Constants;
+using Mirage.Shared.Data;
 using Serilog;
 
 namespace Mirage.Server.Game;

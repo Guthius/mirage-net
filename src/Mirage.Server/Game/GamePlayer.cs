@@ -1,10 +1,11 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Mirage.Game.Constants;
-using Mirage.Game.Data;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromServer;
+using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Net;
 using Mirage.Server.Repositories;
+using Mirage.Shared.Constants;
+using Mirage.Shared.Data;
 using Serilog;
 
 namespace Mirage.Server.Game;
@@ -26,8 +27,7 @@ public sealed class GamePlayer
     public bool GettingMap { get; set; }
     
     public Map NewMap { get; private set; }
-
-
+    
     public GamePlayer(int id, GameSession session, CharacterInfo character, Map map)
     {
         Id = id;
@@ -35,6 +35,8 @@ public sealed class GamePlayer
         Map = GameState.GetMap(Character.MapId);
 
         _session = session;
+        
+        SendWelcome();
 
         NewMap = map;
         NewMap.Add(this);
@@ -62,21 +64,26 @@ public sealed class GamePlayer
         //     Character.Intelligence));
         //
         // WarpTo(Character.MapId, Character.X, Character.Y);
-        // Tell($"Welcome to {Options.GameName}!  Programmed from scratch by yours truely Consty!  Version {Options.VersionMajor}.{Options.VersionMinor}.{Options.VersionBuild}", Color.BrightBlue);
-        // Tell("Type /help for help on commands.  Use arrow keys to move, hold down shift to run, and use ctrl to attack.", Color.Cyan);
-        //
-        // if (File.Exists("Motd.txt"))
-        // {
-        //     var motd = File.ReadAllText("Motd.txt");
-        //     if (!string.IsNullOrWhiteSpace(motd))
-        //     {
-        //         Tell("MOTD: " + motd.Trim(), Color.BrightCyan);
-        //     }
-        // }
-        //
-        // SendWhosOnline();
+
 
         Send<InGame>();
+    }
+    
+    private void SendWelcome()
+    {
+        Tell($"Welcome to {Options.GameName}!", ColorCode.BrightBlue);
+        Tell("Type /help for help on commands. Use arrow keys to move, hold down shift to run, and use ctrl to attack.", ColorCode.Cyan);
+        
+        if (File.Exists("Motd.txt"))
+        {
+            var motd = File.ReadAllText("Motd.txt");
+            if (!string.IsNullOrWhiteSpace(motd))
+            {
+                Tell("MOTD: " + motd.Trim(), ColorCode.BrightCyan);
+            }
+        }
+        
+        SendWhosOnline();
     }
 
     public void Destroy()
@@ -96,15 +103,15 @@ public sealed class GamePlayer
         {
             InParty = false;
 
-            PartyMember.Tell($"{Character.Name} has left {Options.GameName}, disbanning party.", Color.Pink);
+            PartyMember.Tell($"{Character.Name} has left {Options.GameName}, disbanning party.", ColorCode.Pink);
             PartyMember = null;
         }
 
         CharacterRepository.Save(Character);
 
-        var color = Character.AccessLevel <= AccessLevel.Moderator ? Color.JoinLeftColor : Color.White;
+        var color = Character.AccessLevel <= AccessLevel.Moderator ? ColorCode.JoinLeftColor : ColorCode.White;
 
-        Network.SendToAll(new PlayerMessage($"{Character.Name} has left {Options.GameName}!", color));
+        Network.SendToAll(new ChatCommand($"{Character.Name} has left {Options.GameName}!", color));
 
         Log.Information("{CharacterName} has left {GameName}", Character.Name, Options.GameName);
 
@@ -284,7 +291,7 @@ public sealed class GamePlayer
         var slot = GetFreeInventorySlot(itemInfo);
         if (slot == 0)
         {
-            Tell("Your inventory is full.", Color.BrightRed);
+            Tell("Your inventory is full.", ColorCode.BrightRed);
             return;
         }
 
@@ -380,7 +387,7 @@ public sealed class GamePlayer
                 {
                     if (Character.Defense < itemInfo.Data2)
                     {
-                        Tell($"Your defense is to low to wear this armor!  Required DEF ({itemInfo.Data2})", Color.BrightRed);
+                        Tell($"Your defense is to low to wear this armor!  Required DEF ({itemInfo.Data2})", ColorCode.BrightRed);
                         return;
                     }
 
@@ -399,7 +406,7 @@ public sealed class GamePlayer
                 {
                     if (Character.Strength < itemInfo.Data2)
                     {
-                        Tell($"Your strength is to low to wear this armor!  Required STR ({itemInfo.Data2})", Color.BrightRed);
+                        Tell($"Your strength is to low to wear this armor!  Required STR ({itemInfo.Data2})", ColorCode.BrightRed);
                         return;
                     }
 
@@ -418,7 +425,7 @@ public sealed class GamePlayer
                 {
                     if (Character.Speed < itemInfo.Data2)
                     {
-                        Tell($"Your speed coordination is to low to wear this helmet!  Required SPEED ({itemInfo.Data2})", Color.BrightRed);
+                        Tell($"Your speed coordination is to low to wear this helmet!  Required SPEED ({itemInfo.Data2})", ColorCode.BrightRed);
                         return;
                     }
 
@@ -505,7 +512,7 @@ public sealed class GamePlayer
         Map.DoorTimer = Environment.TickCount;
 
         Map.Send(new MapKey(x, y, true));
-        Map.SendMessage("A door has been unlocked.", Color.White);
+        Map.SendMessage("A door has been unlocked.", ColorCode.White);
 
         if (Map.Info.Tiles[x, y].Data2 != 1)
         {
@@ -514,7 +521,7 @@ public sealed class GamePlayer
 
         ClearInventorySlot(inventorySlot);
 
-        Tell("The key disolves.", Color.Yellow);
+        Tell("The key disolves.", ColorCode.Yellow);
     }
 
     private void UseSpell(int inventorySlot, ItemInfo itemInfo)
@@ -522,26 +529,26 @@ public sealed class GamePlayer
         var spellInfo = SpellRepository.Get(itemInfo.Data1);
         if (spellInfo is null)
         {
-            Tell("This scroll is not connected to a spell, please inform an admin!", Color.White);
+            Tell("This scroll is not connected to a spell, please inform an admin!", ColorCode.White);
             return;
         }
 
         if (!string.IsNullOrEmpty(spellInfo.RequiredClassId) && spellInfo.RequiredClassId != Character.JobId)
         {
-            Tell($"This spell can only be learned by a {ClassRepository.GetName(spellInfo.RequiredClassId)}.", Color.White);
+            Tell($"This spell can only be learned by a {ClassRepository.GetName(spellInfo.RequiredClassId)}.", ColorCode.White);
             return;
         }
 
         if (spellInfo.RequiredLevel > Character.Level)
         {
-            Tell($"You must be level {spellInfo.RequiredLevel} to learn this spell.", Color.White);
+            Tell($"You must be level {spellInfo.RequiredLevel} to learn this spell.", ColorCode.White);
             return;
         }
 
         var spellSlot = GetFreeSpellSlot();
         if (spellSlot <= 0)
         {
-            Tell("You have learned all that you can learn!", Color.BrightRed);
+            Tell("You have learned all that you can learn!", ColorCode.BrightRed);
             return;
         }
 
@@ -549,14 +556,14 @@ public sealed class GamePlayer
 
         if (HasSpell(spellInfo.Id))
         {
-            Tell("You have already learned this spell! The spells crumbles into dust.", Color.BrightRed);
+            Tell("You have already learned this spell! The spells crumbles into dust.", ColorCode.BrightRed);
             return;
         }
 
         Character.SpellIds[spellSlot] = spellInfo.Id;
 
-        Tell("You study the spell carefully...", Color.Yellow);
-        Tell("You have learned a new spell!", Color.White);
+        Tell("You study the spell carefully...", ColorCode.Yellow);
+        Tell("You have learned a new spell!", ColorCode.White);
     }
 
     public void DropItem(int inventorySlot, int quantity = 0)
@@ -586,7 +593,7 @@ public sealed class GamePlayer
         var spawned = Map.SpawnItem(Character.X, Character.Y, itemInfo.Id, quantity, slotInfo.Durability);
         if (!spawned)
         {
-            Tell("Too many items already on the ground.", Color.BrightRed);
+            Tell("Too many items already on the ground.", ColorCode.BrightRed);
             return;
         }
 
@@ -596,7 +603,7 @@ public sealed class GamePlayer
             Map.SendMessage(itemInfo.IsEquipment
                     ? $"{Character.Name} drops a {itemInfo.Name} {slotInfo.Durability}/{itemInfo.Data1}."
                     : $"{Character.Name} drops a {itemInfo}.",
-                Color.Yellow);
+                ColorCode.Yellow);
 
             return;
         }
@@ -604,13 +611,13 @@ public sealed class GamePlayer
         if (quantity == slotInfo.Quantity)
         {
             ClearInventorySlot(inventorySlot);
-            Map.SendMessage($"{Character.Name} drops {quantity} {itemInfo.Name}.", Color.Yellow);
+            Map.SendMessage($"{Character.Name} drops {quantity} {itemInfo.Name}.", ColorCode.Yellow);
             return;
         }
 
         slotInfo.Quantity -= quantity;
 
-        Map.SendMessage($"{Character.Name} drops {quantity} {itemInfo.Name}.", Color.Yellow);
+        Map.SendMessage($"{Character.Name} drops {quantity} {itemInfo.Name}.", ColorCode.Yellow);
 
         SendInventoryUpdate(inventorySlot);
     }
@@ -634,7 +641,7 @@ public sealed class GamePlayer
             var inventorySlot = GetFreeInventorySlot(itemInfo);
             if (inventorySlot == 0)
             {
-                Tell("Your inventory is full.", Color.BrightRed);
+                Tell("Your inventory is full.", ColorCode.BrightRed);
                 return;
             }
 
@@ -646,12 +653,12 @@ public sealed class GamePlayer
             if (itemInfo.Type == ItemType.Currency)
             {
                 slotInfo.Quantity += item.Value;
-                Tell($"You picked up {item.Value} {itemInfo.Name}.", Color.Yellow);
+                Tell($"You picked up {item.Value} {itemInfo.Name}.", ColorCode.Yellow);
             }
             else
             {
                 slotInfo.Quantity = 0;
-                Tell($"You picked up a {itemInfo.Name}.", Color.Yellow);
+                Tell($"You picked up a {itemInfo.Name}.", ColorCode.Yellow);
             }
 
             Map.ClearItem(slot);
@@ -737,7 +744,7 @@ public sealed class GamePlayer
         var shopInfo = ShopRepository.Get(oldShopId);
         if (shopInfo is not null && !string.IsNullOrWhiteSpace(shopInfo.LeaveSay))
         {
-            Tell($"{shopInfo.Name} says, '{shopInfo.LeaveSay}'", Color.SayColor);
+            Tell($"{shopInfo.Name} says, '{shopInfo.LeaveSay}'", ColorCode.SayColor);
         }
 
         Map.Send(Id, PlayerData.ClearMap(Id, Character));
@@ -754,7 +761,7 @@ public sealed class GamePlayer
         shopInfo = ShopRepository.Get(newShopId);
         if (shopInfo is not null && !string.IsNullOrWhiteSpace(shopInfo.JoinSay))
         {
-            Tell($"{shopInfo.Name} says, '{shopInfo.JoinSay}'", Color.SayColor);
+            Tell($"{shopInfo.Name} says, '{shopInfo.JoinSay}'", ColorCode.SayColor);
         }
 
         if (oldMap != Map)
@@ -806,9 +813,9 @@ public sealed class GamePlayer
         Character.StatPoints += statPoints;
         Character.Exp -= Character.RequiredExp;
 
-        Network.SendGlobalMessage($"{Character.Name} has reached level {Character.Level}!", Color.Brown);
+        Network.SendGlobalMessage($"{Character.Name} has reached level {Character.Level}!", ColorCode.Brown);
 
-        Tell($"You have gained a level!  You now have {Character.StatPoints} stat points to distribute.", Color.BrightBlue);
+        Tell($"You have gained a level!  You now have {Character.StatPoints} stat points to distribute.", ColorCode.BrightBlue);
     }
 
     private void ReduceDurability(int inventorySlot)
@@ -826,12 +833,12 @@ public sealed class GamePlayer
         switch (slotInfo.Durability)
         {
             case <= 0:
-                Tell($"Your {itemInfo.Name.Trim()} has broken!", Color.Red);
+                Tell($"Your {itemInfo.Name.Trim()} has broken!", ColorCode.Red);
                 ClearInventorySlot(inventorySlot);
                 break;
 
             case <= 5:
-                Tell($"Your {itemInfo.Name.Trim()} is about to break!", Color.Yellow);
+                Tell($"Your {itemInfo.Name.Trim()} is about to break!", ColorCode.Yellow);
                 break;
         }
     }
@@ -933,25 +940,25 @@ public sealed class GamePlayer
 
         if (Character.AccessLevel > AccessLevel.Moderator)
         {
-            Tell("You cannot attack any player for thou art an admin!", Color.BrightBlue);
+            Tell("You cannot attack any player for thou art an admin!", ColorCode.BrightBlue);
             return false;
         }
 
         if (victim.Character.AccessLevel > AccessLevel.Moderator)
         {
-            Tell($"You cannot attack {victim.Character.Name}!", Color.BrightRed);
+            Tell($"You cannot attack {victim.Character.Name}!", ColorCode.BrightRed);
             return false;
         }
 
         if (Map.Info.Moral == MapMoral.Safe && !victim.Character.PlayerKiller)
         {
-            Tell("This is a safe zone!", Color.BrightRed);
+            Tell("This is a safe zone!", ColorCode.BrightRed);
             return false;
         }
 
         if (Character.Level < minPvpLevel)
         {
-            Tell($"You are below level {minPvpLevel}, you cannot attack another player yet!", Color.BrightRed);
+            Tell($"You are below level {minPvpLevel}, you cannot attack another player yet!", ColorCode.BrightRed);
             return false;
         }
 
@@ -960,7 +967,7 @@ public sealed class GamePlayer
             return true;
         }
 
-        Tell($"{victim.Character.Name} is below level {minPvpLevel}, you cannot attack this player yet!", Color.BrightRed);
+        Tell($"{victim.Character.Name} is below level {minPvpLevel}, you cannot attack this player yet!", ColorCode.BrightRed);
         return false;
     }
 
@@ -983,7 +990,7 @@ public sealed class GamePlayer
             return true;
         }
 
-        Tell($"You cannot attack a {npc.Info.Name}!", Color.BrightBlue);
+        Tell($"You cannot attack a {npc.Info.Name}!", ColorCode.BrightBlue);
         return false;
     }
 
@@ -1052,15 +1059,15 @@ public sealed class GamePlayer
 
             if (weapon is null)
             {
-                Tell($"You hit {victim.Character.Name} for {damage} hit points.", Color.White);
+                Tell($"You hit {victim.Character.Name} for {damage} hit points.", ColorCode.White);
 
-                victim.Tell($"{Character.Name} hit you for {damage} hit points.", Color.BrightRed);
+                victim.Tell($"{Character.Name} hit you for {damage} hit points.", ColorCode.BrightRed);
             }
             else
             {
-                Tell($"You hit {victim.Character.Name} with a {weapon.Name} for {damage} hit points.", Color.White);
+                Tell($"You hit {victim.Character.Name} with a {weapon.Name} for {damage} hit points.", ColorCode.White);
 
-                victim.Tell($"{Character.Name} hit you with a {weapon.Name} for {damage} hit points.", Color.BrightRed);
+                victim.Tell($"{Character.Name} hit you with a {weapon.Name} for {damage} hit points.", ColorCode.BrightRed);
             }
 
             return;
@@ -1070,18 +1077,18 @@ public sealed class GamePlayer
 
         if (weapon is null)
         {
-            Tell($"You hit {victim.Character.Name} for {damage} hit points.", Color.White);
+            Tell($"You hit {victim.Character.Name} for {damage} hit points.", ColorCode.White);
 
-            victim.Tell($"{Character.Name} hit you for {damage} hit points.", Color.BrightRed);
+            victim.Tell($"{Character.Name} hit you for {damage} hit points.", ColorCode.BrightRed);
         }
         else
         {
-            Tell($"You hit {victim.Character.Name} with a {weapon.Name} for {damage} hit points.", Color.White);
+            Tell($"You hit {victim.Character.Name} with a {weapon.Name} for {damage} hit points.", ColorCode.White);
 
-            victim.Tell($"{Character.Name} hit you with a {weapon.Name} for {damage} hit points.", Color.BrightRed);
+            victim.Tell($"{Character.Name} hit you with a {weapon.Name} for {damage} hit points.", ColorCode.BrightRed);
         }
 
-        Network.SendGlobalMessage($"{victim.Character.Name} has been killed by {Character.Name}.", Color.BrightRed);
+        Network.SendGlobalMessage($"{victim.Character.Name} has been killed by {Character.Name}.", ColorCode.BrightRed);
 
         victim.DropItem(victim.Character.WeaponSlot);
         victim.DropItem(victim.Character.ArmorSlot);
@@ -1091,17 +1098,17 @@ public sealed class GamePlayer
         var exp = Math.Max(0, victim.Character.Exp / 10);
         if (exp == 0)
         {
-            victim.Tell("You lost no experience points.", Color.BrightRed);
+            victim.Tell("You lost no experience points.", ColorCode.BrightRed);
 
-            Tell("You received no experience points from that weak insignificant player.", Color.BrightBlue);
+            Tell("You received no experience points from that weak insignificant player.", ColorCode.BrightBlue);
         }
         else
         {
             victim.Character.Exp -= exp;
-            victim.Tell($"You lost {exp} experience points.", Color.BrightRed);
+            victim.Tell($"You lost {exp} experience points.", ColorCode.BrightRed);
 
             Character.Exp += exp;
-            Tell($"You got {exp} experience points for killing {victim.Character.Name}.", Color.BrightBlue);
+            Tell($"You got {exp} experience points for killing {victim.Character.Name}.", ColorCode.BrightBlue);
 
             CheckLevelUp();
         }
@@ -1130,14 +1137,14 @@ public sealed class GamePlayer
             Character.PlayerKiller = true;
             SendPlayerData();
 
-            Network.SendGlobalMessage($"{Character.Name} has been deemed a Player Killer!!!", Color.BrightRed);
+            Network.SendGlobalMessage($"{Character.Name} has been deemed a Player Killer!!!", ColorCode.BrightRed);
         }
         else
         {
             victim.Character.PlayerKiller = false;
             victim.SendPlayerData();
 
-            Network.SendGlobalMessage($"{victim.Character.Name} has paid the price for being a Player Killer!!!", Color.BrightRed);
+            Network.SendGlobalMessage($"{victim.Character.Name} has paid the price for being a Player Killer!!!", ColorCode.BrightRed);
         }
     }
 
@@ -1172,11 +1179,11 @@ public sealed class GamePlayer
             Tell(weaponInfo is null
                     ? $"You hit a {npc.Info.Name} for {damage} hit points."
                     : $"You hit a {npc.Info.Name} with a {weaponInfo.Name} for {damage} hit points.",
-                Color.White);
+                ColorCode.White);
 
             if (npc.Target == 0 && npc.Target != Id && !string.IsNullOrWhiteSpace(npc.Info.AttackSay))
             {
-                Tell($"A {npc.Info.Name} says, '{npc.Info.AttackSay}' to you.", Color.SayColor);
+                Tell($"A {npc.Info.Name} says, '{npc.Info.AttackSay}' to you.", ColorCode.SayColor);
             }
 
             npc.Target = Id;
@@ -1196,27 +1203,27 @@ public sealed class GamePlayer
         Tell(weaponInfo is null
                 ? $"You hit a {npc.Info.Name} for {damage} hit points, killing it."
                 : $"You hit a {npc.Info.Name} with a {weaponInfo.Name} for {damage} hit points, killing it.",
-            Color.BrightRed);
+            ColorCode.BrightRed);
 
         var exp = Math.Min(1, npc.Info.Strength * npc.Info.Defense * 2);
 
         if (!InParty)
         {
             Character.Exp += exp;
-            Tell($"You have gained {exp} experience points.", Color.BrightBlue);
+            Tell($"You have gained {exp} experience points.", ColorCode.BrightBlue);
         }
         else
         {
             exp = Math.Min(1, exp / 2);
 
             Character.Exp += exp;
-            Tell($"You have gained {exp} party experience points.", Color.BrightBlue);
+            Tell($"You have gained {exp} party experience points.", ColorCode.BrightBlue);
 
             var partyPlayer = PartyMember;
             if (partyPlayer is not null)
             {
                 partyPlayer.Character.Exp += exp;
-                partyPlayer.Tell($"You have gained {exp} party experience points.", Color.BrightBlue);
+                partyPlayer.Tell($"You have gained {exp} party experience points.", ColorCode.BrightBlue);
             }
         }
 
@@ -1256,13 +1263,13 @@ public sealed class GamePlayer
 
         if (Character.MP < spellInfo.RequiredMp)
         {
-            Tell("Not enough mana points!", Color.BrightRed);
+            Tell("Not enough mana points!", ColorCode.BrightRed);
             return;
         }
 
         if (spellInfo.RequiredLevel > Character.Level)
         {
-            Tell($"You must be level {spellInfo.RequiredLevel} to cast this spell.", Color.BrightRed);
+            Tell($"You must be level {spellInfo.RequiredLevel} to cast this spell.", ColorCode.BrightRed);
             return;
         }
 
@@ -1283,12 +1290,12 @@ public sealed class GamePlayer
             if (slot > 0)
             {
                 GiveItem(spellInfo.Data1, spellInfo.Data2);
-                Map.SendMessage($"{Character.Name} casts {spellInfo.Name}.", Color.BrightBlue);
+                Map.SendMessage($"{Character.Name} casts {spellInfo.Name}.", ColorCode.BrightBlue);
 
                 goto L_Casted;
             }
 
-            Tell("Your inventory is full!", Color.BrightRed);
+            Tell("Your inventory is full!", ColorCode.BrightRed);
             return;
         }
 
@@ -1304,16 +1311,16 @@ public sealed class GamePlayer
             var targetPlayer = GameState.GetPlayer(Target);
             if (targetPlayer is null)
             {
-                Tell("Could not cast spell!", Color.BrightRed);
+                Tell("Could not cast spell!", ColorCode.BrightRed);
                 return;
             }
 
             if (mapInfo.Moral == MapMoral.None &&
                 targetPlayer.Character.MapId == mapId &&
-                targetPlayer.Character is {HP: > 0, Level: >= 10, AccessLevel: AccessLevel.Player} &&
-                Character is {Level: >= 10, AccessLevel: AccessLevel.Player})
+                targetPlayer.Character is {HP: > 0, Level: >= 10, AccessLevel: AccessLevel.None} &&
+                Character is {Level: >= 10, AccessLevel: AccessLevel.None})
             {
-                Map.SendMessage($"{Character.Name} casts {spellInfo.Name} on {targetPlayer.Character.Name}.", Color.BrightBlue);
+                Map.SendMessage($"{Character.Name} casts {spellInfo.Name} on {targetPlayer.Character.Name}.", ColorCode.BrightBlue);
 
                 switch (spellInfo.Type)
                 {
@@ -1325,7 +1332,7 @@ public sealed class GamePlayer
                         }
                         else
                         {
-                            Tell($"The spell was to weak to hurt {targetPlayer.Character.Name}!", Color.BrightRed);
+                            Tell($"The spell was to weak to hurt {targetPlayer.Character.Name}!", ColorCode.BrightRed);
                         }
 
                         break;
@@ -1346,7 +1353,7 @@ public sealed class GamePlayer
 
             if (mapId == targetPlayer.Character.MapId && spellInfo.Type is >= SpellType.AddHp and <= SpellType.AddSp)
             {
-                Map.SendMessage($"{Character.Name} casts {spellInfo.Name} on {targetPlayer.Character.Name}.", Color.BrightBlue);
+                Map.SendMessage($"{Character.Name} casts {spellInfo.Name} on {targetPlayer.Character.Name}.", ColorCode.BrightBlue);
 
                 switch (spellInfo.Type)
                 {
@@ -1370,14 +1377,14 @@ public sealed class GamePlayer
                 goto L_Casted;
             }
 
-            Tell("Could not cast spell!", Color.BrightRed);
+            Tell("Could not cast spell!", ColorCode.BrightRed);
             return;
         }
 
         var npc = Map.GetNpc(Target);
         if (npc is not null && npc.Alive && npc.Info.Behavior != NpcBehavior.Friendly && npc.Info.Behavior != NpcBehavior.Shopkeeper)
         {
-            Map.SendMessage($"{Character.Name} casts {spellInfo.Name} on a {npc.Info.Name}.", Color.BrightBlue);
+            Map.SendMessage($"{Character.Name} casts {spellInfo.Name} on a {npc.Info.Name}.", ColorCode.BrightBlue);
 
             switch (spellInfo.Type)
             {
@@ -1393,7 +1400,7 @@ public sealed class GamePlayer
                     }
                     else
                     {
-                        Tell($"The spell was to weak to hurt {npc.Info.Name}!", Color.BrightRed);
+                        Tell($"The spell was to weak to hurt {npc.Info.Name}!", ColorCode.BrightRed);
                     }
 
                     break;
@@ -1418,7 +1425,7 @@ public sealed class GamePlayer
             goto L_Casted;
         }
 
-        Tell("Could not cast spell!", Color.BrightRed);
+        Tell("Could not cast spell!", ColorCode.BrightRed);
         return;
 
         L_Casted:
@@ -1558,7 +1565,7 @@ public sealed class GamePlayer
             ? "There are no other players online."
             : $"There are {playerNames.Count} other players online: {message}";
 
-        Tell(message, Color.WhoColor);
+        Tell(message, ColorCode.WhoColor);
     }
 
     public void SendJoinMap()
@@ -1593,6 +1600,6 @@ public sealed class GamePlayer
 
     public void Tell(string message, int color)
     {
-        Send(new PlayerMessage(message, color));
+        Send(new ChatCommand(message, color));
     }
 }

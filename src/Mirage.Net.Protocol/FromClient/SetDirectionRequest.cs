@@ -1,4 +1,4 @@
-using Mirage.Game.Data;
+using Mirage.Shared.Data;
 
 namespace Mirage.Net.Protocol.FromClient;
 

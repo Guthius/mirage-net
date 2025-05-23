@@ -1,6 +1,5 @@
 ﻿using Mirage.Client.Entities;
-using Mirage.Client.Game;
-using Mirage.Game.Data;
+using Mirage.Shared.Data;
 
 namespace Mirage.Client;
 
@@ -12,8 +11,8 @@ public abstract class GameState : Microsoft.Xna.Framework.Game
     public InventorySlotInfo[] Inventory { get; set; } = [];
     public List<ChatInfo> ChatHistory { get; set; } = [];
     public bool ChatHistoryUpdated { get; set; }
-    public Map Map { get; protected set; }
+    public Map Map { get; protected set; } = null!;
     public bool GettingMap { get; set; }
     public int LocalPlayerId { get; set; }
-    public Player? LocalPlayer { get; set; }
+    public Actor? LocalPlayer { get; set; }
 }

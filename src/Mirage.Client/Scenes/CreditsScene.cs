@@ -11,14 +11,20 @@ public sealed class CreditsScene(ISceneManager sceneManager) : Scene
     {
         var center = ImGui.GetMainViewport().GetCenter();
 
-        ImGui.SetNextWindowPos(center, ImGuiCond.Always, new ImGuiVec2(0.5f, 0.5f));
-        ImGui.Begin("Credits", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize);
+        ImGui.SetNextWindowPos(center, ImGuiCond.Appearing, new ImGuiVec2(0.5f, 0.5f));
+        ImGui.Begin("Credits", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse);
+        ImGui.Spacing();
 
         DrawSection("Programming", "Chris Kremer (Torquel/Valient/Consty)");
-        DrawSection("Tile/Sprite Art", "Copyright (c) Square Soft");
-        DrawSection("GUI Art", "Jess Triska (Loken)");
+        ImGui.Separator();
 
-        if (ImGui.Button("Back"))
+        DrawSection("Tile/Sprite Art", "Copyright (c) Square Soft");
+        ImGui.Separator();
+
+        DrawSection("GUI Art", "Jess Triska (Loken)");
+        ImGui.Spacing();
+
+        if (ImGui.Button("Back", new ImGuiVec2(70, 26)))
         {
             sceneManager.SwitchTo<MainMenuScene>();
         }
@@ -31,7 +37,9 @@ public sealed class CreditsScene(ISceneManager sceneManager) : Scene
         ImGui.PushStyleColor(ImGuiCol.Text, new ImGuiVec4(.7f, .7f, 1, 1));
         ImGui.Text(title);
         ImGui.PopStyleColor();
+        ImGui.Spacing();
         ImGui.Text(content);
-        ImGui.Separator();
+        ImGui.Spacing();
+        ImGui.Spacing();
     }
 }

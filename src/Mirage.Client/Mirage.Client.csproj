@@ -11,7 +11,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="Jarodwr.MonoGameImGuiNet" Version="1.0.0" />
         <PackageReference Include="MessagePack" Version="3.1.1"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5" />
         <PackageReference Include="System.Resources.Extensions" Version="9.0.0"/>
         <PackageReference Include="TiledSharp" Version="1.0.1"/>
         <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.1.303"/>
@@ -19,7 +22,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Mirage.Client.Core\Mirage.Client.Core.csproj"/>
         <ProjectReference Include="..\Mirage.Net.Protocol\Mirage.Net.Protocol.csproj"/>
         <ProjectReference Include="..\Mirage.Net\Mirage.Net.csproj"/>
     </ItemGroup>
@@ -30,6 +32,9 @@
         </None>
         <None Update="Content\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="appsettings.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
 

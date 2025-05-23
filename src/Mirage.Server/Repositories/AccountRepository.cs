@@ -1,4 +1,4 @@
-﻿using Mirage.Game.Data;
+﻿using Mirage.Shared.Data;
 using MongoDB.Driver;
 using Serilog;
 
@@ -18,13 +18,17 @@ public static class AccountRepository
         return count > 0;
     }
 
-    public static void Create(string accountName, string password)
+    public static AccountInfo Create(string accountName, string password)
     {
-        GetCollection().InsertOne(new AccountInfo
+        var account = new AccountInfo
         {
             Name = accountName,
             Password = BCrypt.Net.BCrypt.HashPassword(password)
-        });
+        };
+
+        GetCollection().InsertOne(account);
+
+        return account;
     }
 
     public static AccountInfo? Authenticate(string accountName, string password)

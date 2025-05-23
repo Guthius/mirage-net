@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
-using Mirage.Game.Constants;
 using Mirage.Server.Net;
 using Mirage.Server.Repositories;
+using Mirage.Shared.Constants;
 using Serilog;
 
 namespace Mirage.Server.Game;
@@ -13,8 +13,6 @@ public sealed class GameService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        const float deltaTime = 0.5f;
-
         const int savePlayersInterval = 60000;
         const int spawnMapItemsInterval = 1000;
 
@@ -29,46 +27,19 @@ public sealed class GameService : BackgroundService
         MapManager.Initialize();
 
         Network.Start();
-
-        var savePlayerTimeLeft = savePlayersInterval;
-        var spawnMapItemsTimeLeft = spawnMapItemsInterval;
+        
+        var lastUpdateTime = DateTime.UtcNow;
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Task.Delay(500, stoppingToken);
-
-            savePlayerTimeLeft -= 500;
-            if (savePlayerTimeLeft <= 0)
-            {
-                _minPassed += 1;
-                if (_minPassed < 10)
-                {
-                    return;
-                }
-
-                if (GameState.OnlinePlayerCount() > 0)
-                {
-                    Network.SendGlobalMessage("Saving all online players...", Color.Pink);
-
-                    GameState.SavePlayers();
-                }
-
-                _minPassed = 0;
-
-                savePlayerTimeLeft += savePlayersInterval;
-            }
-
-            spawnMapItemsTimeLeft -= 500;
-            if (spawnMapItemsTimeLeft <= 0)
-            {
-                CheckSpawnMapItems();
-
-                spawnMapItemsTimeLeft += spawnMapItemsInterval;
-            }
+            await Task.Delay(10, stoppingToken);
+            
+            var currentTime = DateTime.UtcNow;
+            var deltaTime = (float)(currentTime - lastUpdateTime).TotalSeconds;
+            
+            lastUpdateTime = currentTime;
 
             MapManager.Update(deltaTime);
-
-            GameState.Update();
         }
 
         Log.Information("Shutting down server...");

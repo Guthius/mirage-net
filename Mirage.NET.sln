@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D9C5A85C-0CC4-41EA-83F8-4168DE9B01D6}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{D9C5A85C-0CC4-41EA-83F8-4168DE9B01D6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mirage.Client", "src\Mirage.Client\Mirage.Client.csproj", "{C011609A-4638-4F6C-9348-FBFA787D1535}"
 EndProject
@@ -10,14 +10,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mirage.Net.Protocol", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mirage.Net", "src\Mirage.Net\Mirage.Net.csproj", "{66D95256-83CA-4CEF-8560-E6C2EC16B472}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mirage.Game", "src\Mirage.Game\Mirage.Game.csproj", "{17AA3D80-44E4-4FE4-8D4F-3736034E75D2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mirage.Shared", "src\Mirage.Shared\Mirage.Shared.csproj", "{17AA3D80-44E4-4FE4-8D4F-3736034E75D2}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dist", "dist", "{9919EB97-6A1A-493D-8DD2-2D57AE35C63B}"
-	ProjectSection(SolutionItems) = preProject
-		dist\mongo-init.js = dist\mongo-init.js
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{2A9B2A2F-52A7-47DE-8B54-8B5333278C8C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configuration", "{2A9B2A2F-52A7-47DE-8B54-8B5333278C8C}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
 		docker-compose.yml = docker-compose.yml
@@ -26,6 +21,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{2A9B2A
 		.config\dotnet-tools.json = .config\dotnet-tools.json
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data", "Data", "{BF7B3825-7616-4942-BE24-0458A51229C1}"
+	ProjectSection(SolutionItems) = preProject
+		dist\mongo-init.js = dist\mongo-init.js
 	EndProjectSection
 EndProject
 Global
@@ -39,6 +39,7 @@ Global
 		{17AA3D80-44E4-4FE4-8D4F-3736034E75D2} = {D9C5A85C-0CC4-41EA-83F8-4168DE9B01D6}
 		{66D95256-83CA-4CEF-8560-E6C2EC16B472} = {D9C5A85C-0CC4-41EA-83F8-4168DE9B01D6}
 		{BC701BBC-439A-4C3D-BB68-240723446D21} = {D9C5A85C-0CC4-41EA-83F8-4168DE9B01D6}
+		{BF7B3825-7616-4942-BE24-0458A51229C1} = {2A9B2A2F-52A7-47DE-8B54-8B5333278C8C}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{C011609A-4638-4F6C-9348-FBFA787D1535}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

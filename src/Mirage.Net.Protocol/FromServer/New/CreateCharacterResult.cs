@@ -3,11 +3,10 @@
 public enum CreateCharacterResult
 {
     Ok,
-    
+
     CharacterNameInvalid,
     CharacterNameTooShort,
     CharacterNameInUse,
-    
-    InvalidJob,
-    
+
+    InvalidJob
 }

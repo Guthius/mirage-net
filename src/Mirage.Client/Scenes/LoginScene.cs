@@ -14,6 +14,8 @@ public sealed class LoginScene(ISceneManager sceneManager, GameClient gameState)
 
     protected override void OnShow()
     {
+        Network.Disconnect();
+        
         _accountName = string.Empty;
         _password = string.Empty;
 
@@ -28,14 +30,17 @@ public sealed class LoginScene(ISceneManager sceneManager, GameClient gameState)
         ImGui.SetNextWindowPos(center, ImGuiCond.Appearing, new ImGuiVec2(0.5f, 0.5f));
         ImGui.Begin("Login", ImGuiWindowFlags.AlwaysAutoResize);
         ImGui.Spacing();
+        
         ImGui.Text("Enter your account name and password.");
         ImGui.Spacing();
         ImGui.Spacing();
         ImGui.Spacing();
+        
         ImGui.SetItemDefaultFocus();
         ImGui.InputText("Account Name", ref _accountName, 16);
         ImGui.Spacing();
         ImGui.Spacing();
+        
         ImGui.InputText("Password", ref _password, 32, ImGuiInputTextFlags.Password);
         ImGui.Spacing();
         ImGui.Spacing();

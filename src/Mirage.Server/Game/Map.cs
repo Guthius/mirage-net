@@ -1,21 +1,78 @@
-﻿using Mirage.Game.Data;
-using Mirage.Net;
-using Mirage.Net.Protocol.FromServer;
+﻿using Mirage.Net;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Net;
+using Mirage.Shared.Data;
 
 namespace Mirage.Server.Game;
 
-public sealed class Map(NewMapInfo info) : IPacketRecipient
+public sealed class Map : IPacketRecipient
 {
     private readonly List<GamePlayer> _players = [];
+    private readonly List<Npc> _npcs;
+    private readonly NewMapInfo _info;
 
-    /// <summary>
-    /// Updates the map and all objects on the map.
-    /// </summary>
-    public void Update(float dt)
+    public Map(NewMapInfo info)
+    {
+        _info = info;
+        _npcs =
+        [
+            new Npc(this)
+            {
+                Id = MakeNpcId(1),
+                Name = "Test NPC 1",
+                Sprite = 2,
+                X = Random.Shared.Next(0, 10),
+                Y = Random.Shared.Next(0, 10),
+                Direction = Direction.Up,
+                MaxHealth = 5,
+                Health = 5,
+                Alive = true
+            },
+            new Npc(this)
+            {
+                Id = MakeNpcId(2),
+                Name = "Test NPC 2",
+                Sprite = 2,
+                X = Random.Shared.Next(0, 10),
+                Y = Random.Shared.Next(0, 10),
+                Direction = Direction.Up,
+                MaxHealth = 5,
+                Health = 5,
+                Alive = true
+            },
+            new Npc(this)
+            {
+                Id = MakeNpcId(3),
+                Name = "Test NPC 3",
+                Sprite = 2,
+                X = Random.Shared.Next(0, 10),
+                Y = Random.Shared.Next(0, 10),
+                Direction = Direction.Up,
+                MaxHealth = 5,
+                Health = 5,
+                Alive = true
+            }
+        ];
+    }
+
+    private static int MakeNpcId(int slot)
+    {
+        return (slot & 0xffff) << 16;
+    }
+
+    public void Update(float deltaTime)
     {
         // TODO: Implement me: regen player health, regen NPC health, move NPCs, respawn NPCS, despawn items
+
+        UpdateNpcs(deltaTime);
+    }
+
+    private void UpdateNpcs(float deltaTime)
+    {
+        foreach (var npc in _npcs)
+        {
+            npc.Update(deltaTime);
+        }
     }
 
     /// <summary>
@@ -26,34 +83,62 @@ public sealed class Map(NewMapInfo info) : IPacketRecipient
     {
         _players.Add(player);
 
-        player.Send(new LoadMapCommand(info.Name, info.Revision));
+        player.Send(new LoadMapCommand(_info.Name, _info.Revision));
 
         foreach (var otherPlayer in _players)
         {
-            player.Send(new CreatePlayerCommand(
+            player.Send(new CreateActorCommand(
                 otherPlayer.Id,
                 otherPlayer.Character.Name,
-                otherPlayer.Character.JobId,
                 otherPlayer.Character.Sprite,
                 otherPlayer.Character.PlayerKiller,
                 otherPlayer.Character.AccessLevel,
                 otherPlayer.Character.X,
                 otherPlayer.Character.Y,
-                otherPlayer.Character.Direction));
+                otherPlayer.Character.Direction,
+                otherPlayer.Character.MaxHP,
+                otherPlayer.Character.HP,
+                otherPlayer.Character.MaxMP,
+                otherPlayer.Character.MP,
+                otherPlayer.Character.MaxSP,
+                otherPlayer.Character.SP));
         }
 
-        // TODO: Sync NPC's and items with the new player...
+        foreach (var npc in _npcs)
+        {
+            if (!npc.Alive)
+            {
+                continue;
+            }
 
-        Send(new CreatePlayerCommand(
+            player.Send(new CreateActorCommand(
+                npc.Id,
+                npc.Name,
+                npc.Sprite,
+                false, AccessLevel.None,
+                npc.X,
+                npc.Y,
+                npc.Direction,
+                npc.MaxHealth,
+                npc.Health,
+                0, 0, 0, 0));
+        }
+
+        Send(new CreateActorCommand(
             player.Id,
             player.Character.Name,
-            player.Character.JobId,
             player.Character.Sprite,
             player.Character.PlayerKiller,
             player.Character.AccessLevel,
             player.Character.X,
             player.Character.Y,
-            player.Character.Direction));
+            player.Character.Direction,
+            player.Character.MaxHP,
+            player.Character.HP,
+            player.Character.MaxMP,
+            player.Character.MP,
+            player.Character.MaxSP,
+            player.Character.SP));
     }
 
     /// <summary>
@@ -67,7 +152,7 @@ public sealed class Map(NewMapInfo info) : IPacketRecipient
             return;
         }
 
-        Send(new DestroyPlayerCommand(player.Id));
+        Send(new DestroyActorCommand(player.Id));
     }
 
     /// <summary>
@@ -99,7 +184,16 @@ public sealed class Map(NewMapInfo info) : IPacketRecipient
                 break;
         }
 
-        Send(new MovePlayerCommand(player.Id, direction, movementType), recipient => recipient.Id != player.Id);
+        Send(new ActorMoveCommand(player.Id, direction, movementType), recipient => recipient.Id != player.Id);
+    }
+
+    /// <summary>
+    /// Makes the player attack the actor on the tile in the direction the player is facing.
+    /// </summary>
+    /// <param name="player">The player that is attacking.</param>
+    public void Attack(GamePlayer player)
+    {
+        Send(new ActorAttackCommand(player.Id), recipient => recipient.Id != player.Id);
     }
 
     /// <summary>
@@ -143,6 +237,6 @@ public sealed class Map(NewMapInfo info) : IPacketRecipient
     /// <param name="color">The message color.</param>
     public void SendMessage(string message, int color)
     {
-        Send(new PlayerMessage(message, color));
+        Send(new ChatCommand(message, color));
     }
 }

@@ -3,10 +3,9 @@ using ImGuiNET;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Mirage.Client.Game;
+using Mirage.Client.Extensions;
 using Mirage.Client.Scenes;
 using MonoGame.ImGuiNet;
-using Color = Microsoft.Xna.Framework.Color;
 using ImGuiVec2 = System.Numerics.Vector2;
 
 namespace Mirage.Client;

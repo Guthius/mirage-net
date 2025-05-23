@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Mirage.Game\Mirage.Game.csproj"/>
+        <ProjectReference Include="..\Mirage.Shared\Mirage.Shared.csproj" />
         <ProjectReference Include="..\Mirage.Net.Protocol\Mirage.Net.Protocol.csproj"/>
     </ItemGroup>
 </Project>

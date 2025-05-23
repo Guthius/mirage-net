@@ -1,0 +1,19 @@
+﻿namespace Mirage.Net.Protocol.FromClient.New;
+
+public sealed record CreateAccountRequest(string AccountName, string Password) : IPacket<CreateAccountRequest>
+{
+    public static string PacketId => nameof(CreateAccountRequest);
+
+    public static CreateAccountRequest ReadFrom(PacketReader reader)
+    {
+        return new CreateAccountRequest(
+            AccountName: reader.ReadString(),
+            Password: reader.ReadString());
+    }
+
+    public void WriteTo(PacketWriter writer)
+    {
+        writer.WriteString(AccountName);
+        writer.WriteString(Password);
+    }
+}

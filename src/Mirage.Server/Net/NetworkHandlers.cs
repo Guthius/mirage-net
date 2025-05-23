@@ -1,11 +1,11 @@
-﻿using Mirage.Game.Constants;
-using Mirage.Game.Data;
-using Mirage.Net.Protocol.FromClient;
+﻿using Mirage.Net.Protocol.FromClient;
 using Mirage.Net.Protocol.FromClient.New;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Game;
 using Mirage.Server.Repositories;
+using Mirage.Shared.Constants;
+using Mirage.Shared.Data;
 using Serilog;
 using static Mirage.Server.Net.Network;
 
@@ -45,6 +45,71 @@ public static class NetworkHandlers
         session.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
 
         Log.Information("Account {AccountName} has logged in from {RemoteIp}", account.Name, GetIP(session.Id));
+    }
+
+    public static void HandleCreateAccount(GameSession session, CreateAccountRequest request)
+    {
+        if (session.Account is not null)
+        {
+            return;
+        }
+
+        if (request.AccountName.Length < 3 || request.Password.Length < 3)
+        {
+            session.Send(new CreateAccountResponse(CreateAccountResult.AccountNameOrPasswordTooShort));
+            return;
+        }
+
+        foreach (var ch in request.AccountName)
+        {
+            if (char.IsLetterOrDigit(ch) || ch == '_' || ch == ' ')
+            {
+                continue;
+            }
+
+            session.Send(new CreateAccountResponse(CreateAccountResult.AccountNameInvalid));
+            return;
+        }
+
+        if (AccountRepository.Exists(request.AccountName))
+        {
+            session.Send(new CreateAccountResponse(CreateAccountResult.AccountNameTaken));
+            return;
+        }
+
+        var account = AccountRepository.Create(request.AccountName, request.Password);
+
+        Log.Information("Account '{AccountName}' has been created.", request.AccountName);
+
+        session.Account = account;
+        session.Send(new CreateAccountResponse(CreateAccountResult.Ok));
+        session.Send(new UpdateJobListCommand(ClassRepository.GetAll()));
+        session.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
+    }
+
+    public static void HandleDeleteAccount(GameSession session, DeleteAccountRequest request)
+    {
+        if (session.Account is not null)
+        {
+            return;
+        }
+
+        if (request.AccountName.Length < 3 || request.Password.Length < 3)
+        {
+            session.Send(new DeleteAccountResponse(DeleteAccountResult.AccountNameOrPasswordTooShort));
+            return;
+        }
+
+        var account = AccountRepository.Authenticate(request.AccountName, request.Password);
+        if (account is null)
+        {
+            session.Send(new DeleteAccountResponse(DeleteAccountResult.InvalidAccountNameOrPassword));
+            return;
+        }
+
+        AccountRepository.Delete(account.Id);
+
+        session.Send(new DeleteAccountResponse(DeleteAccountResult.Ok));
     }
 
     public static void HandleCreateCharacter(GameSession session, AccountInfo account, CreateCharacterRequest request)
@@ -106,116 +171,17 @@ public static class NetworkHandlers
         player.NewMap.Move(player, request.Direction, request.Movement);
     }
 
-    //----
-
-    public static void HandleCreateAccount(GameSession session, CreateAccountRequest request)
+    public static void HandleAttack(GamePlayer player, AttackRequest request)
     {
-        if (session.Account is not null)
-        {
-            return;
-        }
-
-        if (request.AccountName.Length < 3 || request.Password.Length < 3)
-        {
-            session.SendAlert("Account name and password must each contain at least 3 characters");
-            return;
-        }
-
-        foreach (var ch in request.AccountName)
-        {
-            if (char.IsLetterOrDigit(ch) || ch == '_' || ch == ' ')
-            {
-                continue;
-            }
-
-            session.SendAlert("Invalid name, only letters, numbers, spaces, and _ allowed in names.");
-            return;
-        }
-
-        if (AccountRepository.Exists(request.AccountName))
-        {
-            session.SendAlert("This account name is already taken. Please choose a different name.");
-
-            return;
-        }
-
-        AccountRepository.Create(request.AccountName, request.Password);
-
-        Log.Information("Account '{AccountName}' has been created.", request.AccountName);
-
-        session.SendAlert("Your account has been created!");
+        player.NewMap.Attack(player);
     }
-
-    public static void HandleDeleteAccount(GameSession session, DeleteAccountRequest request)
-    {
-        if (session.Account is not null)
-        {
-            return;
-        }
-
-        if (request.AccountName.Length < 3 || request.Password.Length < 3)
-        {
-            session.SendAlert("Account name and password must each contain at least 3 characters");
-            return;
-        }
-
-        var account = AccountRepository.Authenticate(request.AccountName, request.Password);
-        if (account is null)
-        {
-            session.SendAlert("Invalid account name or password.");
-            return;
-        }
-
-        AccountRepository.Delete(account.Id);
-
-        session.SendAlert("Your account has been deleted!");
-    }
-
+    
     public static void HandleSay(GamePlayer player, SayRequest request)
     {
         ChatProcessor.Handle(player, request.Message);
     }
-    
-    public static void HandlePlayerMessage(GamePlayer player, PlayerMessageRequest request)
-    {
-        var targetPlayerId = GameState.FindPlayer(request.TargetName);
-        if (targetPlayerId is null)
-        {
-            player.Tell("Player is not online.", Color.White);
-            return;
-        }
 
-        foreach (var ch in request.Message)
-        {
-            if (ch >= 32 && ch <= 126)
-            {
-                continue;
-            }
-
-            ReportHackAttempt(player.Id, "Player Msg Text Modification");
-            return;
-        }
-
-        if (targetPlayerId == player)
-        {
-            Log.Information("Map #{MapId}: {CharacterName} begins to mumble to himself, what a wierdo...",
-                player.Character.MapId,
-                player.Character.Name);
-
-            player.Map.SendMessage($"{player.Character.Name} begins to mumble to himself, what a wierdo...", Color.Green);
-
-            return;
-        }
-
-        Log.Information("{FromCharacterName} tells {ToCharacterName}, '{Message}'",
-            player.Character.Name,
-            targetPlayerId.Character.Name,
-            request.Message);
-
-        targetPlayerId.Tell($"{player.Character.Name} tells you, '{request.Message}'", Color.TellColor);
-
-        player.Tell($"You tell {targetPlayerId.Character.Name}, '{request.Message}'", Color.TellColor);
-    }
+    //----
 
     public static void HandleSetDirection(GamePlayer player, SetDirectionRequest request)
     {
@@ -228,92 +194,11 @@ public static class NetworkHandlers
         player.UseItem(request.InventorySlot);
     }
 
-    public static void HandleAttack(GamePlayer player, AttackRequest request)
-    {
-        foreach (var otherPlayer in GameState.OnlinePlayers())
-        {
-            if (otherPlayer == player)
-            {
-                continue;
-            }
-
-            if (!player.CanAttackPlayer(otherPlayer))
-            {
-                continue;
-            }
-
-            if (otherPlayer.TryBlockHit(out var shieldInfo))
-            {
-                player.Tell($"{otherPlayer.Character.Name}'s {shieldInfo.Name} has blocked your hit!", Color.BrightCyan);
-
-                otherPlayer.Tell($"Your {shieldInfo.Name} has blocked {player.Character.Name}'s hit!", Color.BrightRed);
-
-                return;
-            }
-
-            var damage = player.CalculateDamage();
-            if (player.TryCriticalHit())
-            {
-                damage += Random.Shared.Next(damage / 2) + 1 - otherPlayer.CalculateProtection();
-
-                player.Tell("You feel a surge of energy upon swinging!", Color.BrightCyan);
-
-                otherPlayer.Tell($"{player.Character.Name} swings with enormous might!", Color.BrightCyan);
-            }
-            else
-            {
-                damage -= otherPlayer.CalculateProtection();
-            }
-
-            if (damage > 0)
-            {
-                player.AttackPlayer(otherPlayer, damage);
-            }
-            else
-            {
-                player.Tell("Your attack does nothing.", Color.BrightRed);
-            }
-
-            return;
-        }
-
-        foreach (var npc in player.Map.AliveNpcs())
-        {
-            if (!player.CanAttackNpc(npc))
-            {
-                continue;
-            }
-
-            int damage;
-            if (!player.TryCriticalHit())
-            {
-                damage = player.CalculateDamage() - npc.Info.Defense / 2;
-            }
-            else
-            {
-                var n = player.CalculateDamage();
-
-                damage = n + Random.Shared.Next(n / 2) + 1 - npc.Info.Defense / 2;
-
-                player.Tell("You feel a surge of energy upon swinging!", Color.BrightCyan);
-            }
-
-            if (damage > 0)
-            {
-                player.AttackNpc(npc, damage);
-            }
-            else
-            {
-                player.Tell("Your attack does nothing.", Color.BrightRed);
-            }
-        }
-    }
-
     public static void HandleUseStatPoint(GamePlayer player, UseStatPointRequest request)
     {
         if (player.Character.StatPoints <= 0)
         {
-            player.Tell("You have no skill points to train with!", Color.BrightRed);
+            player.Tell("You have no skill points to train with!", ColorCode.BrightRed);
             return;
         }
 
@@ -322,28 +207,28 @@ public static class NetworkHandlers
         {
             case StatType.Strength:
                 player.Character.Strength++;
-                player.Tell("You have gained more strength!", Color.White);
+                player.Tell("You have gained more strength!", ColorCode.White);
                 break;
 
             case StatType.Defense:
                 player.Character.Defense++;
-                player.Tell("You have gained more defense!", Color.White);
+                player.Tell("You have gained more defense!", ColorCode.White);
                 break;
 
             case StatType.Intelligence:
                 player.Character.Intelligence++;
-                player.Tell("You have gained more magic abilities!", Color.White);
+                player.Tell("You have gained more magic abilities!", ColorCode.White);
                 break;
 
             case StatType.Speed:
                 player.Character.Speed++;
-                player.Tell("You have gained more speed!", Color.White);
+                player.Tell("You have gained more speed!", ColorCode.White);
                 break;
         }
 
         player.SendStats();
     }
-    
+
     public static void HandleGetStats(GamePlayer player, GetStatsRequest request)
     {
     }
@@ -409,7 +294,7 @@ public static class NetworkHandlers
 
         player.DropItem(request.InventorySlot, request.Quantity);
     }
-    
+
     public static void HandleEditItem(GamePlayer player, EditItemRequest request)
     {
         var itemInfo = ItemRepository.Get(request.ItemId);
@@ -439,7 +324,7 @@ public static class NetworkHandlers
 
         SendToAll(new UpdateItem(request.ItemInfo));
     }
-    
+
     public static void HandleEditNpc(GamePlayer player, EditNpcRequest request)
     {
         var npcInfo = NpcRepository.Get(request.NpcId);
@@ -469,7 +354,7 @@ public static class NetworkHandlers
 
         SendToAll(new UpdateNpc(request.NpcInfo.Id, request.NpcInfo.Name, request.NpcInfo.Sprite));
     }
-    
+
     public static void HandleEditShop(GamePlayer player, EditShopRequest request)
     {
         var shopInfo = ShopRepository.Get(request.ShopId);
@@ -499,7 +384,7 @@ public static class NetworkHandlers
 
         SendToAll(new UpdateShop(request.ShopInfo.Id, request.ShopInfo.Name));
     }
-    
+
     public static void HandleEditSpell(GamePlayer player, EditSpellRequest request)
     {
         var spellInfo = SpellRepository.Get(request.SpellId);
@@ -541,7 +426,7 @@ public static class NetworkHandlers
         var shopInfo = ShopRepository.Get(mapInfo.ShopId);
         if (shopInfo is null)
         {
-            player.Tell("There is no shop here.", Color.BrightRed);
+            player.Tell("There is no shop here.", ColorCode.BrightRed);
             return;
         }
 
@@ -562,7 +447,7 @@ public static class NetworkHandlers
             player.Tell(!string.IsNullOrEmpty(spellInfo.RequiredClassId)
                     ? $"{itemInfo.Name} can be used by all classes."
                     : $"{itemInfo.Name} can only be used by a {ClassRepository.GetName(spellInfo.RequiredClassId)};",
-                Color.Yellow);
+                ColorCode.Yellow);
         }
 
         player.Send(new Trade(shopInfo.Id, shopInfo.FixesItems, shopInfo.Trades));
@@ -599,20 +484,20 @@ public static class NetworkHandlers
         var inventorySlot = player.GetFreeInventorySlot(getItemInfo);
         if (inventorySlot == 0)
         {
-            player.Tell("Trade unsuccessful, inventory full.", Color.BrightRed);
+            player.Tell("Trade unsuccessful, inventory full.", ColorCode.BrightRed);
             return;
         }
 
         if (player.GetItemQuantity(tradeInfo.GiveItemId) < tradeInfo.GiveItemQuantity)
         {
-            player.Tell("Trade unsuccessful.", Color.BrightRed);
+            player.Tell("Trade unsuccessful.", ColorCode.BrightRed);
             return;
         }
 
         player.TakeItem(tradeInfo.GiveItemId, tradeInfo.GiveItemQuantity);
         player.GiveItem(tradeInfo.GetItemId, tradeInfo.GetItemQuantity);
 
-        player.Tell("The trade was successful!", Color.Yellow);
+        player.Tell("The trade was successful!", ColorCode.Yellow);
     }
 
     public static void HandleFixItem(GamePlayer player, FixItemRequest request)
@@ -629,14 +514,14 @@ public static class NetworkHandlers
 
         if (itemInfo.Type is < ItemType.Weapon or > ItemType.Shield)
         {
-            player.Tell("You can only fix weapons, armors, helmets, and shields.", Color.BrightRed);
+            player.Tell("You can only fix weapons, armors, helmets, and shields.", ColorCode.BrightRed);
             return;
         }
 
         var pointsToRepair = itemInfo.Data1 - slotInfo.Durability;
         if (pointsToRepair <= 0)
         {
-            player.Tell("This item is in perfect condition!", Color.White);
+            player.Tell("This item is in perfect condition!", ColorCode.White);
             return;
         }
 
@@ -646,7 +531,7 @@ public static class NetworkHandlers
         var availableGold = player.GetItemQuantity(goldId);
         if (availableGold < costPerPoint)
         {
-            player.Tell("Insufficient gold to fix this item!", Color.BrightRed);
+            player.Tell("Insufficient gold to fix this item!", ColorCode.BrightRed);
             return;
         }
 
@@ -656,7 +541,7 @@ public static class NetworkHandlers
 
             slotInfo.Durability = itemInfo.Data1;
 
-            player.Tell($"Item has been totally restored for {costTotal} gold!", Color.BrightBlue);
+            player.Tell($"Item has been totally restored for {costTotal} gold!", ColorCode.BrightBlue);
             return;
         }
 
@@ -672,7 +557,7 @@ public static class NetworkHandlers
 
         slotInfo.Durability += pointsToRepair;
 
-        player.Tell($"Item has been partially fixed for {cost} gold!", Color.BrightBlue);
+        player.Tell($"Item has been partially fixed for {cost} gold!", ColorCode.BrightBlue);
     }
 
     public static void HandleSearch(GamePlayer player, SearchRequest request)
@@ -704,30 +589,30 @@ public static class NetworkHandlers
             switch (levelDifference)
             {
                 case >= 5:
-                    player.Tell("You wouldn't stand a chance.", Color.BrightRed);
+                    player.Tell("You wouldn't stand a chance.", ColorCode.BrightRed);
                     break;
 
                 case > 0:
-                    player.Tell("This one seems to have an advantage over you.", Color.Yellow);
+                    player.Tell("This one seems to have an advantage over you.", ColorCode.Yellow);
                     break;
 
                 case <= -5:
-                    player.Tell("You could slaughter that player.", Color.BrightBlue);
+                    player.Tell("You could slaughter that player.", ColorCode.BrightBlue);
                     break;
 
                 case < 0:
-                    player.Tell("You would have an advantage over that player.", Color.Yellow);
+                    player.Tell("You would have an advantage over that player.", ColorCode.Yellow);
                     break;
 
                 default:
-                    player.Tell("This would be an even fight.", Color.White);
+                    player.Tell("This would be an even fight.", ColorCode.White);
                     break;
             }
 
             player.Target = otherId;
             player.TargetType = TargetType.Player;
 
-            player.Tell($"Your target is now {otherPlayer.Character.Name}.", Color.Yellow);
+            player.Tell($"Your target is now {otherPlayer.Character.Name}.", ColorCode.Yellow);
             return;
         }
 
@@ -741,7 +626,7 @@ public static class NetworkHandlers
                 return;
             }
 
-            player.Tell($"You see a {itemInfo.Name}.", Color.Yellow);
+            player.Tell($"You see a {itemInfo.Name}.", ColorCode.Yellow);
             return;
         }
 
@@ -756,7 +641,7 @@ public static class NetworkHandlers
             player.Target = npc.Slot;
             player.TargetType = TargetType.Npc;
 
-            player.Tell($"Your target is now a {npc.Info.Name}.", Color.Yellow);
+            player.Tell($"Your target is now a {npc.Info.Name}.", ColorCode.Yellow);
             return;
         }
     }

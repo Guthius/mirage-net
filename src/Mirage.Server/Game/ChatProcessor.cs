@@ -1,8 +1,9 @@
-﻿using Mirage.Game.Constants;
-using Mirage.Game.Data;
-using Mirage.Net.Protocol.FromServer;
+﻿using Mirage.Net.Protocol.FromServer;
+using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Net;
 using Mirage.Server.Repositories;
+using Mirage.Shared.Constants;
+using Mirage.Shared.Data;
 using Serilog;
 
 namespace Mirage.Server.Game;
@@ -121,14 +122,14 @@ public static class ChatProcessor
             return;
         }
 
-        player.Map.SendMessage($"{player.Character.Name} says '{message}'", Color.SayColor);
+        player.Map.SendMessage($"{player.Character.Name} says '{message}'", ColorCode.SayColor);
     }
 
     private static void HandleBroadcast(GamePlayer player, ReadOnlySpan<char> message)
     {
         if (!message.IsEmpty)
         {
-            Network.SendToAll(new PlayerMessage($"{player.Character.Name}: {message}", Color.BroadcastColor));
+            Network.SendToAll(new ChatCommand($"{player.Character.Name}: {message}", ColorCode.BroadcastColor));
         }
     }
 
@@ -136,7 +137,7 @@ public static class ChatProcessor
     {
         if (!emote.IsEmpty)
         {
-            player.Map.SendMessage($"{player.Character.Name} {emote}", Color.EmoteColor);
+            player.Map.SendMessage($"{player.Character.Name} {emote}", ColorCode.EmoteColor);
         }
     }
 
@@ -153,38 +154,38 @@ public static class ChatProcessor
 
         if (targetName.IsEmpty || chatMesage.IsEmpty)
         {
-            player.Tell("Usage: !playername msghere", Color.AlertColor);
+            player.Tell("Usage: !playername msghere", ColorCode.AlertColor);
             return;
         }
 
         var targetPlayerId = GameState.FindPlayer(targetName);
         if (targetPlayerId is null)
         {
-            player.Tell("Player is not online.", Color.White);
+            player.Tell("Player is not online.", ColorCode.White);
             return;
         }
 
         if (targetPlayerId == player)
         {
-            player.NewMap.SendMessage($"{player.Character.Name} begins to mumble to himself, what a wierdo...", Color.Green);
+            player.NewMap.SendMessage($"{player.Character.Name} begins to mumble to himself, what a wierdo...", ColorCode.Green);
 
             return;
         }
 
         Log.Information("{FromCharacterName} tells {ToCharacterName}, '{Message}'", player.Character.Name, targetPlayerId.Character.Name, new string(chatMesage));
 
-        targetPlayerId.Tell($"{player.Character.Name} tells you, '{chatMesage}'", Color.TellColor);
+        targetPlayerId.Tell($"{player.Character.Name} tells you, '{chatMesage}'", ColorCode.TellColor);
 
-        player.Tell($"You tell {targetPlayerId.Character.Name}, '{chatMesage}'", Color.TellColor);
+        player.Tell($"You tell {targetPlayerId.Character.Name}, '{chatMesage}'", ColorCode.TellColor);
     }
 
     private static void HandleHelp(GamePlayer player)
     {
-        player.Tell("Social commands:", Color.HelpColor);
-        player.Tell("'msghere = Broadcast Message", Color.HelpColor);
-        player.Tell("-msghere = Emote Message", Color.HelpColor);
-        player.Tell("!namehere msghere = Player Message", Color.HelpColor);
-        player.Tell("Available Commands: /help, /info, /who, /fps, /inv, /stats, /train, /trade, /party, /join, /leave", Color.HelpColor);
+        player.Tell("Social commands:", ColorCode.HelpColor);
+        player.Tell("'msghere = Broadcast Message", ColorCode.HelpColor);
+        player.Tell("-msghere = Emote Message", ColorCode.HelpColor);
+        player.Tell("!namehere msghere = Player Message", ColorCode.HelpColor);
+        player.Tell("Available Commands: /help, /info, /who, /fps, /inv, /stats, /train, /trade, /party, /join, /leave", ColorCode.HelpColor);
     }
 
     private static void HandleInfo(GamePlayer player, ReadOnlySpan<char> targetName)
@@ -197,22 +198,22 @@ public static class ChatProcessor
         var targetPlayer = GameState.FindPlayer(targetName);
         if (targetPlayer is null)
         {
-            player.Tell("Player is not online.", Color.White);
+            player.Tell("Player is not online.", ColorCode.White);
             return;
         }
 
-        player.Tell($"Account: {GameState.Sessions[targetPlayer.Id]?.Account?.Name}, Name: {targetPlayer.Character.Name}", Color.BrightGreen);
+        player.Tell($"Account: {GameState.Sessions[targetPlayer.Id]?.Account?.Name}, Name: {targetPlayer.Character.Name}", ColorCode.BrightGreen);
         if (player.Character.AccessLevel <= AccessLevel.Moderator)
         {
             return;
         }
 
-        player.Tell($"-=- Stats for {targetPlayer.Character.Name} -=-", Color.BrightGreen);
-        player.Tell($"Level: {targetPlayer.Character.Level}  Exp: {targetPlayer.Character.Exp}/{targetPlayer.Character.RequiredExp}", Color.BrightGreen);
-        player.Tell($"HP: {targetPlayer.Character.HP}/{targetPlayer.Character.MaxHP}  MP: {targetPlayer.Character.MP}/{targetPlayer.Character.MaxMP}  SP: {targetPlayer.Character.SP}/{targetPlayer.Character.MaxSP}", Color.BrightGreen);
-        player.Tell($"STR: {targetPlayer.Character.Strength}  DEF: {targetPlayer.Character.Defense}  MAGI: {targetPlayer.Character.Intelligence}  SPEED: {targetPlayer.Character.Speed}", Color.BrightGreen);
+        player.Tell($"-=- Stats for {targetPlayer.Character.Name} -=-", ColorCode.BrightGreen);
+        player.Tell($"Level: {targetPlayer.Character.Level}  Exp: {targetPlayer.Character.Exp}/{targetPlayer.Character.RequiredExp}", ColorCode.BrightGreen);
+        player.Tell($"HP: {targetPlayer.Character.HP}/{targetPlayer.Character.MaxHP}  MP: {targetPlayer.Character.MP}/{targetPlayer.Character.MaxMP}  SP: {targetPlayer.Character.SP}/{targetPlayer.Character.MaxSP}", ColorCode.BrightGreen);
+        player.Tell($"STR: {targetPlayer.Character.Strength}  DEF: {targetPlayer.Character.Defense}  MAGI: {targetPlayer.Character.Intelligence}  SPEED: {targetPlayer.Character.Speed}", ColorCode.BrightGreen);
 
-        player.Tell($"Critical Hit Chance: {targetPlayer.Character.CriticalHitRate}%, Block Chance: {targetPlayer.Character.BlockRate}%", Color.BrightGreen);
+        player.Tell($"Critical Hit Chance: {targetPlayer.Character.CriticalHitRate}%, Block Chance: {targetPlayer.Character.BlockRate}%", ColorCode.BrightGreen);
     }
 
     private static void HandleWho(GamePlayer player)
@@ -222,11 +223,11 @@ public static class ChatProcessor
 
     private static void HandleStats(GamePlayer player)
     {
-        player.Tell($"-=- Stats for {player.Character.Name} -=-", Color.White);
-        player.Tell($"Level: {player.Character.Level}  Exp: {player.Character.Exp}/{player.Character.RequiredExp}", Color.White);
-        player.Tell($"HP: {player.Character.HP}/{player.Character.MaxHP}  MP: {player.Character.MP}/{player.Character.MaxMP}  SP: {player.Character.SP}/{player.Character.MaxSP}", Color.White);
-        player.Tell($"STR: {player.Character.Strength}  DEF: {player.Character.Defense}  MAGI: {player.Character.Intelligence}  SPEED: {player.Character.Speed}", Color.White);
-        player.Tell($"Critical Hit Chance: {player.Character.CriticalHitRate}%, Block Chance: {player.Character.BlockRate}%", Color.White);
+        player.Tell($"-=- Stats for {player.Character.Name} -=-", ColorCode.White);
+        player.Tell($"Level: {player.Character.Level}  Exp: {player.Character.Exp}/{player.Character.RequiredExp}", ColorCode.White);
+        player.Tell($"HP: {player.Character.HP}/{player.Character.MaxHP}  MP: {player.Character.MP}/{player.Character.MaxMP}  SP: {player.Character.SP}/{player.Character.MaxSP}", ColorCode.White);
+        player.Tell($"STR: {player.Character.Strength}  DEF: {player.Character.Defense}  MAGI: {player.Character.Intelligence}  SPEED: {player.Character.Speed}", ColorCode.White);
+        player.Tell($"Critical Hit Chance: {player.Character.CriticalHitRate}%, Block Chance: {player.Character.BlockRate}%", ColorCode.White);
     }
 
     private static void HandleTrade(GamePlayer player)
@@ -240,7 +241,7 @@ public static class ChatProcessor
         var shopInfo = ShopRepository.Get(mapInfo.ShopId);
         if (shopInfo is null)
         {
-            player.Tell("There is no shop here.", Color.BrightRed);
+            player.Tell("There is no shop here.", ColorCode.BrightRed);
             return;
         }
 
@@ -261,7 +262,7 @@ public static class ChatProcessor
             player.Tell(!string.IsNullOrEmpty(spellInfo.RequiredClassId)
                     ? $"{itemInfo.Name} can be used by all classes."
                     : $"{itemInfo.Name} can only be used by a {ClassRepository.GetName(spellInfo.RequiredClassId)};",
-                Color.Yellow);
+                ColorCode.Yellow);
         }
 
         player.Send(new Trade(shopInfo.Id, shopInfo.FixesItems, shopInfo.Trades));
@@ -271,50 +272,50 @@ public static class ChatProcessor
     {
         if (targetName.IsEmpty)
         {
-            player.Tell("Usage: /party playernamehere", Color.AlertColor);
+            player.Tell("Usage: /party playernamehere", ColorCode.AlertColor);
             return;
         }
 
         if (player.InParty)
         {
-            player.Tell("You are already in a party!", Color.Pink);
+            player.Tell("You are already in a party!", ColorCode.Pink);
             return;
         }
 
         var targetPlayer = GameState.FindPlayer(targetName);
         if (targetPlayer is null)
         {
-            player.Tell("Player is not online.", Color.White);
+            player.Tell("Player is not online.", ColorCode.White);
             return;
         }
 
         if (player.Character.AccessLevel > AccessLevel.Moderator)
         {
-            player.Tell("You can't join a party, you are an admin!", Color.BrightBlue);
+            player.Tell("You can't join a party, you are an admin!", ColorCode.BrightBlue);
             return;
         }
 
         if (targetPlayer.Character.AccessLevel > AccessLevel.Moderator)
         {
-            player.Tell("Admins cannot join parties!", Color.BrightBlue);
+            player.Tell("Admins cannot join parties!", ColorCode.BrightBlue);
             return;
         }
 
         var levelDifference = Math.Abs(player.Character.Level - targetPlayer.Character.Level);
         if (levelDifference > 5)
         {
-            player.Tell("There is more then a 5 level gap between you two, party failed.", Color.Pink);
+            player.Tell("There is more then a 5 level gap between you two, party failed.", ColorCode.Pink);
             return;
         }
 
         if (targetPlayer.InParty)
         {
-            player.Tell("Player is already in a party!", Color.Pink);
+            player.Tell("Player is already in a party!", ColorCode.Pink);
             return;
         }
 
-        player.Tell($"Party request has been sent to {targetPlayer.Character.Name}.", Color.Pink);
-        targetPlayer.Tell($"{player.Character.Name} wants you to join their party.  Type /join to join, or /leave to decline.", Color.Pink);
+        player.Tell($"Party request has been sent to {targetPlayer.Character.Name}.", ColorCode.Pink);
+        targetPlayer.Tell($"{player.Character.Name} wants you to join their party.  Type /join to join, or /leave to decline.", ColorCode.Pink);
 
         player.IsPartyStarter = true;
         player.PartyMember = targetPlayer;
@@ -326,40 +327,40 @@ public static class ChatProcessor
     {
         if (player.PartyMember is null || player.IsPartyStarter)
         {
-            player.Tell("You have not been invited into a party!", Color.Pink);
+            player.Tell("You have not been invited into a party!", ColorCode.Pink);
             return;
         }
 
         if (player.PartyMember.PartyMember != player)
         {
-            player.Tell("Party failed.", Color.Pink);
+            player.Tell("Party failed.", ColorCode.Pink);
             return;
         }
 
         player.InParty = true;
-        player.Tell($"You have joined {player.PartyMember.Character.Name}'s party!", Color.Pink);
+        player.Tell($"You have joined {player.PartyMember.Character.Name}'s party!", ColorCode.Pink);
 
         player.PartyMember.InParty = true;
-        player.PartyMember.Tell($"{player.Character.Name} has joined your party!", Color.Pink);
+        player.PartyMember.Tell($"{player.Character.Name} has joined your party!", ColorCode.Pink);
     }
 
     private static void HandlePartyDecline(GamePlayer player)
     {
         if (player.PartyMember is null)
         {
-            player.Tell("You are not in a party!", Color.Pink);
+            player.Tell("You are not in a party!", ColorCode.Pink);
             return;
         }
 
         if (player.InParty)
         {
-            player.Tell("You have left the party.", Color.Pink);
-            player.PartyMember.Tell($"{player.Character.Name} has left the party.", Color.Pink);
+            player.Tell("You have left the party.", ColorCode.Pink);
+            player.PartyMember.Tell($"{player.Character.Name} has left the party.", ColorCode.Pink);
         }
         else
         {
-            player.Tell("Declined party request.", Color.Pink);
-            player.PartyMember.Tell($"{player.Character.Name} declined your request.", Color.Pink);
+            player.Tell("Declined party request.", ColorCode.Pink);
+            player.PartyMember.Tell($"{player.Character.Name} declined your request.", ColorCode.Pink);
         }
 
         player.PartyMember.PartyMember = null;
@@ -374,17 +375,17 @@ public static class ChatProcessor
     private static bool HandleAdmin(GamePlayer player, ReadOnlySpan<char> chatText)
     {
         var access = player.Character.AccessLevel;
-        if (access <= AccessLevel.Player)
+        if (access <= AccessLevel.None)
         {
             return false;
         }
 
         if (chatText.StartsWith(Commands.Admin, StringComparison.OrdinalIgnoreCase))
         {
-            player.Tell("Social Commands:", Color.HelpColor);
-            player.Tell("\"msghere = Global Admin Message", Color.HelpColor);
-            player.Tell("=msghere = Private Admin Message", Color.HelpColor);
-            player.Tell("Available Commands: /admin, /loc, /mapeditor, /warpmeto, /warptome, /warpto, /setsprite, /kick, /ban, /edititem, /respawn, /editnpc, /motd, /editshop, /ban, /editspell", Color.HelpColor);
+            player.Tell("Social Commands:", ColorCode.HelpColor);
+            player.Tell("\"msghere = Global Admin Message", ColorCode.HelpColor);
+            player.Tell("=msghere = Private Admin Message", ColorCode.HelpColor);
+            player.Tell("Available Commands: /admin, /loc, /mapeditor, /warpmeto, /warptome, /warpto, /setsprite, /kick, /ban, /edititem, /respawn, /editnpc, /motd, /editshop, /ban, /editspell", ColorCode.HelpColor);
             return true;
         }
 
@@ -409,7 +410,7 @@ public static class ChatProcessor
         {
             if (chatText.StartsWith(Commands.Location, StringComparison.OrdinalIgnoreCase))
             {
-                player.Tell($"Map: {player.Character.MapId}, X: {player.Character.X}, Y: {player.Character.Y}", Color.Pink);
+                player.Tell($"Map: {player.Character.MapId}, X: {player.Character.X}, Y: {player.Character.Y}", ColorCode.Pink);
                 return true;
             }
 
@@ -525,23 +526,23 @@ public static class ChatProcessor
         var targetPlayer = GameState.FindPlayer(targetName);
         if (targetPlayer is null)
         {
-            player.Tell("Player is not online.", Color.White);
+            player.Tell("Player is not online.", ColorCode.White);
             return;
         }
 
         if (targetPlayer == player)
         {
-            player.Tell("You cannot kick yourself!", Color.White);
+            player.Tell("You cannot kick yourself!", ColorCode.White);
             return;
         }
 
         if (targetPlayer.Character.AccessLevel > player.Character.AccessLevel)
         {
-            player.Tell("That is a higher access admin then you!", Color.White);
+            player.Tell("That is a higher access admin then you!", ColorCode.White);
             return;
         }
 
-        Network.SendGlobalMessage($"{targetPlayer.Character.Name} has been kicked from {Options.GameName} by {player.Character.Name}!", Color.White);
+        Network.SendGlobalMessage($"{targetPlayer.Character.Name} has been kicked from {Options.GameName} by {player.Character.Name}!", ColorCode.White);
 
         Log.Information("{CharacterName} has kicked {TargetCharacterName}.", player.Character.Name, targetPlayer.Character.Name);
 
@@ -552,7 +553,7 @@ public static class ChatProcessor
     {
         if (!message.IsEmpty)
         {
-            Network.SendToAll(new PlayerMessage($"(global) {player.Character.Name}: {message}", Color.GlobalColor));
+            Network.SendToAll(new ChatCommand($"(global) {player.Character.Name}: {message}", ColorCode.GlobalColor));
         }
     }
 
@@ -560,7 +561,7 @@ public static class ChatProcessor
     {
         if (!message.IsEmpty)
         {
-            Network.SendToAll(new PlayerMessage($"(admin {player.Character.Name}) {message}", Color.AdminColor));
+            Network.SendToAll(new ChatCommand($"(admin {player.Character.Name}) {message}", ColorCode.AdminColor));
         }
     }
 
@@ -574,13 +575,13 @@ public static class ChatProcessor
         var targetPlayer = GameState.FindPlayer(targetName);
         if (targetPlayer is null)
         {
-            player.Tell("Player is not online.", Color.White);
+            player.Tell("Player is not online.", ColorCode.White);
             return;
         }
 
         if (targetPlayer == player)
         {
-            player.Tell("You cannot warp to yourself!", Color.White);
+            player.Tell("You cannot warp to yourself!", ColorCode.White);
             return;
         }
 
@@ -591,9 +592,9 @@ public static class ChatProcessor
             targetPlayer.Character.Name,
             targetPlayer.Character.MapId);
 
-        targetPlayer.Tell($"{player.Character.Name} has warped to you.", Color.BrightBlue);
+        targetPlayer.Tell($"{player.Character.Name} has warped to you.", ColorCode.BrightBlue);
 
-        player.Tell($"You have been warped to {targetPlayer.Character.Name}.", Color.BrightBlue);
+        player.Tell($"You have been warped to {targetPlayer.Character.Name}.", ColorCode.BrightBlue);
     }
 
     private static void HandleWarpToMe(GamePlayer player, ReadOnlySpan<char> targetName)
@@ -606,13 +607,13 @@ public static class ChatProcessor
         var targetPlayer = GameState.FindPlayer(targetName);
         if (targetPlayer is null)
         {
-            player.Tell("Player is not online.", Color.White);
+            player.Tell("Player is not online.", ColorCode.White);
             return;
         }
 
         if (targetPlayer == player)
         {
-            player.Tell("You cannot warp yourself to yourself!", Color.White);
+            player.Tell("You cannot warp yourself to yourself!", ColorCode.White);
             return;
         }
 
@@ -623,9 +624,9 @@ public static class ChatProcessor
             targetPlayer.Character.Name,
             player.Character.MapId);
 
-        targetPlayer.Tell($"You have been summoned by {player.Character.Name}.", Color.BrightBlue);
+        targetPlayer.Tell($"You have been summoned by {player.Character.Name}.", ColorCode.BrightBlue);
 
-        player.Tell($"{targetPlayer.Character.Name} has been summoned.", Color.BrightBlue);
+        player.Tell($"{targetPlayer.Character.Name} has been summoned.", ColorCode.BrightBlue);
     }
 
     private static void HandleWarpTo(GamePlayer player, ReadOnlySpan<char> targetMapId)
@@ -642,7 +643,7 @@ public static class ChatProcessor
 
         if (mapId is <= 0 or > Limits.MaxMaps)
         {
-            player.Tell("Invalid map number.", Color.Red);
+            player.Tell("Invalid map number.", ColorCode.Red);
             return;
         }
 
@@ -654,7 +655,7 @@ public static class ChatProcessor
         }
 
         player.WarpTo(mapId, player.Character.X, player.Character.Y);
-        player.Tell($"You have been warped to map #{mapId}", Color.BrightBlue);
+        player.Tell($"You have been warped to map #{mapId}", ColorCode.BrightBlue);
 
         Log.Information("{CharacterName} warped to map #{MapId}", player.Character.Name, mapId);
     }
@@ -687,7 +688,7 @@ public static class ChatProcessor
         player.Map.RespawnItems();
         player.Map.RespawnNpcs();
 
-        player.Tell("Map respawned.", Color.Blue);
+        player.Tell("Map respawned.", ColorCode.Blue);
 
         Log.Information("{CharacterName} has respawned map #{MapId}", player.Character.Name, mapId);
     }
@@ -703,7 +704,7 @@ public static class ChatProcessor
 
         Log.Information("{CharacterName} changed MOTD to: {NewMotd}", player.Character.Name, new string(motd));
 
-        Network.SendToAll(new PlayerMessage($"MOTD changed to: {motd}", Color.BrightCyan));
+        Network.SendToAll(new ChatCommand($"MOTD changed to: {motd}", ColorCode.BrightCyan));
     }
 
     private static void HandleBanList(GamePlayer player)
@@ -718,7 +719,7 @@ public static class ChatProcessor
 
         foreach (var x in bans)
         {
-            player.Tell($"{lineNumber}: Banned IP {x.Ip} by {x.BannedBy}", Color.White);
+            player.Tell($"{lineNumber}: Banned IP {x.Ip} by {x.BannedBy}", ColorCode.White);
 
             lineNumber++;
         }
@@ -734,25 +735,25 @@ public static class ChatProcessor
         var targetPlayer = GameState.FindPlayer(targetName);
         if (targetPlayer is null)
         {
-            player.Tell("Player is not online.", Color.White);
+            player.Tell("Player is not online.", ColorCode.White);
             return;
         }
 
         if (targetPlayer == player)
         {
-            player.Tell("You cannot ban yourself!", Color.White);
+            player.Tell("You cannot ban yourself!", ColorCode.White);
             return;
         }
 
         if (targetPlayer.Character.AccessLevel > player.Character.AccessLevel)
         {
-            player.Tell("That is a higher access admin then you!", Color.White);
+            player.Tell("That is a higher access admin then you!", ColorCode.White);
             return;
         }
 
         BanRepository.AddBan(Network.GetIP(targetPlayer.Id), player.Character.Name);
 
-        Network.SendGlobalMessage($"{targetPlayer.Character.Name} has been banned from {Options.GameName} by {player.Character.Name}!", Color.White);
+        Network.SendGlobalMessage($"{targetPlayer.Character.Name} has been banned from {Options.GameName} by {player.Character.Name}!", ColorCode.White);
 
         Log.Information("{CharacterName} has banned {BannedCharacterName}",
             targetPlayer.Character.Name, player.Character);
@@ -782,13 +783,13 @@ public static class ChatProcessor
         var targetPlayer = GameState.FindPlayer(targetName);
         if (targetPlayer is null)
         {
-            player.Tell("Player is not online.", Color.White);
+            player.Tell("Player is not online.", ColorCode.White);
             return;
         }
 
-        if (targetPlayer.Character.AccessLevel <= AccessLevel.Player)
+        if (targetPlayer.Character.AccessLevel <= AccessLevel.None)
         {
-            Network.SendGlobalMessage($"{targetPlayer.Character.Name} has been blessed with administrative access.", Color.BrightBlue);
+            Network.SendGlobalMessage($"{targetPlayer.Character.Name} has been blessed with administrative access.", ColorCode.BrightBlue);
         }
 
         targetPlayer.Character.AccessLevel = (AccessLevel) accessLevel;
@@ -811,6 +812,6 @@ public static class ChatProcessor
     {
         BanRepository.Clear();
 
-        player.Tell("Ban list destroyed.", Color.White);
+        player.Tell("Ban list destroyed.", ColorCode.White);
     }
 }

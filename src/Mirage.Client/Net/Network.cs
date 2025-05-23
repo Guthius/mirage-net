@@ -1,10 +1,10 @@
 ﻿using System.Buffers;
 using System.Net.Sockets;
 using System.Threading.Channels;
-using Mirage.Game.Constants;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Net.Protocol.FromServer.New;
+using Mirage.Shared.Constants;
 
 namespace Mirage.Client.Net;
 
@@ -18,6 +18,8 @@ public static class Network
     static Network()
     {
         // Authentication & Account Management
+        Parser.Register<CreateAccountResponse>(NetworkHandlers.HandleCreateAccount);
+        Parser.Register<DeleteAccountResponse>(NetworkHandlers.HandleDeleteAccount);
         Parser.Register<AuthResponse>(NetworkHandlers.HandleAuth);
 
         // Data Transfer
@@ -31,36 +33,33 @@ public static class Network
         // Map Management
         Parser.Register<LoadMapCommand>(NetworkHandlers.HandleLoadMap);
 
-        // Players
-        Parser.Register<CreatePlayerCommand>(NetworkHandlers.HandleCreatePlayer);
-        Parser.Register<MovePlayerCommand>(NetworkHandlers.HandleMovePlayer);
-        Parser.Register<DestroyPlayerCommand>(NetworkHandlers.HandleDestroyPlayer);
+        // Actors
+        Parser.Register<CreateActorCommand>(NetworkHandlers.HandleCreateActor);
+        Parser.Register<DestroyActorCommand>(NetworkHandlers.HandleDestroyActor);
+        Parser.Register<UpdateActorVitalsCommand>(NetworkHandlers.HandleUpdateActorVitals);
+        Parser.Register<ActorMoveCommand>(NetworkHandlers.HandleActorMove);
+        Parser.Register<ActorAttackCommand>(NetworkHandlers.HandleActorAttack);
+
+        // Social
+        Parser.Register<ChatCommand>(NetworkHandlers.HandleChat);
 
 
         //---
         Parser.Register<AlertMessage>(NetworkHandlers.HandleAlertMessage);
-        Parser.Register<NewCharClasses>(NetworkHandlers.HandleNewCharClasses);
         Parser.Register<InGame>(NetworkHandlers.HandleInGame);
         Parser.Register<PlayerInventory>(NetworkHandlers.HandleInventory);
         Parser.Register<PlayerInventoryUpdate>(NetworkHandlers.HandlePlayerInventoryUpdate);
         Parser.Register<PlayerEquipment>(NetworkHandlers.HandlePlayerEquipment);
-        Parser.Register<PlayerHp>(NetworkHandlers.HandlePlayerHP);
-        Parser.Register<PlayerMp>(NetworkHandlers.HandlePlayerMP);
-        Parser.Register<PlayerSp>(NetworkHandlers.HandlePlayerSP);
-        Parser.Register<PlayerStats>(NetworkHandlers.HandlePlayerStats);
-        Parser.Register<PlayerMove>(NetworkHandlers.HandlePlayerMove);
         Parser.Register<PlayerDir>(NetworkHandlers.HandlePlayerDir);
         Parser.Register<NpcMove>(NetworkHandlers.HandleNpcMove);
         Parser.Register<NpcDir>(NetworkHandlers.HandleNpcDir);
         Parser.Register<PlayerPosition>(NetworkHandlers.HandlePlayerPosition);
-        Parser.Register<Attack>(NetworkHandlers.HandleAttack);
         Parser.Register<NpcAttack>(NetworkHandlers.HandleNpcAttack);
         Parser.Register<CheckForMap>(NetworkHandlers.HandleCheckForMap);
         Parser.Register<MapData>(NetworkHandlers.HandleMapData);
         Parser.Register<MapItemData>(NetworkHandlers.HandleMapItemData);
         Parser.Register<MapNpcData>(NetworkHandlers.HandleMapNpcData);
         Parser.Register<MapDone>(NetworkHandlers.HandleMapDone);
-        Parser.Register<PlayerMessage>(NetworkHandlers.HandlePlayerMessage);
         Parser.Register<SpawnItem>(NetworkHandlers.HandleSpawnItem);
         Parser.Register<OpenItemEditor>(NetworkHandlers.HandleOpenItemEditor);
         Parser.Register<UpdateItem>(NetworkHandlers.HandleUpdateItem);
@@ -165,14 +164,12 @@ public static class Network
                     return;
                 }
 
-                Console.WriteLine($"Received {bytesReceived} bytes");
-
                 bufferPos += bytesReceived;
 
-                var bytesHandled = Parser.Parse(buffer.AsMemory(0, bytesReceived));
+                var bytesHandled = Parser.Parse(buffer.AsMemory(0, bufferPos));
                 if (bytesHandled <= 0)
                 {
-                    return;
+                    continue;
                 }
 
                 var bytesLeft = bufferPos - bytesHandled;
@@ -184,8 +181,9 @@ public static class Network
                 bufferPos = bytesLeft;
             }
         }
-        catch (IOException)
+        catch (IOException ex)
         {
+            Console.WriteLine(ex);
         }
         catch (Exception ex)
         {
@@ -197,11 +195,6 @@ public static class Network
         }
     }
 
-    public static void Send(byte[] bytes)
-    {
-        _writeChannel?.Writer.TryWrite(bytes);
-    }
-    
     public static void Send<TPacket>(TPacket packet) where TPacket : IPacket<TPacket>
     {
         var bytes = PacketSerializer.GetBytes(packet);

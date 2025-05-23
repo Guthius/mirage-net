@@ -1,7 +1,7 @@
-﻿using Mirage.Game.Data;
-using Mirage.Net;
+﻿using Mirage.Net;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Net;
+using Mirage.Shared.Data;
 
 namespace Mirage.Server.Game;
 

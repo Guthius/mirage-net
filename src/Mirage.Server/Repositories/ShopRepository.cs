@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
-using Mirage.Game.Constants;
-using Mirage.Game.Data;
+using Mirage.Shared.Constants;
+using Mirage.Shared.Data;
 using MongoDB.Driver;
 using Serilog;
 
