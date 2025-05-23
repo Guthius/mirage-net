@@ -102,7 +102,7 @@ public static class NetworkHandlers
                 return;
             }
         }
-        
+
         player.NewMap.Move(player, request.Direction, request.Movement);
     }
 
@@ -173,110 +173,9 @@ public static class NetworkHandlers
 
     public static void HandleSay(GamePlayer player, SayRequest request)
     {
-        foreach (var ch in request.Message)
-        {
-            if (ch >= 32 && ch <= 126)
-            {
-                continue;
-            }
-
-            ReportHackAttempt(player.Id, "Say Text Modification");
-            return;
-        }
-
-        Log.Information("Map #{MapId}: {CharacterName} says '{Message}'",
-            player.Character.MapId,
-            player.Character.Name,
-            request.Message);
-
-        player.Map.SendMessage($"{player.Character.Name} says '{request.Message}'", Color.SayColor);
+        ChatProcessor.Handle(player, request.Message);
     }
-
-    public static void HandleEmote(GamePlayer player, EmoteRequest request)
-    {
-        foreach (var ch in request.Message)
-        {
-            if (ch >= 32 && ch <= 126)
-            {
-                continue;
-            }
-
-            ReportHackAttempt(player.Id, "Emote Text Modification");
-            return;
-        }
-
-        Log.Information("Map #{MapId}: {CharacterName} {Message}",
-            player.Character.MapId,
-            player.Character.Name,
-            request.Message);
-
-        player.Map.SendMessage($"{player.Character.Name} {request.Message}", Color.EmoteColor);
-    }
-
-    public static void HandleBroadcast(GamePlayer player, BroadcastRequest request)
-    {
-        foreach (var ch in request.Message)
-        {
-            if (ch >= 32 && ch <= 126)
-            {
-                continue;
-            }
-
-            ReportHackAttempt(player.Id, "Broadcast Text Modification");
-            return;
-        }
-
-        Log.Information("{CharacterName}: {Message}", player.Character.Name, request.Message);
-
-        SendToAll(new PlayerMessage($"{player.Character.Name}: {request.Message}", Color.BroadcastColor));
-    }
-
-    public static void HandleGlobalMessage(GamePlayer player, GlobalMessageRequest request)
-    {
-        foreach (var ch in request.Message)
-        {
-            if (ch >= 32 && ch <= 126)
-            {
-                continue;
-            }
-
-            ReportHackAttempt(player.Id, "Global Text Modification");
-            return;
-        }
-
-        if (player.Character.AccessLevel <= 0)
-        {
-            return;
-        }
-
-        Log.Information("(global) {CharacterName}: {Message}", player.Character.Name, request.Message);
-
-        SendToAll(new PlayerMessage($"(global) {player.Character.Name}: {request.Message}", Color.GlobalColor));
-    }
-
-    public static void HandleAdminMessage(GamePlayer player, AdminMessageRequest request)
-    {
-        foreach (var ch in request.Message)
-        {
-            if (ch >= 32 && ch <= 126)
-            {
-                continue;
-            }
-
-            ReportHackAttempt(player.Id, "Admin Text Modification");
-            return;
-        }
-
-        if (player.Character.AccessLevel <= 0)
-        {
-            return;
-        }
-
-        Log.Information("(admin {CharacterName}) {Message}", player.Character.Name, request.Message);
-
-        SendToAll(new PlayerMessage($"(admin {player.Character.Name}) {request.Message}", Color.AdminColor));
-    }
-
+    
     public static void HandlePlayerMessage(GamePlayer player, PlayerMessageRequest request)
     {
         var targetPlayerId = GameState.FindPlayer(request.TargetName);
@@ -444,112 +343,9 @@ public static class NetworkHandlers
 
         player.SendStats();
     }
-
-    public static void HandlePlayerInfoRequest(GamePlayer player, PlayerInfoRequest request)
-    {
-        var targetPlayer = GameState.FindPlayer(request.TargetName);
-        if (targetPlayer is null)
-        {
-            player.Tell("Player is not online.", Color.White);
-            return;
-        }
-
-        player.Tell($"Account: {GameState.Sessions[targetPlayer.Id]?.Account?.Name}, Name: {targetPlayer.Character.Name}", Color.BrightGreen);
-        if (player.Character.AccessLevel <= AccessLevel.Moderator)
-        {
-            return;
-        }
-
-        player.Tell($"-=- Stats for {targetPlayer.Character.Name} -=-", Color.BrightGreen);
-        player.Tell($"Level: {targetPlayer.Character.Level}  Exp: {targetPlayer.Character.Exp}/{targetPlayer.Character.RequiredExp}", Color.BrightGreen);
-        player.Tell($"HP: {targetPlayer.Character.HP}/{targetPlayer.Character.MaxHP}  MP: {targetPlayer.Character.MP}/{targetPlayer.Character.MaxMP}  SP: {targetPlayer.Character.SP}/{targetPlayer.Character.MaxSP}", Color.BrightGreen);
-        player.Tell($"STR: {targetPlayer.Character.Strength}  DEF: {targetPlayer.Character.Defense}  MAGI: {targetPlayer.Character.Intelligence}  SPEED: {targetPlayer.Character.Speed}", Color.BrightGreen);
-
-        player.Tell($"Critical Hit Chance: {targetPlayer.Character.CriticalHitRate}%, Block Chance: {targetPlayer.Character.BlockRate}%", Color.BrightGreen);
-    }
-
-    public static void HandleWarpMeTo(GamePlayer player, WarpMeToRequest request)
-    {
-        var targetPlayer = GameState.FindPlayer(request.TargetName);
-        if (targetPlayer is null)
-        {
-            player.Tell("Player is not online.", Color.White);
-            return;
-        }
-
-        if (targetPlayer == player)
-        {
-            player.Tell("You cannot warp to yourself!", Color.White);
-            return;
-        }
-
-        player.WarpTo(targetPlayer.Character.MapId, targetPlayer.Character.X, targetPlayer.Character.Y);
-
-        Log.Information("{CharacterName} has warped to {TargetCharacterName}, map #{MapId}.",
-            player.Character.Name,
-            targetPlayer.Character.Name,
-            targetPlayer.Character.MapId);
-
-        targetPlayer.Tell($"{player.Character.Name} has warped to you.", Color.BrightBlue);
-
-        player.Tell($"You have been warped to {targetPlayer.Character.Name}.", Color.BrightBlue);
-    }
-
-    public static void HandleWarpToMe(GamePlayer player, WarpToMeRequest request)
-    {
-        var targetPlayer = GameState.FindPlayer(request.TargetName);
-        if (targetPlayer is null)
-        {
-            player.Tell("Player is not online.", Color.White);
-            return;
-        }
-
-        if (targetPlayer == player)
-        {
-            player.Tell("You cannot warp yourself to yourself!", Color.White);
-            return;
-        }
-
-        targetPlayer.WarpTo(player.Character.MapId, player.Character.X, player.Character.Y);
-
-        Log.Information("{CharacterName} has warped {TargetCharacterName} to self, map #{MapId}.",
-            player.Character.Name,
-            targetPlayer.Character.Name,
-            player.Character.MapId);
-
-        targetPlayer.Tell($"You have been summoned by {player.Character.Name}.", Color.BrightBlue);
-
-        player.Tell($"{targetPlayer.Character.Name} has been summoned.", Color.BrightBlue);
-    }
-
-    public static void HandleWarpTo(GamePlayer player, WarpToRequest request)
-    {
-        var mapInfo = MapRepository.Get(request.MapId);
-        if (mapInfo is null)
-        {
-            ReportHackAttempt(player.Id, "Invalid map");
-            return;
-        }
-
-        player.WarpTo(request.MapId, player.Character.X, player.Character.Y);
-        player.Tell($"You have been warped to map #{request.MapId}", Color.BrightBlue);
-
-        Log.Information("{CharacterName} warped to map #{MapId}", player.Character.Name, request.MapId);
-    }
-
-    public static void HandleSetSprite(GamePlayer player, SetSpriteRequest request)
-    {
-        player.Character.Sprite = request.Sprite;
-        player.SendPlayerData();
-    }
-
+    
     public static void HandleGetStats(GamePlayer player, GetStatsRequest request)
     {
-        player.Tell($"-=- Stats for {player.Character.Name} -=-", Color.White);
-        player.Tell($"Level: {player.Character.Level}  Exp: {player.Character.Exp}/{player.Character.RequiredExp}", Color.White);
-        player.Tell($"HP: {player.Character.HP}/{player.Character.MaxHP}  MP: {player.Character.MP}/{player.Character.MaxMP}  SP: {player.Character.SP}/{player.Character.MaxSP}", Color.White);
-        player.Tell($"STR: {player.Character.Strength}  DEF: {player.Character.Defense}  MAGI: {player.Character.Intelligence}  SPEED: {player.Character.Speed}", Color.White);
-        player.Tell($"Critical Hit Chance: {player.Character.CriticalHitRate}%, Block Chance: {player.Character.BlockRate}%", Color.White);
     }
 
     public static void HandleNewMap(GamePlayer player, NewMapRequest request)
@@ -613,140 +409,7 @@ public static class NetworkHandlers
 
         player.DropItem(request.InventorySlot, request.Quantity);
     }
-
-    public static void HandleMapRespawn(GamePlayer player, MapRespawnRequest request)
-    {
-        var mapId = player.Character.MapId;
-
-        for (var slot = 1; slot <= Limits.MaxMapItems; slot++)
-        {
-            player.Map.ClearItem(slot);
-        }
-
-        player.Map.RespawnItems();
-        player.Map.RespawnNpcs();
-
-        player.Tell("Map respawned.", Color.Blue);
-
-        Log.Information("{CharacterName} has respawned map #{MapId}", player.Character.Name, mapId);
-    }
-
-    public static void HandleMapReport(GamePlayer player, MapReportRequest request)
-    {
-        var ranges = MapRepository.GetFreeMapRanges();
-
-        player.Tell($"Free Maps: {string.Join(", ", ranges)}.", Color.Brown);
-    }
-
-    public static void HandleKickPlayer(GamePlayer player, KickPlayerRequest request)
-    {
-        var targetPlayer = GameState.FindPlayer(request.TargetName);
-        if (targetPlayer is null)
-        {
-            player.Tell("Player is not online.", Color.White);
-            return;
-        }
-
-        if (targetPlayer == player)
-        {
-            player.Tell("You cannot kick yourself!", Color.White);
-            return;
-        }
-
-        if (targetPlayer.Character.AccessLevel > player.Character.AccessLevel)
-        {
-            player.Tell("That is a higher access admin then you!", Color.White);
-            return;
-        }
-
-        SendGlobalMessage($"{targetPlayer.Character.Name} has been kicked from {Options.GameName} by {player.Character.Name}!", Color.White);
-
-        Log.Information("{CharacterName} has kicked {TargetCharacterName}.", player.Character.Name, targetPlayer.Character.Name);
-
-        targetPlayer.SendAlert($"You have been kicked by {player.Character.Name}!");
-    }
-
-    public static void HandleBanList(GamePlayer player, BanListRequest request)
-    {
-        if (!File.Exists("Banlist.txt"))
-        {
-            return;
-        }
-
-        var lineNumber = 1;
-
-        using var reader = File.OpenText("Banlist.txt");
-        while (!reader.EndOfStream)
-        {
-            var line = reader.ReadLine();
-            if (line is null)
-            {
-                continue;
-            }
-
-            var comma = line.IndexOf(',');
-            if (comma == -1)
-            {
-                continue;
-            }
-
-            var ip = line[..comma];
-            var name = line[(comma + 1)..];
-
-            player.Tell($"{lineNumber}: Banned IP {ip} by {name}", Color.White);
-
-            lineNumber++;
-        }
-    }
-
-    public static void HandleBanDestroy(GamePlayer player, BanDestroyRequest request)
-    {
-        BanRepository.Clear();
-
-        player.Tell("Ban list destroyed.", Color.White);
-    }
-
-    public static void HandleBanPlayer(GamePlayer player, BanPlayerRequest request)
-    {
-        var targetPlayer = GameState.FindPlayer(request.TargetName);
-        if (targetPlayer is null)
-        {
-            player.Tell("Player is not online.", Color.White);
-            return;
-        }
-
-        if (targetPlayer == player)
-        {
-            player.Tell("You cannot ban yourself!", Color.White);
-            return;
-        }
-
-        if (targetPlayer.Character.AccessLevel > player.Character.AccessLevel)
-        {
-            player.Tell("That is a higher access admin then you!", Color.White);
-            return;
-        }
-
-        BanRepository.AddBan(GetIP(targetPlayer.Id), player.Character.Name);
-
-        SendGlobalMessage($"{targetPlayer.Character.Name} has been banned from {Options.GameName} by {player.Character.Name}!", Color.White);
-
-        Log.Information("{CharacterName} has banned {BannedCharacterName}",
-            targetPlayer.Character.Name, player.Character);
-
-        targetPlayer.SendAlert($"You have been banned by {player.Character.Name}!");
-    }
-
-    public static void HandleOpenMapEditor(GamePlayer player, OpenMapEditorRequest request)
-    {
-        player.Send<OpenMapEditor>();
-    }
-
-    public static void HandleOpenItemEditor(GamePlayer player, OpenItemEditorRequest request)
-    {
-        player.Send<OpenItemEditor>();
-    }
-
+    
     public static void HandleEditItem(GamePlayer player, EditItemRequest request)
     {
         var itemInfo = ItemRepository.Get(request.ItemId);
@@ -776,12 +439,7 @@ public static class NetworkHandlers
 
         SendToAll(new UpdateItem(request.ItemInfo));
     }
-
-    public static void HandleOpenNpcEditor(GamePlayer player, OpenNpcEditorRequest request)
-    {
-        player.Send<OpenNpcEditor>();
-    }
-
+    
     public static void HandleEditNpc(GamePlayer player, EditNpcRequest request)
     {
         var npcInfo = NpcRepository.Get(request.NpcId);
@@ -811,51 +469,7 @@ public static class NetworkHandlers
 
         SendToAll(new UpdateNpc(request.NpcInfo.Id, request.NpcInfo.Name, request.NpcInfo.Sprite));
     }
-
-    public static void HandleSetAccessLevel(GamePlayer player, SetAccessLevelRequest request)
-    {
-        var targetPlayer = GameState.FindPlayer(request.TargetName);
-        if (targetPlayer is null)
-        {
-            player.Tell("Player is not online.", Color.White);
-            return;
-        }
-
-        if (targetPlayer.Character.AccessLevel <= AccessLevel.Player)
-        {
-            SendGlobalMessage($"{targetPlayer.Character.Name} has been blessed with administrative access.", Color.BrightBlue);
-        }
-
-        targetPlayer.Character.AccessLevel = request.AccessLevel;
-
-        Log.Information("{CharacterName} has modified {TargetCharacterName}'s access..", player.Character.Name, targetPlayer.Character.Name);
-
-        targetPlayer.Map.Send(new PlayerData(
-            targetPlayer.Id,
-            targetPlayer.Character.Name,
-            targetPlayer.Character.Sprite,
-            targetPlayer.Character.MapId,
-            targetPlayer.Character.X,
-            targetPlayer.Character.Y,
-            targetPlayer.Character.Direction,
-            targetPlayer.Character.AccessLevel,
-            targetPlayer.Character.PlayerKiller));
-    }
-
-    public static void HandleSetMotd(GamePlayer player, SetMotdRequest request)
-    {
-        File.WriteAllText("Motd.txt", request.Motd);
-
-        Log.Information("{CharacterName} changed MOTD to: {NewMotd}", player.Character.Name, request.Motd);
-
-        SendToAll(new PlayerMessage($"MOTD changed to: {request.Motd}", Color.BrightCyan));
-    }
-
-    public static void HandleOpenShopEditor(GamePlayer player, OpenShopEditorRequest request)
-    {
-        player.Send<OpenShopEditor>();
-    }
-
+    
     public static void HandleEditShop(GamePlayer player, EditShopRequest request)
     {
         var shopInfo = ShopRepository.Get(request.ShopId);
@@ -885,12 +499,7 @@ public static class NetworkHandlers
 
         SendToAll(new UpdateShop(request.ShopInfo.Id, request.ShopInfo.Name));
     }
-
-    public static void OpenSpellEditor(GamePlayer player, OpenSpellEditorRequest request)
-    {
-        player.Send<OpenSpellEditor>();
-    }
-
+    
     public static void HandleEditSpell(GamePlayer player, EditSpellRequest request)
     {
         var spellInfo = SpellRepository.Get(request.SpellId);
@@ -919,11 +528,6 @@ public static class NetworkHandlers
         Log.Information("{CharacterName} saving spell #{SpellId}.", player.Character.Name, request.SpellInfo.Id);
 
         SendToAll(new UpdateSpell(request.SpellInfo.Id, request.SpellInfo.Name));
-    }
-
-    public static void HandleWhosOnline(GamePlayer player, WhosOnlineRequest request)
-    {
-        player.SendWhosOnline();
     }
 
     public static void HandleShop(GamePlayer player, ShopRequest request)
@@ -1157,104 +761,6 @@ public static class NetworkHandlers
         }
     }
 
-    public static void HandleParty(GamePlayer player, PartyRequest request)
-    {
-        if (player.InParty)
-        {
-            player.Tell("You are already in a party!", Color.Pink);
-            return;
-        }
-
-        var targetPlayer = GameState.FindPlayer(request.TargetName);
-        if (targetPlayer is null)
-        {
-            player.Tell("Player is not online.", Color.White);
-            return;
-        }
-
-        if (player.Character.AccessLevel > AccessLevel.Moderator)
-        {
-            player.Tell("You can't join a party, you are an admin!", Color.BrightBlue);
-            return;
-        }
-
-        if (targetPlayer.Character.AccessLevel > AccessLevel.Moderator)
-        {
-            player.Tell("Admins cannot join parties!", Color.BrightBlue);
-            return;
-        }
-
-        var levelDifference = Math.Abs(player.Character.Level - targetPlayer.Character.Level);
-        if (levelDifference > 5)
-        {
-            player.Tell("There is more then a 5 level gap between you two, party failed.", Color.Pink);
-            return;
-        }
-
-        if (targetPlayer.InParty)
-        {
-            player.Tell("Player is already in a party!", Color.Pink);
-            return;
-        }
-
-        player.Tell($"Party request has been sent to {targetPlayer.Character.Name}.", Color.Pink);
-        targetPlayer.Tell($"{player.Character.Name} wants you to join their party.  Type /join to join, or /leave to decline.", Color.Pink);
-
-        player.IsPartyStarter = true;
-        player.PartyMember = targetPlayer;
-
-        targetPlayer.PartyMember = player;
-    }
-
-    public static void HandleJoinParty(GamePlayer player, JoinPartyRequest request)
-    {
-        if (player.PartyMember is null || player.IsPartyStarter)
-        {
-            player.Tell("You have not been invited into a party!", Color.Pink);
-            return;
-        }
-
-        if (player.PartyMember.PartyMember != player)
-        {
-            player.Tell("Party failed.", Color.Pink);
-            return;
-        }
-
-        player.InParty = true;
-        player.Tell($"You have joined {player.PartyMember.Character.Name}'s party!", Color.Pink);
-
-        player.PartyMember.InParty = true;
-        player.PartyMember.Tell($"{player.Character.Name} has joined your party!", Color.Pink);
-    }
-
-    public static void HandleLeaveParty(GamePlayer player, LeavePartyRequest request)
-    {
-        if (player.PartyMember is null)
-        {
-            player.Tell("You are not in a party!", Color.Pink);
-            return;
-        }
-
-        if (player.InParty)
-        {
-            player.Tell("You have left the party.", Color.Pink);
-            player.PartyMember.Tell($"{player.Character.Name} has left the party.", Color.Pink);
-        }
-        else
-        {
-            player.Tell("Declined party request.", Color.Pink);
-            player.PartyMember.Tell($"{player.Character.Name} declined your request.", Color.Pink);
-        }
-
-        player.PartyMember.PartyMember = null;
-        player.PartyMember.IsPartyStarter = false;
-        player.PartyMember.InParty = false;
-
-        player.PartyMember = null;
-        player.IsPartyStarter = false;
-        player.InParty = false;
-    }
-
     public static void HandleSpells(GamePlayer player, SpellsRequest request)
     {
         player.Send(new PlayerSpells(player.Character.SpellIds));
@@ -1263,10 +769,5 @@ public static class NetworkHandlers
     public static void HandleCast(GamePlayer player, CastRequest request)
     {
         player.Cast(request.SpellSlot);
-    }
-
-    public static void HandleLocation(GamePlayer player, LocationRequest request)
-    {
-        player.Tell($"Map: {player.Character.MapId}, X: {player.Character.X}, Y: {player.Character.Y}", Color.Pink);
     }
 }

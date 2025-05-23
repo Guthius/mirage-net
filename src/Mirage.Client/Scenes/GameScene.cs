@@ -310,14 +310,14 @@ public sealed class GameScene : Scene
         ImGui.EndListBox();
         if (ImGui.InputText("##Message", ref _chatMessage, 256, ImGuiInputTextFlags.EnterReturnsTrue))
         {
-            GameChat.Handle(_chatMessage);
+            ChatProcessor.Handle(_chatMessage);
             _chatMessage = string.Empty;
         }
 
         ImGui.SameLine();
         if (ImGui.Button("Send"))
         {
-            GameChat.Handle(_chatMessage);
+            ChatProcessor.Handle(_chatMessage);
             _chatMessage = string.Empty;
         }
 

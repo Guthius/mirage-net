@@ -24,8 +24,7 @@ public sealed class GamePlayer
     public bool IsPartyStarter { get; set; }
     public GamePlayer? PartyMember { get; set; }
     public bool GettingMap { get; set; }
-
-
+    
     public Map NewMap { get; private set; }
 
 
@@ -39,8 +38,7 @@ public sealed class GamePlayer
 
         NewMap = map;
         NewMap.Add(this);
-
-
+        
         // CheckEquippedItems();
         //
         // var color = Character.AccessLevel <= AccessLevel.Moderator ? Color.JoinLeftColor : Color.White;

@@ -31,73 +31,45 @@ public static class Network
     {
         // Authentication & Account Management
         Parser.Register<AuthRequest>(NetworkHandlers.HandleAuth);
-        
+
         // Character Management
         Parser.Register<CreateCharacterRequest>(NetworkHandlers.HandleCreateCharacter);
         Parser.Register<DeleteCharacterRequest>(NetworkHandlers.HandleDeleteCharacter);
         Parser.Register<SelectCharacterRequest>(NetworkHandlers.HandleSelectCharacter);
-        
+
         // Player Actions
         Parser.Register<MoveRequest>(NetworkHandlers.HandleMove);
-        
-        
+
+
         //---
         Parser.Register<CreateAccountRequest>(NetworkHandlers.HandleCreateAccount);
         Parser.Register<DeleteAccountRequest>(NetworkHandlers.HandleDeleteAccount);
         Parser.Register<SayRequest>(NetworkHandlers.HandleSay);
-        Parser.Register<EmoteRequest>(NetworkHandlers.HandleEmote);
-        Parser.Register<BroadcastRequest>(NetworkHandlers.HandleBroadcast);
-        Parser.Register<GlobalMessageRequest>(NetworkHandlers.HandleGlobalMessage);
-        Parser.Register<AdminMessageRequest>(NetworkHandlers.HandleAdminMessage);
         Parser.Register<PlayerMessageRequest>(NetworkHandlers.HandlePlayerMessage);
-
         Parser.Register<SetDirectionRequest>(NetworkHandlers.HandleSetDirection);
         Parser.Register<UseItemRequest>(NetworkHandlers.HandleUseItem);
         Parser.Register<AttackRequest>(NetworkHandlers.HandleAttack);
         Parser.Register<UseStatPointRequest>(NetworkHandlers.HandleUseStatPoint);
-        Parser.Register<PlayerInfoRequest>(NetworkHandlers.HandlePlayerInfoRequest);
-        Parser.Register<WarpMeToRequest>(NetworkHandlers.HandleWarpMeTo, AccessLevel.Mapper);
-        Parser.Register<WarpToMeRequest>(NetworkHandlers.HandleWarpToMe, AccessLevel.Mapper);
-        Parser.Register<WarpToRequest>(NetworkHandlers.HandleWarpTo, AccessLevel.Mapper);
-        Parser.Register<SetSpriteRequest>(NetworkHandlers.HandleSetSprite, AccessLevel.Mapper);
         Parser.Register<GetStatsRequest>(NetworkHandlers.HandleGetStats);
         Parser.Register<NewMapRequest>(NetworkHandlers.HandleNewMap);
         Parser.Register<UpdateMapRequest>(NetworkHandlers.HandleUpdateMap, AccessLevel.Mapper);
         Parser.Register<NeedMapRequest>(NetworkHandlers.HandleNeedMap);
         Parser.Register<PickupItemRequest>(NetworkHandlers.HandlePickupItem);
         Parser.Register<DropItemRequest>(NetworkHandlers.HandleDropItem);
-        Parser.Register<MapRespawnRequest>(NetworkHandlers.HandleMapRespawn, AccessLevel.Mapper);
-        Parser.Register<MapReportRequest>(NetworkHandlers.HandleMapReport, AccessLevel.Mapper);
-        Parser.Register<KickPlayerRequest>(NetworkHandlers.HandleKickPlayer, AccessLevel.Moderator);
-        Parser.Register<BanListRequest>(NetworkHandlers.HandleBanList, AccessLevel.Mapper);
-        Parser.Register<BanDestroyRequest>(NetworkHandlers.HandleBanDestroy, AccessLevel.Administrator);
-        Parser.Register<BanPlayerRequest>(NetworkHandlers.HandleBanPlayer, AccessLevel.Mapper);
-        Parser.Register<OpenMapEditorRequest>(NetworkHandlers.HandleOpenMapEditor, AccessLevel.Mapper);
-        Parser.Register<OpenItemEditorRequest>(NetworkHandlers.HandleOpenItemEditor, AccessLevel.Developer);
         Parser.Register<EditItemRequest>(NetworkHandlers.HandleEditItem, AccessLevel.Developer);
         Parser.Register<UpdateItemRequest>(NetworkHandlers.HandleUpdateItem, AccessLevel.Developer);
-        Parser.Register<OpenNpcEditorRequest>(NetworkHandlers.HandleOpenNpcEditor, AccessLevel.Developer);
         Parser.Register<EditNpcRequest>(NetworkHandlers.HandleEditNpc, AccessLevel.Developer);
         Parser.Register<UpdateNpcRequest>(NetworkHandlers.HandleUpdateNpc, AccessLevel.Developer);
-        Parser.Register<SetAccessLevelRequest>(NetworkHandlers.HandleSetAccessLevel, AccessLevel.Administrator);
-        Parser.Register<SetMotdRequest>(NetworkHandlers.HandleSetMotd, AccessLevel.Mapper);
-        Parser.Register<OpenShopEditorRequest>(NetworkHandlers.HandleOpenShopEditor, AccessLevel.Developer);
         Parser.Register<EditShopRequest>(NetworkHandlers.HandleEditShop, AccessLevel.Developer);
         Parser.Register<UpdateShopRequest>(NetworkHandlers.HandleUpdateShop, AccessLevel.Developer);
-        Parser.Register<OpenSpellEditorRequest>(NetworkHandlers.OpenSpellEditor, AccessLevel.Developer);
         Parser.Register<EditSpellRequest>(NetworkHandlers.HandleEditSpell, AccessLevel.Developer);
         Parser.Register<UpdateSpellRequest>(NetworkHandlers.HandleUpdateSpell, AccessLevel.Developer);
-        Parser.Register<WhosOnlineRequest>(NetworkHandlers.HandleWhosOnline);
         Parser.Register<ShopRequest>(NetworkHandlers.HandleShop);
         Parser.Register<ShopTradeRequest>(NetworkHandlers.HandleShopTrade);
         Parser.Register<FixItemRequest>(NetworkHandlers.HandleFixItem);
         Parser.Register<SearchRequest>(NetworkHandlers.HandleSearch);
-        Parser.Register<PartyRequest>(NetworkHandlers.HandleParty);
-        Parser.Register<JoinPartyRequest>(NetworkHandlers.HandleJoinParty);
-        Parser.Register<LeavePartyRequest>(NetworkHandlers.HandleLeaveParty);
         Parser.Register<SpellsRequest>(NetworkHandlers.HandleSpells);
         Parser.Register<CastRequest>(NetworkHandlers.HandleCast);
-        Parser.Register<LocationRequest>(NetworkHandlers.HandleLocation, AccessLevel.Mapper);
 
         for (var playerId = 1; playerId <= Limits.MaxPlayers; playerId++)
         {

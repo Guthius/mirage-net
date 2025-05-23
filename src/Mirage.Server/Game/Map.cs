@@ -1,5 +1,6 @@
 ﻿using Mirage.Game.Data;
 using Mirage.Net;
+using Mirage.Net.Protocol.FromServer;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Net;
 
@@ -133,5 +134,15 @@ public sealed class Map(NewMapInfo info) : IPacketRecipient
                 Network.SendData(player.Id, bytes);
             }
         }
+    }
+
+    /// <summary>
+    /// Sends a message to all players on the map.
+    /// </summary>
+    /// <param name="message">The message.</param>
+    /// <param name="color">The message color.</param>
+    public void SendMessage(string message, int color)
+    {
+        Send(new PlayerMessage(message, color));
     }
 }

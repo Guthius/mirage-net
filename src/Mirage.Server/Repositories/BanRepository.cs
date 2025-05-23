@@ -10,6 +10,11 @@ public static class BanRepository
         return Database.GetCollection<IpBanInfo>("ip_bans");
     }
 
+    public static IReadOnlyList<IpBanInfo> GetAll()
+    {
+        return GetCollection().Find(Builders<IpBanInfo>.Filter.Empty).ToList();
+    }
+    
     public static void AddBan(string ip, string bannedBy)
     {
         GetCollection().ReplaceOne(x => x.Ip == ip,
