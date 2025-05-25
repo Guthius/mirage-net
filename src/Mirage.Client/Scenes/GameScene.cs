@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Mirage.Client.Net;
 using Mirage.Net.Protocol.FromClient;
 using Mirage.Net.Protocol.FromClient.New;
-using Mirage.Shared.Constants;
 using Mirage.Shared.Data;
 using Keys = Microsoft.Xna.Framework.Input.Keys;
 using Vector2 = System.Numerics.Vector2;
@@ -23,8 +22,8 @@ public sealed class GameScene : Scene
         _graphicsDevice = graphicsDevice;
         _gameState = gameState;
 
-        Textures.Sprites = Texture2D.FromFile(graphicsDevice, "Assets/Sprites.png");
-        Textures.Items = Texture2D.FromFile(graphicsDevice, "Assets/Items.png");
+        Textures.Sprites = Texture2D.FromFile(graphicsDevice, "Content/Sprites.png");
+        Textures.Items = Texture2D.FromFile(graphicsDevice, "Content/Items.png");
     }
 
     protected override void OnShow()

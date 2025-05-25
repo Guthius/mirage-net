@@ -1,6 +1,4 @@
 ﻿using Mirage.Server.Repositories;
-using Mirage.Shared.Constants;
-using Mirage.Shared.Data;
 
 namespace Mirage.Server.Game;
 
@@ -10,12 +8,10 @@ public static class MapManager
 
     public static void Initialize()
     {
-        foreach (var mapInfo in NewMapRepository.GetAll())
+        foreach (var (fileName, mapInfo) in NewMapRepository.All())
         {
-            Maps[mapInfo.Name] = new Map(mapInfo);
+            Maps[fileName] = new Map(mapInfo);
         }
-
-        CreateStartMapIfNotExist();
     }
 
     public static void Update(float dt)
@@ -24,31 +20,6 @@ public static class MapManager
         {
             map.Update(dt);
         }
-    }
-
-    private static void CreateStartMapIfNotExist()
-    {
-        if (Maps.ContainsKey(Options.StartMapName))
-        {
-            return;
-        }
-
-        Maps[Options.StartMapName] = new Map(new NewMapInfo
-        {
-            Name = Options.StartMapName,
-            Revision = 1,
-            Width = 50,
-            Height = 50,
-            Layers =
-            [
-                new MapLayerInfo
-                {
-                    Name = "Ground",
-                    Tiles = new int[50 * 50]
-                }
-            ],
-            Tiles = new NewTileInfo[50 * 50]
-        });
     }
 
     public static Map? GetMap(string mapName)

@@ -1,8 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.DependencyInjection;
 using Mirage.Client.Net;
 using Mirage.Net.Protocol.FromClient.New;
-using Mirage.Shared.Constants;
-using Mirage.Shared.Data;
 
 namespace Mirage.Client;
 

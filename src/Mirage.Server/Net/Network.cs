@@ -45,11 +45,13 @@ public static class Network
         Parser.Register<AttackRequest>(NetworkHandlers.HandleAttack);
 
         // Social
-
-        //---
-
-
         Parser.Register<SayRequest>(NetworkHandlers.HandleSay);
+        
+        // Asset Management
+        Parser.Register<DownloadAssetRequest>(NetworkHandlers.HandleDownloadAsset);
+        
+        
+        //---
         Parser.Register<SetDirectionRequest>(NetworkHandlers.HandleSetDirection);
         Parser.Register<UseItemRequest>(NetworkHandlers.HandleUseItem);
         Parser.Register<UseStatPointRequest>(NetworkHandlers.HandleUseStatPoint);

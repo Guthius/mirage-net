@@ -1,12 +1,13 @@
 namespace Mirage.Shared.Data;
 
+[Flags]
 public enum TileType
 {
     Walkable = 0,
     Blocked = 1,
     Warp = 2,
-    Item = 3,
-    NpcAvoid = 4,
-    Key = 5,
-    KeyOpen = 6
+    Item = 4,
+    NpcAvoid = 8,
+    Key = 16,
+    KeyOpen = 32
 }

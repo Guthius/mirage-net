@@ -31,7 +31,7 @@ public sealed class PacketReader(ReadOnlyMemory<byte> data)
 
         return value;
     }
-
+    
     public string ReadString()
     {
         var bytes = GetNextField();
@@ -39,6 +39,11 @@ public sealed class PacketReader(ReadOnlyMemory<byte> data)
         return Encoding.UTF8.GetString(bytes);
     }
 
+    public byte[] ReadBytes()
+    {
+        return Convert.FromBase64String(ReadString());
+    }
+    
     public int ReadInt32()
     {
         return int.Parse(ReadString());

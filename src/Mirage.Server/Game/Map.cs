@@ -62,9 +62,24 @@ public sealed class Map : IPacketRecipient
 
     public void Update(float deltaTime)
     {
-        // TODO: Implement me: regen player health, regen NPC health, move NPCs, respawn NPCS, despawn items
+        /* Don't bother updating the map if there are no players on it. */
+        if (_players.Count == 0)
+        {
+            return;
+        }
 
+        /* Update all players on the map. */
+        UpdatePlayers(deltaTime);
+
+        /* Update all NPC's on the map. */
         UpdateNpcs(deltaTime);
+
+        // TODO: Implement: despawn items when they reach their expiry time...
+    }
+
+    private void UpdatePlayers(float deltaTime)
+    {
+        // TODO: Player healh regen...
     }
 
     private void UpdateNpcs(float deltaTime)
@@ -83,7 +98,7 @@ public sealed class Map : IPacketRecipient
     {
         _players.Add(player);
 
-        player.Send(new LoadMapCommand(_info.Name, _info.Revision));
+        player.Send(new LoadMapCommand(_info.Id));
 
         foreach (var otherPlayer in _players)
         {

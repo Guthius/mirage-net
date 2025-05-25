@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.DependencyInjection;
+using Mirage.Client.Assets;
 using Mirage.Client.Scenes;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Net.Protocol.FromServer.New;
@@ -160,7 +161,7 @@ public static class NetworkHandlers
 
     public static void HandleLoadMap(LoadMapCommand command)
     {
-        GameState.Map.Load(command.MapName, command.Revision);
+        GameState.Map.Load(command.MapId);
     }
 
     public static void HandleCreateActor(CreateActorCommand command)
@@ -227,9 +228,19 @@ public static class NetworkHandlers
         GameState.ChatHistory.Add(new ChatInfo(command.Message, command.Color));
         GameState.ChatHistoryUpdated = true;
     }
+    
+    public static void HandleDownloadAssetChunk(DownloadAssetChunkCommand command)
+    {
+        AssetDownloader.WriteChunk(command.Handle, command.Data);
+    }
 
-
+    public static void HandleDownloadAssetResponse(DownloadAssetResponse response)
+    {
+        AssetDownloader.End(response.Handle);
+    }
+    
     //---
+    
 
     public static void HandleAlertMessage(AlertMessage alertMessage)
     {

@@ -1,19 +1,16 @@
 ﻿namespace Mirage.Net.Protocol.FromServer.New;
 
-public sealed record LoadMapCommand(string MapName, int Revision) : IPacket<LoadMapCommand>
+public sealed record LoadMapCommand(string MapId) : IPacket<LoadMapCommand>
 {
     public static string PacketId => nameof(LoadMapCommand);
 
     public static LoadMapCommand ReadFrom(PacketReader reader)
     {
-        return new LoadMapCommand(
-            MapName: reader.ReadString(),
-            Revision: reader.ReadInt32());
+        return new LoadMapCommand(MapId: reader.ReadString());
     }
 
     public void WriteTo(PacketWriter writer)
     {
-        writer.WriteString(MapName);
-        writer.WriteInt32(Revision);
+        writer.WriteString(MapId);
     }
 }

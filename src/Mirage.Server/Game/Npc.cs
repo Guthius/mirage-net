@@ -21,6 +21,10 @@ public sealed class Npc(Map map)
     
     public void Update(float dt)
     {
+        // TODO: Implement actual NPC AI.
+        // TODO: Implement respawn logic
+        // TODO: Implement health regen logic
+        
         _moveTimer += dt;
         if (_moveTimer < MoveIntervalInSeconds)
         {

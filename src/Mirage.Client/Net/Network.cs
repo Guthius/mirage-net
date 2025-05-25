@@ -43,6 +43,10 @@ public static class Network
         // Social
         Parser.Register<ChatCommand>(NetworkHandlers.HandleChat);
 
+        // Asset Management
+        Parser.Register<DownloadAssetChunkCommand>(NetworkHandlers.HandleDownloadAssetChunk);
+        Parser.Register<DownloadAssetResponse>(NetworkHandlers.HandleDownloadAssetResponse);
+
 
         //---
         Parser.Register<AlertMessage>(NetworkHandlers.HandleAlertMessage);

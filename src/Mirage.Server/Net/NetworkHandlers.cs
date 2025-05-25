@@ -1,7 +1,9 @@
-﻿using Mirage.Net.Protocol.FromClient;
+﻿using System.Buffers;
+using Mirage.Net.Protocol.FromClient;
 using Mirage.Net.Protocol.FromClient.New;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Net.Protocol.FromServer.New;
+using Mirage.Server.Assets;
 using Mirage.Server.Game;
 using Mirage.Server.Repositories;
 using Mirage.Shared.Constants;
@@ -179,6 +181,44 @@ public static class NetworkHandlers
     public static void HandleSay(GamePlayer player, SayRequest request)
     {
         ChatProcessor.Handle(player, request.Message);
+    }
+
+    public static void HandleDownloadAsset(GamePlayer player, DownloadAssetRequest request)
+    {
+        const int chunkSize = 1024;
+        
+        var asset = AssetManager.Get(request.Hash);
+        if (asset is null)
+        {
+            player.Send(new DownloadAssetResponse(request.Handle, DownloadAssetResult.NotFound));
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            var buffer = ArrayPool<byte>.Shared.Rent(chunkSize);
+            try
+            {
+                int bytesRead;
+                
+                await using var stream = asset.OpenRead();
+                while ((bytesRead = await stream.ReadAsync(buffer)) > 0)
+                {
+                    player.Send(new DownloadAssetChunkCommand(request.Handle, buffer.AsSpan(0, bytesRead).ToArray()));
+                }
+                
+                player.Send(new DownloadAssetResponse(request.Handle, DownloadAssetResult.Ok));
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error sending {Hash} to client [Hash: {Sha1Hash}]",
+                    asset.Path, asset.Id);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+        });
     }
 
     //----

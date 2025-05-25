@@ -1,53 +1,46 @@
 ﻿using System.Collections.Concurrent;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Mirage.Client.Assets;
 using Mirage.Client.Entities;
-using Mirage.Client.Net;
-using Mirage.Net.Protocol.FromClient.New;
 using Mirage.Shared.Data;
-using TiledSharp;
 
 namespace Mirage.Client;
 
 public sealed class Map(GameState gameState, GraphicsDevice graphicsDevice)
 {
-    private const string MapName = "Map Name";
-
+    private readonly TextureManager _textureManager = new(graphicsDevice);
+    private readonly MapManager _mapManager = new();
     private readonly ConcurrentDictionary<int, Actor> _actors = new();
-    private readonly Dictionary<int, Texture2D> _tilesets = [];
-    private TmxMap? _map;
+    private readonly Dictionary<int, Asset<Texture2D>> _tilesets = [];
+    private NewMapInfo? _info;
 
-    public void Load(string mapName, int revision)
+    public void Load(string mapId)
     {
         Clear();
 
         try
         {
-            var path = Path.Combine("Content", mapName);
+            _mapManager.Get(mapId, info =>
+            {
+                _info = info;
 
-            _map = new TmxMap(path);
-
-            LoadTilesets(_map);
-        }
-        catch (FileNotFoundException)
-        {
-            Network.Send(new DownloadMapRequest(mapName));
+                LoadTilesets(_info);
+            });
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Failed to load map {mapName}: {ex.Message}", ex);
+            throw new InvalidOperationException($"Failed to load map {mapId}: {ex.Message}", ex);
         }
     }
 
-    private void LoadTilesets(TmxMap map)
+    private void LoadTilesets(NewMapInfo map)
     {
         _tilesets.Clear();
 
         foreach (var tileset in map.Tilesets)
         {
-            using var stream = File.OpenRead(tileset.Image.Source);
-
-            _tilesets[tileset.FirstGid] = Texture2D.FromStream(graphicsDevice, stream);
+            _tilesets[tileset.FirstGid] = _textureManager.Get(tileset.Id);
         }
     }
 
@@ -73,61 +66,74 @@ public sealed class Map(GameState gameState, GraphicsDevice graphicsDevice)
         DrawMapName(spriteBatch);
     }
 
+    private void DrawLayer(SpriteBatch spriteBatch, NewMapInfo mapInfo, MapLayerInfo layerInfo)
+    {
+        for (var y = 0; y < mapInfo.Height; y++)
+        {
+            for (var x = 0; x < mapInfo.Width; x++)
+            {
+                var tile = layerInfo.Tiles[y * mapInfo.Width + x];
+                if (tile == 0)
+                {
+                    continue;
+                }
+
+                // Find the right tileset for this gid
+                var tilesetGid = mapInfo.Tilesets.Where(t => t.FirstGid <= tile).Max(t => t.FirstGid);
+                var tileset = mapInfo.Tilesets.First(t => t.FirstGid == tilesetGid);
+                var tilesetTexture = _tilesets[tilesetGid].Instance;
+
+                // Get the source rectangle from the tileset
+                var tileId = tile - tileset.FirstGid;
+                var tilesetWidth = tilesetTexture.Width / tileset.TileWidth;
+                var tilesetX = tileId % tilesetWidth * tileset.TileWidth;
+                var tilesetY = tileId / tilesetWidth * tileset.TileHeight;
+
+                var sourceRectangle = new Rectangle(
+                    tilesetX,
+                    tilesetY,
+                    tileset.TileWidth,
+                    tileset.TileHeight);
+
+                var destinationRectangle = new Rectangle(
+                    x * tileset.TileWidth,
+                    y * tileset.TileHeight,
+                    tileset.TileWidth,
+                    tileset.TileHeight);
+
+                spriteBatch.Draw(
+                    tilesetTexture,
+                    destinationRectangle,
+                    sourceRectangle,
+                    Color.White);
+            }
+        }
+    }
+
     private void DrawGroundLayers(SpriteBatch spriteBatch)
     {
-        if (_map is null)
+        if (_info is null)
         {
             return;
         }
 
-        foreach (var layer in _map.Layers)
+        foreach (var layerInfo in _info.Layers.Where(x => !x.DrawOverActors))
         {
-            for (var y = 0; y < _map.Height; y++)
-            {
-                for (var x = 0; x < _map.Width; x++)
-                {
-                    var tile = layer.Tiles[y * _map.Width + x];
-                    if (tile.Gid == 0)
-                    {
-                        continue;
-                    }
-
-                    // Find the right tileset for this gid
-                    var tilesetGid = _map.Tilesets.Where(t => t.FirstGid <= tile.Gid).Max(t => t.FirstGid);
-                    var tileset = _map.Tilesets.First(t => t.FirstGid == tilesetGid);
-                    var tilesetTexture = _tilesets[tilesetGid];
-
-                    // Get the source rectangle from the tileset
-                    var tileId = tile.Gid - tileset.FirstGid;
-                    var tilesetWidth = tilesetTexture.Width / tileset.TileWidth;
-                    var tilesetX = tileId % tilesetWidth * tileset.TileWidth;
-                    var tilesetY = tileId / tilesetWidth * tileset.TileHeight;
-
-                    var sourceRectangle = new Rectangle(
-                        tilesetX,
-                        tilesetY,
-                        tileset.TileWidth,
-                        tileset.TileHeight);
-
-                    var destinationRectangle = new Rectangle(
-                        x * tileset.TileWidth,
-                        y * tileset.TileHeight,
-                        tileset.TileWidth,
-                        tileset.TileHeight);
-
-                    spriteBatch.Draw(
-                        tilesetTexture,
-                        destinationRectangle,
-                        sourceRectangle,
-                        Color.White);
-                }
-            }
+            DrawLayer(spriteBatch, _info, layerInfo);
         }
     }
 
     private void DrawSkyLayers(SpriteBatch spriteBatch)
     {
-        // TODO: Implement me
+        if (_info is null)
+        {
+            return;
+        }
+
+        foreach (var layerInfo in _info.Layers.Where(x => x.DrawOverActors))
+        {
+            DrawLayer(spriteBatch, _info, layerInfo);
+        }
     }
 
     private void DrawActors(SpriteBatch spriteBatch)
@@ -146,12 +152,20 @@ public sealed class Map(GameState gameState, GraphicsDevice graphicsDevice)
         }
     }
 
-    private static void DrawMapName(SpriteBatch spriteBatch)
+    private void DrawMapName(SpriteBatch spriteBatch)
     {
-        // TODO: Draw the map name in red if PvP is allowed on the map
+        if (_info is null || string.IsNullOrEmpty(_info.Name))
+        {
+            return;
+        }
+
+        var color = _info.PvpEnabled ? Color.Red : Color.White;
+        
+        var w = graphicsDevice.Viewport.Width + (int) Textures.Font.MeasureString(_info.Name).X;
+
         // TODO: Draw the map name centered at the top of the window
 
-        spriteBatch.DrawString(Textures.Font, MapName, new Vector2(10, 10), Color.White);
+        spriteBatch.DrawString(Textures.Font, _info.Name, new Vector2((int)(w * 0.5f), 10), color);
     }
 
     public Actor? GetActor(int actorId)
@@ -191,15 +205,11 @@ public sealed class Map(GameState gameState, GraphicsDevice graphicsDevice)
 
     public bool IsPassable(int x, int y)
     {
-        // TODO: Implement me
-
-        return true;
+        return _info?.IsPassable(x, y) ?? false;
     }
 
     public TileType GetTileType(int x, int y)
     {
-        // TODO: Implement me
-
-        return TileType.Walkable;
+        return _info?.GetTileType(x, y) ?? TileType.Walkable;
     }
 }
