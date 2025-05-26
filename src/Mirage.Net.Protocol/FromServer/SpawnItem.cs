@@ -24,9 +24,4 @@ public sealed record SpawnItem(int Slot, int ItemId, int Quantity, int Durabilit
         writer.WriteInt32(X);
         writer.WriteInt32(Y);
     }
-
-    public static SpawnItem Cleared(int slot)
-    {
-        return new SpawnItem(slot, 0, 0, 0, 0, 0);
-    }
 }

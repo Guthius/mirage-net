@@ -15,6 +15,4 @@ public static class Limits
     public const int MaxMaps = 1000;
     public const int MaxMapWidth = 15;
     public const int MaxMapHeight = 11;
-    public const int MaxMapItems = 20;
-    public const int MaxMapNpcs = 5;
 }

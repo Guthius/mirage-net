@@ -6,7 +6,8 @@ using Mirage.Net.Protocol.FromClient;
 using Mirage.Net.Protocol.FromClient.New;
 using Mirage.Shared.Data;
 using Keys = Microsoft.Xna.Framework.Input.Keys;
-using Vector2 = System.Numerics.Vector2;
+using ImGuiVec2 = System.Numerics.Vector2;
+using ImGuiVec4 = System.Numerics.Vector4;
 
 namespace Mirage.Client.Scenes;
 
@@ -29,6 +30,11 @@ public sealed class GameScene : Scene
     protected override void OnShow()
     {
         _gameState.ClearStatus();
+    }
+
+    protected override void OnHide()
+    {
+        _gameState.ChatHistory.Clear();
     }
 
     protected override void OnUpdate(GameTime gameTime)
@@ -144,9 +150,9 @@ public sealed class GameScene : Scene
         if (localPlayer is not null)
         {
             spriteBatch.Begin(transformMatrix:
-                Matrix.CreateTranslation(-localPlayer.X, -localPlayer.Y, 0) *
+                Matrix.CreateTranslation(-(localPlayer.X + 16), -(localPlayer.Y + 16), 0) *
                 Matrix.CreateTranslation(
-                    _graphicsDevice.Viewport.Width / 2f, 
+                    _graphicsDevice.Viewport.Width / 2f,
                     _graphicsDevice.Viewport.Height / 2f,
                     0));
         }
@@ -168,6 +174,14 @@ public sealed class GameScene : Scene
 
     public override void DrawUI(GameTime gameTime)
     {
+        var spriteBatch = new SpriteBatch(_graphicsDevice);
+
+        spriteBatch.Begin();
+
+        _gameState.Map.DrawUI(spriteBatch);
+
+        spriteBatch.End();
+
         ShowMenu();
         //ShowInventory();
         ShowVitals();
@@ -176,16 +190,37 @@ public sealed class GameScene : Scene
 
     private void ShowVitals()
     {
-        var p = _gameState.LocalPlayer;
-        if (p is null)
+        var localPlayer = _gameState.LocalPlayer;
+        if (localPlayer is null)
         {
             return;
         }
 
-        ImGui.Begin("Vitals");
-        ImGui.ProgressBar((float) p.Health / p.MaxHealth, new Vector2(100, 16), "HP");
-        ImGui.ProgressBar((float) p.Mana / p.MaxMana, new Vector2(100, 16), "MP");
-        ImGui.ProgressBar((float) p.Stamina / p.MaxStamina, new Vector2(100, 16), "SP");
+        ImGui.Begin("Vitals", ImGuiWindowFlags.AlwaysAutoResize);
+
+        ImGui.PushStyleColor(ImGuiCol.PlotHistogram, new ImGuiVec4(1.0f, 0.0f, 0.0f, 1.0f));
+        ImGui.PushStyleColor(ImGuiCol.PlotHistogramHovered, new ImGuiVec4(1.0f, 0.0f, 0.0f, 1.0f));
+        ImGui.ProgressBar((float) localPlayer.Health / localPlayer.MaxHealth, new ImGuiVec2(140, 16), "HP");
+        ImGui.PopStyleColor(2);
+        ImGui.SameLine();
+        ImGui.Text($"{localPlayer.Health}/{localPlayer.MaxHealth}");
+
+        ImGui.Spacing();
+        ImGui.PushStyleColor(ImGuiCol.PlotHistogram, new ImGuiVec4(0.0f, 0.0f, 1.0f, 1.0f));
+        ImGui.PushStyleColor(ImGuiCol.PlotHistogramHovered, new ImGuiVec4(0.0f, 0.0f, 1.0f, 1.0f));
+        ImGui.ProgressBar((float) localPlayer.Mana / localPlayer.MaxMana, new ImGuiVec2(140, 16), "MP");
+        ImGui.PopStyleColor(2);
+        ImGui.SameLine();
+        ImGui.Text($"{localPlayer.Mana}/{localPlayer.MaxMana}");
+
+        ImGui.Spacing();
+        ImGui.PushStyleColor(ImGuiCol.PlotHistogram, new ImGuiVec4(1.0f, 1.0f, 0.0f, 1.0f));
+        ImGui.PushStyleColor(ImGuiCol.PlotHistogramHovered, new ImGuiVec4(1.0f, 1.0f, 0.0f, 1.0f));
+        ImGui.PushStyleColor(ImGuiCol.Text, new ImGuiVec4(0.0f, 0.0f, 0.0f, 1.0f));
+        ImGui.ProgressBar((float) localPlayer.Stamina / localPlayer.MaxStamina, new ImGuiVec2(140, 16), "SP");
+        ImGui.PopStyleColor(3);
+        ImGui.SameLine();
+        ImGui.Text($"{localPlayer.Stamina}/{localPlayer.MaxStamina}");
     }
 
     private void ShowMenu()
@@ -198,12 +233,10 @@ public sealed class GameScene : Scene
 
         if (ImGui.Button("Spells"))
         {
-            Network.Send<SpellsRequest>();
         }
 
         if (ImGui.Button("Stats"))
         {
-            Network.Send<GetStatsRequest>();
         }
 
         if (ImGui.Button("Train"))

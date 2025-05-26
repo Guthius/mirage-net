@@ -25,26 +25,6 @@ public static class ShopRepository
         return Shops[shopId];
     }
 
-    public static void Update(int shopId, ShopInfo shopInfo)
-    {
-        if (shopId is <= 0 or > Limits.MaxShops)
-        {
-            return;
-        }
-
-        Shops[shopId] = shopInfo;
-
-        Save(shopId);
-    }
-
-    private static void Save(int shopId)
-    {
-        GetCollection().ReplaceOne(x => x.Id == shopId, Shops[shopId], new ReplaceOptions
-        {
-            IsUpsert = true
-        });
-    }
-
     public static void Load()
     {
         var stopwatch = Stopwatch.StartNew();

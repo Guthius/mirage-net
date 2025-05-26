@@ -16,13 +16,17 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="Content\**">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\Mirage.Shared\Mirage.Shared.csproj"/>
         <ProjectReference Include="..\Mirage.Net.Protocol\Mirage.Net.Protocol.csproj"/>
     </ItemGroup>
+
+    <ItemGroup>
+        <None Update="Content\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="appsettings*.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+    
 </Project>

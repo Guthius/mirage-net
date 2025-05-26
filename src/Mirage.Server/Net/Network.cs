@@ -5,13 +5,11 @@ using System.Threading.Channels;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromClient;
 using Mirage.Net.Protocol.FromClient.New;
-using Mirage.Net.Protocol.FromServer;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Extensions;
-using Mirage.Server.Game;
+using Mirage.Server.Players;
 using Mirage.Server.Repositories;
 using Mirage.Shared.Constants;
-using Mirage.Shared.Data;
 using Serilog;
 
 namespace Mirage.Server.Net;
@@ -20,7 +18,7 @@ public static class Network
 {
     public const int ProtocolVersion = 1;
 
-    private static readonly PacketParser Parser = new();
+    private static readonly PacketParser Parser = new(HandleBadPacket);
     private static readonly CancellationTokenSource CancellationTokenSource = new();
     private static readonly Connection?[] Connections = new Connection?[Limits.MaxPlayers + 1];
     private static readonly ConcurrentQueue<int> ConnectionIds = new();
@@ -43,28 +41,20 @@ public static class Network
         // Player Actions
         Parser.Register<MoveRequest>(NetworkHandlers.HandleMove);
         Parser.Register<AttackRequest>(NetworkHandlers.HandleAttack);
+        Parser.Register<SetDirectionRequest>(NetworkHandlers.HandleSetDirection);
 
         // Social
         Parser.Register<SayRequest>(NetworkHandlers.HandleSay);
 
         // Asset Management
         Parser.Register<DownloadAssetRequest>(NetworkHandlers.HandleDownloadAsset);
-
-
+        
         //---
-        Parser.Register<SetDirectionRequest>(NetworkHandlers.HandleSetDirection);
+        
         Parser.Register<UseItemRequest>(NetworkHandlers.HandleUseItem);
         Parser.Register<UseStatPointRequest>(NetworkHandlers.HandleUseStatPoint);
         Parser.Register<PickupItemRequest>(NetworkHandlers.HandlePickupItem);
         Parser.Register<DropItemRequest>(NetworkHandlers.HandleDropItem);
-        Parser.Register<EditItemRequest>(NetworkHandlers.HandleEditItem, AccessLevel.Developer);
-        Parser.Register<UpdateItemRequest>(NetworkHandlers.HandleUpdateItem, AccessLevel.Developer);
-        Parser.Register<EditNpcRequest>(NetworkHandlers.HandleEditNpc, AccessLevel.Developer);
-        Parser.Register<UpdateNpcRequest>(NetworkHandlers.HandleUpdateNpc, AccessLevel.Developer);
-        Parser.Register<EditShopRequest>(NetworkHandlers.HandleEditShop, AccessLevel.Developer);
-        Parser.Register<UpdateShopRequest>(NetworkHandlers.HandleUpdateShop, AccessLevel.Developer);
-        Parser.Register<EditSpellRequest>(NetworkHandlers.HandleEditSpell, AccessLevel.Developer);
-        Parser.Register<UpdateSpellRequest>(NetworkHandlers.HandleUpdateSpell, AccessLevel.Developer);
         Parser.Register<ShopRequest>(NetworkHandlers.HandleShop);
         Parser.Register<ShopTradeRequest>(NetworkHandlers.HandleShopTrade);
         Parser.Register<FixItemRequest>(NetworkHandlers.HandleFixItem);
@@ -123,7 +113,7 @@ public static class Network
 
                 Connections[id] = connection;
 
-                GameState.CreateSession(id);
+                CreateSession(id);
 
                 _ = RunAsync(connection);
             }
@@ -158,7 +148,7 @@ public static class Network
             Connections[connection.Id] = null;
             ConnectionIds.Enqueue(connection.Id);
 
-            GameState.DestroySession(connection.Id);
+            DestroySession(connection.Id);
 
             connection.Client.Close();
             connection.Cts.Dispose();
@@ -240,22 +230,9 @@ public static class Network
     {
         var bytes = PacketSerializer.GetBytes(packet);
 
-        foreach (var player in GameState.OnlinePlayers())
+        foreach (var player in OnlinePlayers())
         {
             Connections[player.Id]?.SendQueue.Writer.TryWrite(bytes);
-        }
-    }
-
-    public static void SendToAllBut<TPacket>(int excludePlayerId, TPacket packet) where TPacket : IPacket<TPacket>
-    {
-        var bytes = PacketSerializer.GetBytes(packet);
-
-        foreach (var player in GameState.OnlinePlayers())
-        {
-            if (excludePlayerId != player.Id)
-            {
-                Connections[player.Id]?.SendQueue.Writer.TryWrite(bytes);
-            }
         }
     }
 
@@ -266,7 +243,7 @@ public static class Network
 
     public static void SendAlert(int connectionId, string message)
     {
-        var bytes = PacketSerializer.GetBytes(new AlertMessage(message));
+        var bytes = PacketSerializer.GetBytes(new DisconnectCommand(message));
 
         Connections[connectionId]?.SendQueue.Writer.TryWrite(bytes);
 
@@ -282,10 +259,10 @@ public static class Network
 
         SendAlert(connectionId, $"You have lost your connection with {Options.GameName}.");
 
-        var player = GameState.Sessions[connectionId];
+        var player = Sessions[connectionId];
         if (player is {Account: not null, Player: not null})
         {
-            SendToAll(new ChatCommand($"{player.Account.Name}/{player.Player.Character.Name} has been booted for ({reason})", ColorCode.White));
+            SendToAll(new ChatCommand($"{player.Account.Name}/{player.Player.Character.Name} has been booted ({reason})", ColorCode.White));
         }
     }
 
@@ -307,7 +284,7 @@ public static class Network
 
     public static void IncomingData(int connectionId, ReadOnlySpan<byte> bytes)
     {
-        var session = GameState.Sessions[connectionId];
+        var session = Sessions[connectionId];
         if (session is null)
         {
             return;
@@ -330,5 +307,101 @@ public static class Network
         }
 
         session.BufferOffset = bytesLeft;
+    }
+
+    private static void HandleBadPacket(int playerId, string packetId)
+    {
+        Log.Warning("Received unsupported packet ({PacketId}) from {IpAddr}", packetId, GetIP(playerId));
+    }
+    
+    //--
+    
+    public static NetworkSession?[] Sessions { get; } = new NetworkSession[Limits.MaxPlayers + 1];
+
+    public static NetworkSession? GetSession(int playerId)
+    {
+        if (playerId is <= 0 or > Limits.MaxPlayers)
+        {
+            return null;
+        }
+
+        return Sessions[playerId];
+    }
+
+    public static void CreateSession(int playerId)
+    {
+        Sessions[playerId] = new NetworkSession(playerId);
+    }
+
+    public static void DestroySession(int playerId)
+    {
+        Sessions[playerId]?.Destroy();
+        Sessions[playerId] = null;
+    }
+
+    public static bool IsAccountLoggedIn(string accountName)
+    {
+        for (var playerId = 1; playerId <= Limits.MaxPlayers; playerId++)
+        {
+            var accountInfo = Sessions[playerId]?.Account;
+            if (accountInfo is null)
+            {
+                continue;
+            }
+
+            if (accountInfo.Name.Equals(accountName, StringComparison.CurrentCultureIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static Player? FindPlayer(ReadOnlySpan<char> characterName)
+    {
+        characterName = characterName.Trim();
+
+        for (var playerId = 1; playerId <= Limits.MaxPlayers; playerId++)
+        {
+            var player = Sessions[playerId]?.Player;
+            if (player is null)
+            {
+                continue;
+            }
+
+            var character = player.Character;
+            if (character.Name.Length < characterName.Length)
+            {
+                continue;
+            }
+
+            if (character.Name.AsSpan()[..characterName.Length].Equals(characterName, StringComparison.CurrentCultureIgnoreCase))
+            {
+                return player;
+            }
+        }
+
+        return null;
+    }
+
+    public static IEnumerable<Player> OnlinePlayers()
+    {
+        return Sessions.Where(session => session?.Player is not null).Select(session => session!.Player!);
+    }
+
+    public static void SavePlayers()
+    {
+        Log.Information("Saving all online players...");
+
+        for (var playerId = 1; playerId <= Limits.MaxPlayers; playerId++)
+        {
+            var session = Sessions[playerId];
+
+            if (session?.Player != null)
+            {
+                CharacterRepository.Save(session.Player.Character);
+            }
+        }
     }
 }

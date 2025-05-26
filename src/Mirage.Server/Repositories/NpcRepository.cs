@@ -27,26 +27,6 @@ public static class NpcRepository
         return Npcs[npcId];
     }
 
-    public static void Update(int npcId, NpcInfo npcInfo)
-    {
-        if (npcId is <= 0 or > Limits.MaxNpcs)
-        {
-            return;
-        }
-
-        Npcs[npcId] = npcInfo;
-
-        Save(npcId);
-    }
-
-    public static void Save(int npcId)
-    {
-        GetCollection().ReplaceOne(x => x.Id == npcId, Npcs[npcId], new ReplaceOptions
-        {
-            IsUpsert = true
-        });
-    }
-
     public static void Load()
     {
         var stopwatch = Stopwatch.StartNew();

@@ -1,6 +1,7 @@
 ﻿using System.Buffers;
 using System.Net.Sockets;
 using System.Threading.Channels;
+using CommunityToolkit.Mvvm.DependencyInjection;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Net.Protocol.FromServer.New;
@@ -32,6 +33,7 @@ public static class Network
 
         // Map Management
         Parser.Register<LoadMapCommand>(NetworkHandlers.HandleLoadMap);
+        Parser.Register<EnterGameCommand>(NetworkHandlers.HandleEnterGame);
 
         // Actors
         Parser.Register<CreateActorCommand>(NetworkHandlers.HandleCreateActor);
@@ -39,6 +41,8 @@ public static class Network
         Parser.Register<UpdateActorVitalsCommand>(NetworkHandlers.HandleUpdateActorVitals);
         Parser.Register<ActorMoveCommand>(NetworkHandlers.HandleActorMove);
         Parser.Register<ActorAttackCommand>(NetworkHandlers.HandleActorAttack);
+        Parser.Register<SetActorPositionCommand>(NetworkHandlers.HandleSetActorPosition);
+        Parser.Register<SetActorDirectionCommand>(NetworkHandlers.HandleSetActorDirection);
 
         // Social
         Parser.Register<ChatCommand>(NetworkHandlers.HandleChat);
@@ -47,34 +51,15 @@ public static class Network
         Parser.Register<DownloadAssetChunkCommand>(NetworkHandlers.HandleDownloadAssetChunk);
         Parser.Register<DownloadAssetResponse>(NetworkHandlers.HandleDownloadAssetResponse);
 
+        // Misc
+        Parser.Register<DisconnectCommand>(NetworkHandlers.HandleDisconnect);
 
         //---
-        Parser.Register<AlertMessage>(NetworkHandlers.HandleAlertMessage);
-        Parser.Register<InGame>(NetworkHandlers.HandleInGame);
+
         Parser.Register<PlayerInventory>(NetworkHandlers.HandleInventory);
         Parser.Register<PlayerInventoryUpdate>(NetworkHandlers.HandlePlayerInventoryUpdate);
         Parser.Register<PlayerEquipment>(NetworkHandlers.HandlePlayerEquipment);
-        Parser.Register<PlayerDir>(NetworkHandlers.HandlePlayerDir);
-        Parser.Register<NpcMove>(NetworkHandlers.HandleNpcMove);
-        Parser.Register<NpcDir>(NetworkHandlers.HandleNpcDir);
-        Parser.Register<PlayerPosition>(NetworkHandlers.HandlePlayerPosition);
-        Parser.Register<NpcAttack>(NetworkHandlers.HandleNpcAttack);
         Parser.Register<SpawnItem>(NetworkHandlers.HandleSpawnItem);
-        Parser.Register<OpenItemEditor>(NetworkHandlers.HandleOpenItemEditor);
-        Parser.Register<UpdateItem>(NetworkHandlers.HandleUpdateItem);
-        Parser.Register<EditItem>(NetworkHandlers.HandleEditItem);
-        Parser.Register<SpawnNpc>(NetworkHandlers.HandleSpawnNpc);
-        Parser.Register<NpcDead>(NetworkHandlers.HandleNpcDead);
-        Parser.Register<OpenNpcEditor>(NetworkHandlers.HandleOpenNpcEditor);
-        Parser.Register<UpdateNpc>(NetworkHandlers.HandleUpdateNpc);
-        Parser.Register<EditNpc>(NetworkHandlers.HandleEditNpc);
-        Parser.Register<MapKey>(NetworkHandlers.HandleMapKey);
-        Parser.Register<OpenShopEditor>(NetworkHandlers.HandleOpenShopEditor);
-        Parser.Register<UpdateShop>(NetworkHandlers.HandleUpdateShop);
-        Parser.Register<EditShop>(NetworkHandlers.HandleEditShop);
-        Parser.Register<OpenSpellEditor>(NetworkHandlers.HandleOpenSpellEditor);
-        Parser.Register<UpdateSpell>(NetworkHandlers.HandleUpdateSpell);
-        Parser.Register<EditSpell>(NetworkHandlers.HandleEditSpell);
         Parser.Register<Trade>(NetworkHandlers.HandleTrade);
         Parser.Register<PlayerSpells>(NetworkHandlers.HandlePlayerSpells);
     }
@@ -122,10 +107,6 @@ public static class Network
         {
             await Task.WhenAny(DoSend(channel, tcpClient), DoReceive(tcpClient));
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
-        }
         finally
         {
             channel.Writer.Complete();
@@ -159,6 +140,8 @@ public static class Network
                 var bytesReceived = await stream.ReadAsync(buffer.AsMemory(bufferPos)).ConfigureAwait(false);
                 if (bytesReceived == 0)
                 {
+                    Ioc.Default.GetRequiredService<Game>().ConnectionLost();
+
                     return;
                 }
 
@@ -178,14 +161,6 @@ public static class Network
 
                 bufferPos = bytesLeft;
             }
-        }
-        catch (IOException ex)
-        {
-            Console.WriteLine(ex);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
         }
         finally
         {

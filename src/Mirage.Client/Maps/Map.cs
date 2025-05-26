@@ -63,6 +63,10 @@ public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
         DrawActors(spriteBatch);
         DrawSkyLayers(spriteBatch);
         DrawActorNames(spriteBatch);
+    }
+
+    public void DrawUI(SpriteBatch spriteBatch)
+    {
         DrawMapName(spriteBatch);
     }
 
@@ -160,12 +164,9 @@ public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
         }
 
         var color = _info.PvpEnabled ? Color.Red : Color.White;
-        
-        var w = graphicsDevice.Viewport.Width + (int) Textures.Font.MeasureString(_info.Name).X;
+        var x = graphicsDevice.Viewport.Width + (int) Textures.Font.MeasureString(_info.Name).X;
 
-        // TODO: Draw the map name centered at the top of the window
-
-        spriteBatch.DrawString(Textures.Font, _info.Name, new Vector2((int)(w * 0.5f), 10), color);
+        spriteBatch.DrawString(Textures.Font, _info.Name, new Vector2((int) (x * 0.5f), 10), color);
     }
 
     public Actor? GetActor(int actorId)
@@ -205,6 +206,11 @@ public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
 
     public bool IsPassable(int x, int y)
     {
+        if (_actors.Values.Any(actor => actor.TileX == x && actor.TileY == y))
+        {
+            return false;
+        }
+
         return _info?.IsPassable(x, y) ?? false;
     }
 

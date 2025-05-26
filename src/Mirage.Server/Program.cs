@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Mirage.Server.Game;
+using Mirage.Server.Services;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()

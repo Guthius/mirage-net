@@ -1,6 +1,6 @@
 ﻿namespace Mirage.Client.Assets;
 
-public sealed class Asset<T>(T instance)
+public sealed class Asset<TAsset>(TAsset instance)
 {
-    public T Instance { get; set; } = instance;
+    public TAsset Instance { get; set; } = instance;
 }

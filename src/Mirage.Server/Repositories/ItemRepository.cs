@@ -27,26 +27,6 @@ public static class ItemRepository
         return Items[itemId];
     }
 
-    public static void Update(int itemId, ItemInfo itemInfo)
-    {
-        if (itemId is <= 0 or > Limits.MaxItems)
-        {
-            return;
-        }
-
-        Items[itemId] = itemInfo;
-
-        Save(itemId);
-    }
-
-    private static void Save(int itemId)
-    {
-        GetCollection().ReplaceOne(x => x.Id == itemId, Items[itemId], new ReplaceOptions
-        {
-            IsUpsert = true
-        });
-    }
-
     public static void Load()
     {
         var stopwatch = Stopwatch.StartNew();

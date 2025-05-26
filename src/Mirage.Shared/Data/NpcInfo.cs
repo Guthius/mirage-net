@@ -49,14 +49,14 @@ public sealed record NpcInfo
     public int Intelligence { get; set; }
 
     [BsonIgnore]
-    public int MaxHP => Strength * Defense;
+    public int MaxHealth => Strength * Defense;
 
     [BsonIgnore]
-    public int MaxMP => Intelligence * 2;
+    public int MaxMana => Intelligence * 2;
 
     [BsonIgnore]
-    public int MaxSP => Speed * 2;
+    public int MaxStamina => Speed * 2;
 
     [BsonIgnore]
-    public int HPRegen => Math.Max(1, Defense / 3);
+    public int HealthRegen => Math.Max(1, Defense / 3);
 }

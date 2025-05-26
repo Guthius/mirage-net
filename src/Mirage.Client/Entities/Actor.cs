@@ -239,6 +239,24 @@ public sealed class Actor(Game game, int id, int x, int y)
         StartNextQueuedAction();
     }
 
+    public void SetPosition(Direction direction, int x, int y)
+    {
+        _actionBuffer.Clear();
+        _moving = false;
+        _attacking = false;
+
+        Direction = direction;
+        TileX = x;
+        TileY = y;
+        X = x * TileWidth;
+        Y = y * TileHeight;
+    }
+
+    public void SetDirection(Direction direction)
+    {
+        Direction = direction;
+    }
+    
     public void QueueAttack()
     {
         if (IsLocalPlayer)

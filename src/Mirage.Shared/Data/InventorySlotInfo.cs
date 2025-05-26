@@ -5,6 +5,9 @@ namespace Mirage.Shared.Data;
 
 public sealed record InventorySlotInfo
 {
+    [BsonElement("slot"), BsonRepresentation(BsonType.Int32)]
+    public int Slot { get; set; }
+    
     [BsonElement("item_id"), BsonRepresentation(BsonType.Int32)]
     public int ItemId { get; set; }
 

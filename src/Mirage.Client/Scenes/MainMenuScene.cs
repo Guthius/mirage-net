@@ -18,7 +18,7 @@ public sealed class MainMenuScene(ISceneManager sceneManager, Game gameState) : 
         var center = ImGui.GetMainViewport().GetCenter();
 
         ImGui.SetNextWindowPos(center, ImGuiCond.Appearing, new ImGuiVec2(0.5f, 0.15f));
-        ImGui.Begin("Menu", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse);
+        ImGui.Begin("Mirage.NET", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse);
         ImGui.BeginGroup();
 
         if (ImGui.Button("New Account", ButtonSize))

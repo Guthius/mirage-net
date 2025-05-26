@@ -27,26 +27,6 @@ public static class SpellRepository
         return Spells[spellId];
     }
 
-    public static void Update(int spellId, SpellInfo spellInfo)
-    {
-        if (spellId is <= 0 or > Limits.MaxSpells)
-        {
-            return;
-        }
-
-        Spells[spellId] = spellInfo;
-
-        Save(spellId);
-    }
-
-    private static void Save(int spellId)
-    {
-        GetCollection().ReplaceOne(x => x.Id == spellId, Spells[spellId], new ReplaceOptions
-        {
-            IsUpsert = true
-        });
-    }
-
     public static void Load()
     {
         var stopwatch = Stopwatch.StartNew();

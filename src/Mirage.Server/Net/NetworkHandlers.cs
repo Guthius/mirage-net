@@ -4,7 +4,8 @@ using Mirage.Net.Protocol.FromClient.New;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Assets;
-using Mirage.Server.Game;
+using Mirage.Server.Chat;
+using Mirage.Server.Players;
 using Mirage.Server.Repositories;
 using Mirage.Shared.Constants;
 using Mirage.Shared.Data;
@@ -15,7 +16,7 @@ namespace Mirage.Server.Net;
 
 public static class NetworkHandlers
 {
-    public static void HandleAuth(GameSession session, AuthRequest request)
+    public static void HandleAuth(NetworkSession session, AuthRequest request)
     {
         if (session.Account is not null)
         {
@@ -35,7 +36,7 @@ public static class NetworkHandlers
             return;
         }
 
-        if (GameState.IsAccountLoggedIn(request.AccountName))
+        if (IsAccountLoggedIn(request.AccountName))
         {
             session.Send(new AuthResponse(AuthResult.AlreadyLoggedIn));
             return;
@@ -43,13 +44,13 @@ public static class NetworkHandlers
 
         session.Account = account;
         session.Send(new AuthResponse(AuthResult.Ok));
-        session.Send(new UpdateJobListCommand(ClassRepository.GetAll()));
+        session.Send(new UpdateJobListCommand(JobRepository.GetAll()));
         session.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
 
         Log.Information("Account {AccountName} has logged in from {RemoteIp}", account.Name, GetIP(session.Id));
     }
 
-    public static void HandleCreateAccount(GameSession session, CreateAccountRequest request)
+    public static void HandleCreateAccount(NetworkSession session, CreateAccountRequest request)
     {
         if (session.Account is not null)
         {
@@ -85,11 +86,11 @@ public static class NetworkHandlers
 
         session.Account = account;
         session.Send(new CreateAccountResponse(CreateAccountResult.Ok));
-        session.Send(new UpdateJobListCommand(ClassRepository.GetAll()));
+        session.Send(new UpdateJobListCommand(JobRepository.GetAll()));
         session.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
     }
 
-    public static void HandleDeleteAccount(GameSession session, DeleteAccountRequest request)
+    public static void HandleDeleteAccount(NetworkSession session, DeleteAccountRequest request)
     {
         if (session.Account is not null)
         {
@@ -114,7 +115,7 @@ public static class NetworkHandlers
         session.Send(new DeleteAccountResponse(DeleteAccountResult.Ok));
     }
 
-    public static void HandleCreateCharacter(GameSession session, AccountInfo account, CreateCharacterRequest request)
+    public static void HandleCreateCharacter(NetworkSession session, AccountInfo account, CreateCharacterRequest request)
     {
         var result = CharacterRepository.Create(account.Id, request.CharacterName, request.Gender, request.JobId);
 
@@ -129,7 +130,7 @@ public static class NetworkHandlers
         session.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
     }
 
-    public static void HandleDeleteCharacter(GameSession session, AccountInfo account, DeleteCharacterRequest request)
+    public static void HandleDeleteCharacter(NetworkSession session, AccountInfo account, DeleteCharacterRequest request)
     {
         CharacterRepository.Delete(request.CharacterId, account.Id);
 
@@ -138,7 +139,7 @@ public static class NetworkHandlers
         session.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
     }
 
-    public static void HandleSelectCharacter(GameSession session, AccountInfo account, SelectCharacterRequest request)
+    public static void HandleSelectCharacter(NetworkSession session, AccountInfo account, SelectCharacterRequest request)
     {
         var character = CharacterRepository.Get(request.CharacterId, account.Id);
         if (character is null)
@@ -154,7 +155,7 @@ public static class NetworkHandlers
             character.Name, Options.GameName, account.Name);
     }
 
-    public static void HandleMove(GamePlayer player, MoveRequest request)
+    public static void HandleMove(Player player, MoveRequest request)
     {
         if (player.CastedSpell)
         {
@@ -164,7 +165,11 @@ public static class NetworkHandlers
             }
             else
             {
-                player.Send(new PlayerPosition(player.Character.X, player.Character.Y));
+                player.Send(new SetActorPositionCommand(
+                    player.Id,
+                    player.Character.Direction,
+                    player.Character.X,
+                    player.Character.Y));
 
                 return;
             }
@@ -173,17 +178,24 @@ public static class NetworkHandlers
         player.NewMap.Move(player, request.Direction, request.Movement);
     }
 
-    public static void HandleAttack(GamePlayer player, AttackRequest request)
+    public static void HandleAttack(Player player, AttackRequest request)
     {
         player.NewMap.Attack(player);
     }
 
-    public static void HandleSay(GamePlayer player, SayRequest request)
+    public static void HandleSetDirection(Player player, SetDirectionRequest request)
+    {
+        player.Character.Direction = request.Direction;
+        player.NewMap.Send(new SetActorDirectionCommand(player.Id, player.Character.Direction),
+            p => p.Id != player.Id);
+    }
+
+    public static void HandleSay(Player player, SayRequest request)
     {
         ChatProcessor.Handle(player, request.Message);
     }
 
-    public static void HandleDownloadAsset(GamePlayer player, DownloadAssetRequest request)
+    public static void HandleDownloadAsset(Player player, DownloadAssetRequest request)
     {
         const int chunkSize = 1024;
 
@@ -223,18 +235,12 @@ public static class NetworkHandlers
 
     //----
 
-    public static void HandleSetDirection(GamePlayer player, SetDirectionRequest request)
-    {
-        player.Character.Direction = request.Direction;
-        player.Map.Send(player.Id, new PlayerDir(player.Id, player.Character.Direction));
-    }
-
-    public static void HandleUseItem(GamePlayer player, UseItemRequest request)
+    public static void HandleUseItem(Player player, UseItemRequest request)
     {
         player.UseItem(request.InventorySlot);
     }
 
-    public static void HandleUseStatPoint(GamePlayer player, UseStatPointRequest request)
+    public static void HandleUseStatPoint(Player player, UseStatPointRequest request)
     {
         if (player.Character.StatPoints <= 0)
         {
@@ -268,13 +274,13 @@ public static class NetworkHandlers
 
         player.SendStats();
     }
-    
-    public static void HandlePickupItem(GamePlayer player, PickupItemRequest request)
+
+    public static void HandlePickupItem(Player player, PickupItemRequest request)
     {
         player.PickupItem();
     }
 
-    public static void HandleDropItem(GamePlayer player, DropItemRequest request)
+    public static void HandleDropItem(Player player, DropItemRequest request)
     {
         if (request.InventorySlot is < 1 or > Limits.MaxInventory)
         {
@@ -292,127 +298,7 @@ public static class NetworkHandlers
         player.DropItem(request.InventorySlot, request.Quantity);
     }
 
-    public static void HandleEditItem(GamePlayer player, EditItemRequest request)
-    {
-        var itemInfo = ItemRepository.Get(request.ItemId);
-        if (itemInfo is null)
-        {
-            ReportHackAttempt(player.Id, "Invalid Item Index");
-            return;
-        }
-
-        Log.Information("{CharacterName} editing item #{ItemId}", player.Character.Name, request.ItemId);
-
-        player.Send(new EditItem(itemInfo));
-    }
-
-    public static void HandleUpdateItem(GamePlayer player, UpdateItemRequest request)
-    {
-        var itemInfo = ItemRepository.Get(request.ItemInfo.Id);
-        if (itemInfo is null)
-        {
-            ReportHackAttempt(player.Id, "Invalid Item Index");
-            return;
-        }
-
-        ItemRepository.Update(request.ItemInfo.Id, request.ItemInfo);
-
-        Log.Information("{CharacterName} saved item #{ItemId}.", player.Character.Name, request.ItemInfo.Id);
-
-        SendToAll(new UpdateItem(request.ItemInfo));
-    }
-
-    public static void HandleEditNpc(GamePlayer player, EditNpcRequest request)
-    {
-        var npcInfo = NpcRepository.Get(request.NpcId);
-        if (npcInfo is null)
-        {
-            ReportHackAttempt(player.Id, "Invalid NPC Index");
-            return;
-        }
-
-        Log.Information("{CharacterName} editing npc #{NpcId}.", player.Character.Name, request.NpcId);
-
-        player.Send(new EditNpc(npcInfo));
-    }
-
-    public static void HandleUpdateNpc(GamePlayer player, UpdateNpcRequest request)
-    {
-        var npcInfo = NpcRepository.Get(request.NpcInfo.Id);
-        if (npcInfo is null)
-        {
-            ReportHackAttempt(player.Id, "Invalid NPC Index");
-            return;
-        }
-
-        NpcRepository.Update(request.NpcInfo.Id, request.NpcInfo);
-
-        Log.Information("{CharacterName} saved npc #{NpcId}.", player.Character.Name, request.NpcInfo.Id);
-
-        SendToAll(new UpdateNpc(request.NpcInfo.Id, request.NpcInfo.Name, request.NpcInfo.Sprite));
-    }
-
-    public static void HandleEditShop(GamePlayer player, EditShopRequest request)
-    {
-        var shopInfo = ShopRepository.Get(request.ShopId);
-        if (shopInfo is null)
-        {
-            ReportHackAttempt(player.Id, "Invalid Shop Index");
-            return;
-        }
-
-        Log.Information("{CharacterName} editing shop #{ShopId}", player.Character.Name, request.ShopId);
-
-        player.Send(new EditShop(shopInfo));
-    }
-
-    public static void HandleUpdateShop(GamePlayer player, UpdateShopRequest request)
-    {
-        var shopInfo = ShopRepository.Get(request.ShopInfo.Id);
-        if (shopInfo is null)
-        {
-            ReportHackAttempt(player.Id, "Invalid Shop Index");
-            return;
-        }
-
-        ShopRepository.Update(request.ShopInfo.Id, request.ShopInfo);
-
-        Log.Information("{CharacterName} saving shop #{ShopId}", player.Character.Name, request.ShopInfo.Id);
-
-        SendToAll(new UpdateShop(request.ShopInfo.Id, request.ShopInfo.Name));
-    }
-
-    public static void HandleEditSpell(GamePlayer player, EditSpellRequest request)
-    {
-        var spellInfo = SpellRepository.Get(request.SpellId);
-        if (spellInfo is null)
-        {
-            ReportHackAttempt(player.Id, "Invalid Spell Index");
-            return;
-        }
-
-        Log.Information("{CharacterName} editing spell #{SpellId}", player.Character.Name, request.SpellId);
-
-        player.Send(new EditSpell(spellInfo));
-    }
-
-    public static void HandleUpdateSpell(GamePlayer player, UpdateSpellRequest request)
-    {
-        var spellInfo = SpellRepository.Get(request.SpellInfo.Id);
-        if (spellInfo is null)
-        {
-            ReportHackAttempt(player.Id, "Invalid Spell Index");
-            return;
-        }
-
-        SpellRepository.Update(request.SpellInfo.Id, request.SpellInfo);
-
-        Log.Information("{CharacterName} saving spell #{SpellId}.", player.Character.Name, request.SpellInfo.Id);
-
-        SendToAll(new UpdateSpell(request.SpellInfo.Id, request.SpellInfo.Name));
-    }
-
-    public static void HandleShop(GamePlayer player, ShopRequest request)
+    public static void HandleShop(Player player, ShopRequest request)
     {
         var mapInfo = MapRepository.Get(player.Character.MapId);
         if (mapInfo is null)
@@ -443,14 +329,14 @@ public static class NetworkHandlers
 
             player.Tell(!string.IsNullOrEmpty(spellInfo.RequiredClassId)
                     ? $"{itemInfo.Name} can be used by all classes."
-                    : $"{itemInfo.Name} can only be used by a {ClassRepository.GetName(spellInfo.RequiredClassId)};",
+                    : $"{itemInfo.Name} can only be used by a {JobRepository.GetName(spellInfo.RequiredClassId)};",
                 ColorCode.Yellow);
         }
 
         player.Send(new Trade(shopInfo.Id, shopInfo.FixesItems, shopInfo.Trades));
     }
 
-    public static void HandleShopTrade(GamePlayer player, ShopTradeRequest request)
+    public static void HandleShopTrade(Player player, ShopTradeRequest request)
     {
         if (request.Slot is < 0 or > Limits.MaxShopTrades)
         {
@@ -497,7 +383,7 @@ public static class NetworkHandlers
         player.Tell("The trade was successful!", ColorCode.Yellow);
     }
 
-    public static void HandleFixItem(GamePlayer player, FixItemRequest request)
+    public static void HandleFixItem(Player player, FixItemRequest request)
     {
         const int goldId = 1;
 
@@ -557,98 +443,17 @@ public static class NetworkHandlers
         player.Tell($"Item has been partially fixed for {cost} gold!", ColorCode.BrightBlue);
     }
 
-    public static void HandleSearch(GamePlayer player, SearchRequest request)
+    public static void HandleSearch(Player player, SearchRequest request)
     {
-        if (request.X < 0 || request.X > Limits.MaxMapWidth ||
-            request.Y < 0 || request.Y > Limits.MaxMapHeight)
-        {
-            return;
-        }
-
-        var mapId = player.Character.MapId;
-
-        for (var otherId = 1; otherId <= Limits.MaxPlayers; otherId++)
-        {
-            var otherPlayer = GameState.GetPlayer(otherId);
-            if (otherPlayer is null)
-            {
-                continue;
-            }
-
-            if (otherPlayer.Character.MapId != mapId ||
-                otherPlayer.Character.X != request.X ||
-                otherPlayer.Character.Y != request.Y)
-            {
-                continue;
-            }
-
-            var levelDifference = otherPlayer.Character.Level - player.Character.Level;
-            switch (levelDifference)
-            {
-                case >= 5:
-                    player.Tell("You wouldn't stand a chance.", ColorCode.BrightRed);
-                    break;
-
-                case > 0:
-                    player.Tell("This one seems to have an advantage over you.", ColorCode.Yellow);
-                    break;
-
-                case <= -5:
-                    player.Tell("You could slaughter that player.", ColorCode.BrightBlue);
-                    break;
-
-                case < 0:
-                    player.Tell("You would have an advantage over that player.", ColorCode.Yellow);
-                    break;
-
-                default:
-                    player.Tell("This would be an even fight.", ColorCode.White);
-                    break;
-            }
-
-            player.Target = otherId;
-            player.TargetType = TargetType.Player;
-
-            player.Tell($"Your target is now {otherPlayer.Character.Name}.", ColorCode.Yellow);
-            return;
-        }
-
-        // Check for an item
-        var item = player.Map.GetItemAt(request.X, request.Y);
-        if (item is not null)
-        {
-            var itemInfo = ItemRepository.Get(item.ItemId);
-            if (itemInfo is null)
-            {
-                return;
-            }
-
-            player.Tell($"You see a {itemInfo.Name}.", ColorCode.Yellow);
-            return;
-        }
-
-        // Check for an NPC
-        foreach (var npc in player.Map.AliveNpcs())
-        {
-            if (npc.X != request.X || npc.Y != request.Y)
-            {
-                continue;
-            }
-
-            player.Target = npc.Slot;
-            player.TargetType = TargetType.Npc;
-
-            player.Tell($"Your target is now a {npc.Info.Name}.", ColorCode.Yellow);
-            return;
-        }
+        player.NewMap.LookAt(player, request.X, request.Y);
     }
 
-    public static void HandleSpells(GamePlayer player, SpellsRequest request)
+    public static void HandleSpells(Player player, SpellsRequest request)
     {
         player.Send(new PlayerSpells(player.Character.SpellIds));
     }
 
-    public static void HandleCast(GamePlayer player, CastRequest request)
+    public static void HandleCast(Player player, CastRequest request)
     {
         player.Cast(request.SpellSlot);
     }

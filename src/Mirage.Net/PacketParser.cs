@@ -1,6 +1,6 @@
 ﻿namespace Mirage.Net;
 
-public sealed class PacketParser
+public sealed class PacketParser(Action<int, string>? reportBadPacket = null)
 {
     private readonly Dictionary<string, Action<int, PacketReader>> _handlers = new(StringComparer.OrdinalIgnoreCase);
 
@@ -33,7 +33,7 @@ public sealed class PacketParser
             handler(packet);
         };
     }
-    
+
     /// <summary>
     /// Registers a handler for packets of type <typeparamref name="TPacket"/>.
     /// </summary>
@@ -41,10 +41,7 @@ public sealed class PacketParser
     /// <typeparam name="TPacket">The packet type.</typeparam>
     public void Register<TPacket>(Action handler) where TPacket : IPacket<TPacket>
     {
-        _handlers[TPacket.PacketId] = (_, _) =>
-        {
-            handler();
-        };
+        _handlers[TPacket.PacketId] = (_, _) => { handler(); };
     }
 
     /// <summary>
@@ -69,19 +66,21 @@ public sealed class PacketParser
             var packetReader = new PacketReader(packetData);
             var packetId = packetReader.ReadString();
 
-            if (!_handlers.TryGetValue(packetId, out var handler))
+            if (_handlers.TryGetValue(packetId, out var handler))
             {
-                break;
+                handler(playerId, packetReader);
             }
-
-            handler(playerId, packetReader);
+            else
+            {
+                reportBadPacket?.Invoke(playerId, packetId);
+            }
 
             bytes = bytes[(end + 1)..];
         }
 
         return byteCount - bytes.Length;
     }
-    
+
     /// <summary>
     /// Parses the specified <paramref name="bytes"/> for data packets and calls the registered handler for each packet.
     /// </summary>

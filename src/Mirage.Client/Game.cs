@@ -82,6 +82,13 @@ public sealed class Game : Microsoft.Xna.Framework.Game
         base.Initialize();
     }
 
+    public void ConnectionLost()
+    {
+        _sceneManager.SwitchTo<MainMenuScene>();
+
+        ShowAlert("The connection with the server was lost.");
+    }
+
     protected override void Update(GameTime gameTime)
     {
         _sceneManager.Current?.Update(gameTime);

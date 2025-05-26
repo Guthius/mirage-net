@@ -164,6 +164,11 @@ public static class NetworkHandlers
         GameState.Map.Load(command.MapId);
     }
 
+    public static void HandleEnterGame(EnterGameCommand command)
+    {
+        SceneManager.SwitchTo<GameScene>();
+    }
+
     public static void HandleCreateActor(CreateActorCommand command)
     {
         var player = GameState.Map.CreateActor(
@@ -223,12 +228,29 @@ public static class NetworkHandlers
         actor?.QueueAttack();
     }
 
+    public static void HandleSetActorPosition(SetActorPositionCommand command)
+    {
+        var actor = GameState.Map.GetActor(command.ActorId);
+
+        actor?.SetPosition(
+            command.Direction,
+            command.X,
+            command.Y);
+    }
+
+    public static void HandleSetActorDirection(SetActorDirectionCommand command)
+    {
+        var actor = GameState.Map.GetActor(command.ActorId);
+
+        actor?.SetDirection(command.Direction);
+    }
+
     public static void HandleChat(ChatCommand command)
     {
         GameState.ChatHistory.Add(new ChatInfo(command.Message, command.Color));
         GameState.ChatHistoryUpdated = true;
     }
-    
+
     public static void HandleDownloadAssetChunk(DownloadAssetChunkCommand command)
     {
         AssetDownloader.WriteChunk(command.Handle, command.Data);
@@ -238,20 +260,18 @@ public static class NetworkHandlers
     {
         AssetDownloader.End(response.Handle);
     }
-    
-    //---
-    
 
-    public static void HandleAlertMessage(AlertMessage alertMessage)
+    public static void HandleDisconnect(DisconnectCommand command)
     {
-        GameState.ShowAlert(alertMessage.Message);
+        Network.Disconnect();
+
+        GameState.ShowAlert(command.Message);
         GameState.ClearStatus();
+
+        SceneManager.SwitchTo<MainMenuScene>();
     }
 
-    public static void HandleInGame(InGame inGame)
-    {
-        SceneManager.SwitchTo<GameScene>();
-    }
+    //---
 
     public static void HandleInventory(PlayerInventory playerInventory)
     {
@@ -271,87 +291,7 @@ public static class NetworkHandlers
     {
     }
 
-    public static void HandlePlayerDir(PlayerDir playerDir)
-    {
-    }
-
-    public static void HandleNpcMove(NpcMove npcMove)
-    {
-    }
-
-    public static void HandleNpcDir(NpcDir npcDir)
-    {
-    }
-
-    public static void HandlePlayerPosition(PlayerPosition playerPosition)
-    {
-    }
-
-    public static void HandleNpcAttack(NpcAttack npcAttack)
-    {
-    }
-    
     public static void HandleSpawnItem(SpawnItem spawnItem)
-    {
-    }
-
-    public static void HandleOpenItemEditor()
-    {
-    }
-
-    public static void HandleUpdateItem(UpdateItem updateItem)
-    {
-    }
-
-    public static void HandleEditItem(EditItem editItem)
-    {
-    }
-
-    public static void HandleSpawnNpc(SpawnNpc spawnNpc)
-    {
-    }
-
-    public static void HandleNpcDead(NpcDead npcDead)
-    {
-    }
-
-    public static void HandleOpenNpcEditor()
-    {
-    }
-
-    public static void HandleUpdateNpc(UpdateNpc updateNpc)
-    {
-    }
-
-    public static void HandleEditNpc(EditNpc editNpc)
-    {
-    }
-
-    public static void HandleMapKey(MapKey mapKey)
-    {
-    }
-    
-    public static void HandleOpenShopEditor()
-    {
-    }
-
-    public static void HandleUpdateShop(UpdateShop updateShop)
-    {
-    }
-
-    public static void HandleEditShop(EditShop editShop)
-    {
-    }
-
-    public static void HandleOpenSpellEditor()
-    {
-    }
-
-    public static void HandleUpdateSpell(UpdateSpell updateSpell)
-    {
-    }
-
-    public static void HandleEditSpell(EditSpell editSpell)
     {
     }
 

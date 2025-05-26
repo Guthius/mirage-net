@@ -1,19 +1,19 @@
 ﻿namespace Mirage.Client.Assets;
 
-public abstract class AssetManager<T>(T placeholder)
+public abstract class AssetManager<TAsset>(TAsset placeholder)
 {
-    private readonly Dictionary<string, Asset<T>> _assets = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Asset<TAsset>> _assets = new(StringComparer.OrdinalIgnoreCase);
 
-    public Asset<T> Get(string assetId, Action<T>? afterLoad = null)
+    public Asset<TAsset> Get(string assetId, Action<TAsset>? afterLoad = null)
     {
         if (_assets.TryGetValue(assetId, out var asset))
         {
             return asset;
         }
 
-        var path = GetPath(assetId, typeof(T).Name.ToLowerInvariant());
+        var path = GetPath(assetId, typeof(TAsset).Name.ToLowerInvariant());
 
-        asset = _assets[assetId] = new Asset<T>(placeholder);
+        asset = _assets[assetId] = new Asset<TAsset>(placeholder);
 
         _ = Task.Run(async () =>
         {
@@ -56,7 +56,7 @@ public abstract class AssetManager<T>(T placeholder)
         return Path.Combine(path, fileName + "." + category);
     }
 
-    private T Load(Stream stream)
+    private TAsset Load(Stream stream)
     {
         try
         {
@@ -68,5 +68,5 @@ public abstract class AssetManager<T>(T placeholder)
         }
     }
 
-    protected abstract T OnLoad(Stream stream);
+    protected abstract TAsset OnLoad(Stream stream);
 }

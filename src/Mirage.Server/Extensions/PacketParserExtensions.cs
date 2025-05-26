@@ -1,5 +1,6 @@
 ﻿using Mirage.Net;
-using Mirage.Server.Game;
+using Mirage.Server.Net;
+using Mirage.Server.Players;
 using Mirage.Shared.Data;
 
 namespace Mirage.Server.Extensions;
@@ -7,11 +8,11 @@ namespace Mirage.Server.Extensions;
 public static class PacketParserExtensions
 {
     // GameSession, Packet
-    public static void Register<TPacket>(this PacketParser parser, Action<GameSession, TPacket> handler) where TPacket : IPacket<TPacket>
+    public static void Register<TPacket>(this PacketParser parser, Action<NetworkSession, TPacket> handler) where TPacket : IPacket<TPacket>
     {
         parser.Register<TPacket>((playerId, packet) =>
         {
-            var session = GameState.GetSession(playerId);
+            var session = Network.GetSession(playerId);
             if (session is null)
             {
                 return;
@@ -22,11 +23,11 @@ public static class PacketParserExtensions
     }
 
     // GameSession, AccountInfo, Packet
-    public static void Register<TPacket>(this PacketParser parser, Action<GameSession, AccountInfo, TPacket> handler) where TPacket : IPacket<TPacket>
+    public static void Register<TPacket>(this PacketParser parser, Action<NetworkSession, AccountInfo, TPacket> handler) where TPacket : IPacket<TPacket>
     {
         parser.Register<TPacket>((playerId, packet) =>
         {
-            var session = GameState.GetSession(playerId);
+            var session = Network.GetSession(playerId);
             if (session?.Account is null)
             {
                 return; // Player not logged in
@@ -37,11 +38,11 @@ public static class PacketParserExtensions
     }
 
     // GamePlayer, Packet
-    public static void Register<TPacket>(this PacketParser parser, Action<GamePlayer, TPacket> handler) where TPacket : IPacket<TPacket>
+    public static void Register<TPacket>(this PacketParser parser, Action<Player, TPacket> handler) where TPacket : IPacket<TPacket>
     {
         parser.Register<TPacket>((playerId, packet) =>
         {
-            var session = GameState.GetSession(playerId);
+            var session = Network.GetSession(playerId);
             if (session?.Player is null)
             {
                 return; // Player not in game
@@ -52,11 +53,11 @@ public static class PacketParserExtensions
     }
 
     // GamePlayer, Packet
-    public static void Register<TPacket>(this PacketParser parser, Action<GamePlayer, TPacket> handler, AccessLevel minimumAccessLevel) where TPacket : IPacket<TPacket>
+    public static void Register<TPacket>(this PacketParser parser, Action<Player, TPacket> handler, AccessLevel minimumAccessLevel) where TPacket : IPacket<TPacket>
     {
         parser.Register<TPacket>((playerId, packet) =>
         {
-            var session = GameState.GetSession(playerId);
+            var session = Network.GetSession(playerId);
             if (session?.Player is null)
             {
                 return; // Player not in game

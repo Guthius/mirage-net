@@ -7,6 +7,11 @@ public static class AssetManager
 {
     private static readonly Dictionary<string, Asset> Assets = new(StringComparer.OrdinalIgnoreCase);
 
+    public static Asset? Get(string id)
+    {
+        return Assets.GetValueOrDefault(id);
+    }
+
     public static Asset Register(string id, string path)
     {
         return Assets[id] = new Asset(path, id);
@@ -34,10 +39,5 @@ public static class AssetManager
         var sha1Hash = string.Concat(sha1HashBytes.Select(b => b.ToString("x2")));
 
         return sha1Hash;
-    }
-
-    public static Asset? Get(string hash)
-    {
-        return Assets.GetValueOrDefault(hash);
     }
 }

@@ -56,7 +56,7 @@ public static class CharacterRepository
             return CreateCharacterResult.CharacterNameInvalid;
         }
 
-        var jobInfo = ClassRepository.Get(jobId);
+        var jobInfo = JobRepository.Get(jobId);
         if (jobInfo is null)
         {
             return CreateCharacterResult.InvalidJob;
