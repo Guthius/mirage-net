@@ -46,19 +46,15 @@ public static class Network
 
         // Social
         Parser.Register<SayRequest>(NetworkHandlers.HandleSay);
-        
+
         // Asset Management
         Parser.Register<DownloadAssetRequest>(NetworkHandlers.HandleDownloadAsset);
-        
-        
+
+
         //---
         Parser.Register<SetDirectionRequest>(NetworkHandlers.HandleSetDirection);
         Parser.Register<UseItemRequest>(NetworkHandlers.HandleUseItem);
         Parser.Register<UseStatPointRequest>(NetworkHandlers.HandleUseStatPoint);
-        Parser.Register<GetStatsRequest>(NetworkHandlers.HandleGetStats);
-        Parser.Register<NewMapRequest>(NetworkHandlers.HandleNewMap);
-        Parser.Register<UpdateMapRequest>(NetworkHandlers.HandleUpdateMap, AccessLevel.Mapper);
-        Parser.Register<NeedMapRequest>(NetworkHandlers.HandleNeedMap);
         Parser.Register<PickupItemRequest>(NetworkHandlers.HandlePickupItem);
         Parser.Register<DropItemRequest>(NetworkHandlers.HandleDropItem);
         Parser.Register<EditItemRequest>(NetworkHandlers.HandleEditItem, AccessLevel.Developer);

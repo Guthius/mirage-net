@@ -3,42 +3,54 @@ using ImGuiNET;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Mirage.Client.Entities;
 using Mirage.Client.Extensions;
+using Mirage.Client.Maps;
 using Mirage.Client.Scenes;
+using Mirage.Shared.Data;
 using MonoGame.ImGuiNet;
 using ImGuiVec2 = System.Numerics.Vector2;
 
 namespace Mirage.Client;
 
-public sealed class GameClient : GameState
+public sealed class Game : Microsoft.Xna.Framework.Game
 {
     private readonly ISceneManager _sceneManager;
     private string _status = string.Empty;
     private string _alertMessage = string.Empty;
-    
+
+    public List<JobInfo> Jobs { get; set; } = [];
+    public int MaxCharacters { get; set; }
+    public List<CharacterSlotInfo> Characters { get; set; } = [];
+    public InventorySlotInfo[] Inventory { get; set; } = [];
+    public List<ChatInfo> ChatHistory { get; set; } = [];
+    public bool ChatHistoryUpdated { get; set; }
+    public Map Map { get; private set; } = null!;
+    public bool GettingMap { get; set; }
+    public int LocalPlayerId { get; set; }
+    public Actor? LocalPlayer { get; set; }
     public ImGuiRenderer ImGuiRenderer { get; private set; } = null!;
-    
+
     private static void Main()
     {
         var services = new ServiceCollection();
 
         services.AddCore();
-        services.AddSingleton<GameClient>();
-        services.AddScenesFromAssemblyContaining<GameClient>();
-        services.AddSingleton<GameState>(provider => provider.GetRequiredService<GameClient>());
-        services.AddSingleton<GraphicsDevice>(provider => provider.GetRequiredService<GameClient>().GraphicsDevice);
-        services.AddSingleton<ImGuiRenderer>(provider => provider.GetRequiredService<GameClient>().ImGuiRenderer);
+        services.AddSingleton<Game>();
+        services.AddScenesFromAssemblyContaining<Game>();
+        services.AddSingleton<GraphicsDevice>(provider => provider.GetRequiredService<Game>().GraphicsDevice);
+        services.AddSingleton<ImGuiRenderer>(provider => provider.GetRequiredService<Game>().ImGuiRenderer);
 
         var serviceProvider = services.BuildServiceProvider();
 
         Ioc.Default.ConfigureServices(serviceProvider);
 
-        using var client = serviceProvider.GetRequiredService<GameClient>();
+        using var client = serviceProvider.GetRequiredService<Game>();
 
         client.Run();
     }
 
-    public GameClient(ISceneManager sceneManager)
+    public Game(ISceneManager sceneManager)
     {
         _sceneManager = sceneManager;
 
@@ -46,7 +58,7 @@ public sealed class GameClient : GameState
 
         graphics.PreferredBackBufferWidth = 1280;
         graphics.PreferredBackBufferHeight = 720;
-        
+
         Content.RootDirectory = "Content";
 
         IsMouseVisible = true;
@@ -64,7 +76,7 @@ public sealed class GameClient : GameState
         Textures.Font = Content.Load<SpriteFont>("PixelOperator");
 
         _sceneManager.SwitchTo<MainMenuScene>();
-        
+
         Map = new Map(this, GraphicsDevice);
 
         base.Initialize();
@@ -139,7 +151,7 @@ public sealed class GameClient : GameState
         }
 
         var center = ImGui.GetMainViewport().GetCenter();
-        
+
         ImGui.OpenPopup("Alert");
         ImGui.SetNextWindowSize(new ImGuiVec2(380, 120), ImGuiCond.Always);
         ImGui.SetNextWindowPos(new ImGuiVec2(center.X - 190, center.Y - 60), ImGuiCond.Appearing);

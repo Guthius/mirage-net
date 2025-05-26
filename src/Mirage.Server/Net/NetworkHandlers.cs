@@ -177,7 +177,7 @@ public static class NetworkHandlers
     {
         player.NewMap.Attack(player);
     }
-    
+
     public static void HandleSay(GamePlayer player, SayRequest request)
     {
         ChatProcessor.Handle(player, request.Message);
@@ -186,7 +186,7 @@ public static class NetworkHandlers
     public static void HandleDownloadAsset(GamePlayer player, DownloadAssetRequest request)
     {
         const int chunkSize = 1024;
-        
+
         var asset = AssetManager.Get(request.Hash);
         if (asset is null)
         {
@@ -200,13 +200,13 @@ public static class NetworkHandlers
             try
             {
                 int bytesRead;
-                
+
                 await using var stream = asset.OpenRead();
                 while ((bytesRead = await stream.ReadAsync(buffer)) > 0)
                 {
                     player.Send(new DownloadAssetChunkCommand(request.Handle, buffer.AsSpan(0, bytesRead).ToArray()));
                 }
-                
+
                 player.Send(new DownloadAssetResponse(request.Handle, DownloadAssetResult.Ok));
             }
             catch (Exception ex)
@@ -268,50 +268,7 @@ public static class NetworkHandlers
 
         player.SendStats();
     }
-
-    public static void HandleGetStats(GamePlayer player, GetStatsRequest request)
-    {
-    }
-
-    public static void HandleNewMap(GamePlayer player, NewMapRequest request)
-    {
-        player.Move(request.Direction, MovementType.Walking);
-    }
-
-    public static void HandleUpdateMap(GamePlayer player, UpdateMapRequest request)
-    {
-        var mapId = request.MapInfo.Id;
-
-        player.Map.UpdateInfo(request.MapInfo);
-
-        foreach (var otherPlayer in GameState.OnlinePlayers())
-        {
-            if (otherPlayer.Character.MapId == mapId)
-            {
-                otherPlayer.WarpTo(mapId, otherPlayer.Character.X, otherPlayer.Character.Y);
-            }
-        }
-
-        Log.Information("{CharacterName} saved map #{ItemId}.", player.Character.Name, request.MapInfo.Id);
-    }
-
-    public static void HandleNeedMap(GamePlayer player, NeedMapRequest request)
-    {
-        if (request.NeedMap)
-        {
-            player.Send(new MapData(player.Map.Info));
-        }
-
-        player.Send(new MapItemData(player.Map.GetItemData()));
-        player.Send(new MapNpcData(player.Map.GetNpcData()));
-
-        player.SendJoinMap();
-
-        player.GettingMap = false;
-
-        player.Send(new MapDone());
-    }
-
+    
     public static void HandlePickupItem(GamePlayer player, PickupItemRequest request)
     {
         player.PickupItem();

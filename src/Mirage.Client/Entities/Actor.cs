@@ -1,10 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Mirage.Client.Maps;
 using Mirage.Shared.Data;
 
 namespace Mirage.Client.Entities;
 
-public sealed class Actor(GameState gameState, int id, int x, int y)
+public sealed class Actor(Game game, int id, int x, int y)
 {
     private const int TileWidth = 32;
     private const int TileHeight = 32;
@@ -19,25 +20,6 @@ public sealed class Actor(GameState gameState, int id, int x, int y)
         public static readonly AttackAction Instance = new();
     }
 
-    public bool IsLocalPlayer { get; } = gameState.LocalPlayerId == id;
-    public required string Name { get; set; }
-    public required int Sprite { get; set; }
-    public required bool IsPlayerKiller { get; set; }
-    public required AccessLevel AccessLevel { get; set; }
-    public required Map Map { get; set; }
-    public required int X { get; set; }
-    public required int Y { get; set; }
-    public required Direction Direction { get; set; }
-    public required int MaxHealth { get; set; }
-    public required int Health { get; set; }
-    public required int MaxMana { get; set; }
-    public required int Mana { get; set; }
-    public required int MaxStamina { get; set; }
-    public required int Stamina { get; set; }
-    public bool Busy => _moving || _attacking;
-
-    private int _currentX = x * TileWidth;
-    private int _currentY = y * TileHeight;
     private readonly Queue<object> _actionBuffer = [];
     private bool _moving;
     private double _moveDuration;
@@ -47,6 +29,25 @@ public sealed class Actor(GameState gameState, int id, int x, int y)
     private bool _attacking;
     private double _attackDuration;
     private double _attackTimer;
+
+    public bool IsLocalPlayer { get; } = game.LocalPlayerId == id;
+    public required string Name { get; set; }
+    public required int Sprite { get; set; }
+    public required bool IsPlayerKiller { get; set; }
+    public required AccessLevel AccessLevel { get; set; }
+    public required Map Map { get; set; }
+    public required int TileX { get; set; }
+    public required int TileY { get; set; }
+    public int X { get; private set; } = x * TileWidth;
+    public int Y { get; private set; } = y * TileHeight;
+    public required Direction Direction { get; set; }
+    public required int MaxHealth { get; set; }
+    public required int Health { get; set; }
+    public required int MaxMana { get; set; }
+    public required int Mana { get; set; }
+    public required int MaxStamina { get; set; }
+    public required int Stamina { get; set; }
+    public bool Busy => _moving || _attacking;
 
     public void Update(GameTime gameTime)
     {
@@ -66,8 +67,8 @@ public sealed class Actor(GameState gameState, int id, int x, int y)
         _moveTimer += deltaTime;
         if (_moveTimer >= _moveDuration)
         {
-            _currentX = (int) _moveTo.X;
-            _currentY = (int) _moveTo.Y;
+            X = (int) _moveTo.X;
+            Y = (int) _moveTo.Y;
             _moving = false;
 
             StartNextQueuedAction();
@@ -77,8 +78,8 @@ public sealed class Actor(GameState gameState, int id, int x, int y)
         var moveFactor = (float) (_moveTimer / _moveDuration);
         var movePosition = Vector2.LerpPrecise(_moveFrom, _moveTo, moveFactor);
 
-        _currentX = (int) movePosition.X;
-        _currentY = (int) movePosition.Y;
+        X = (int) movePosition.X;
+        Y = (int) movePosition.Y;
     }
 
     private void UpdateAttack(double deltaTime)
@@ -121,8 +122,8 @@ public sealed class Actor(GameState gameState, int id, int x, int y)
             }
         }
 
-        var destX = _currentX;
-        var destY = _currentY - 4;
+        var destX = X;
+        var destY = Y - 4;
         if (destY < 0)
         {
             destY = 0;
@@ -141,8 +142,8 @@ public sealed class Actor(GameState gameState, int id, int x, int y)
     {
         var color = GetNameColor(IsPlayerKiller, AccessLevel);
         var width = (int) Textures.Font.MeasureString(Name).X;
-        var x = _currentX + 16 - width / 2;
-        var y = _currentY - 24;
+        var x = X + 16 - width / 2;
+        var y = Y - 24;
 
         spriteBatch.DrawString(Textures.Font, Name, new Vector2(x, y), color);
     }
@@ -174,8 +175,8 @@ public sealed class Actor(GameState gameState, int id, int x, int y)
 
         var (moveX, moveY) = GetDirectionVector(direction);
 
-        var targetX = X + (int) moveX;
-        var targetY = Y + (int) moveY;
+        var targetX = TileX + (int) moveX;
+        var targetY = TileY + (int) moveY;
 
         var passable = Map.IsPassable(targetX, targetY);
         if (!passable)
@@ -189,11 +190,11 @@ public sealed class Actor(GameState gameState, int id, int x, int y)
         }
 
         Direction = direction;
-        X = targetX;
-        Y = targetY;
+        TileX = targetX;
+        TileY = targetY;
 
         _moveTo = new Vector2(targetX * TileWidth, targetY * TileHeight);
-        _moveFrom = new Vector2(_currentX, _currentY);
+        _moveFrom = new Vector2(X, Y);
         _moveDuration = GetMoveSpeed(movementType);
         _moveTimer = 0;
 
@@ -270,12 +271,12 @@ public sealed class Actor(GameState gameState, int id, int x, int y)
                 var directionVector = GetDirectionVector(move.Direction);
 
                 Direction = move.Direction;
-                X += (int) directionVector.X;
-                Y += (int) directionVector.Y;
+                TileX += (int) directionVector.X;
+                TileY += (int) directionVector.Y;
 
                 _moving = true;
-                _moveTo = new Vector2(X * TileWidth, Y * TileHeight);
-                _moveFrom = new Vector2(_currentX, _currentY);
+                _moveTo = new Vector2(TileX * TileWidth, TileY * TileHeight);
+                _moveFrom = new Vector2(X, Y);
                 _moveDuration = move.Duration;
                 _moveTimer = 0;
                 return;

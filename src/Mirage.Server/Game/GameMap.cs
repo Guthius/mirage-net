@@ -158,7 +158,7 @@ public sealed class GameMap : IBlockedProvider
             }
         }
 
-        Send(new MapItemData(_items));
+        // TODO: Send(new MapItemData(_items));
     }
 
     public void RespawnNpcs()

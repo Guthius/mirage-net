@@ -5,9 +5,9 @@ using Mirage.Client.Assets;
 using Mirage.Client.Entities;
 using Mirage.Shared.Data;
 
-namespace Mirage.Client;
+namespace Mirage.Client.Maps;
 
-public sealed class Map(GameState gameState, GraphicsDevice graphicsDevice)
+public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
 {
     private readonly TextureManager _textureManager = new(graphicsDevice);
     private readonly MapManager _mapManager = new();
@@ -182,8 +182,8 @@ public sealed class Map(GameState gameState, GraphicsDevice graphicsDevice)
             IsPlayerKiller = isPlayerKiller,
             AccessLevel = accessLevel,
             Map = this,
-            X = x,
-            Y = y,
+            TileX = x,
+            TileY = y,
             Direction = direction,
             MaxHealth = maxHealth,
             Health = health,

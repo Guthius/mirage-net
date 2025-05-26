@@ -9,7 +9,7 @@ namespace Mirage.Client.Net;
 
 public static class NetworkHandlers
 {
-    private static readonly GameClient GameState = Ioc.Default.GetRequiredService<GameClient>();
+    private static readonly Game GameState = Ioc.Default.GetRequiredService<Game>();
     private static readonly ISceneManager SceneManager = Ioc.Default.GetRequiredService<ISceneManager>();
 
     public static void HandleCreateAccount(CreateAccountResponse response)
@@ -290,27 +290,7 @@ public static class NetworkHandlers
     public static void HandleNpcAttack(NpcAttack npcAttack)
     {
     }
-
-    public static void HandleCheckForMap(CheckForMap checkFormap)
-    {
-    }
-
-    public static void HandleMapData(MapData mapData)
-    {
-    }
-
-    public static void HandleMapItemData(MapItemData mapItemData)
-    {
-    }
-
-    public static void HandleMapNpcData(MapNpcData mapNpcData)
-    {
-    }
-
-    public static void HandleMapDone(MapDone mapDone)
-    {
-    }
-
+    
     public static void HandleSpawnItem(SpawnItem spawnItem)
     {
     }
@@ -350,11 +330,7 @@ public static class NetworkHandlers
     public static void HandleMapKey(MapKey mapKey)
     {
     }
-
-    public static void HandleOpenMapEditor()
-    {
-    }
-
+    
     public static void HandleOpenShopEditor()
     {
     }

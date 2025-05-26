@@ -21,8 +21,8 @@ public sealed class Map : IPacketRecipient
                 Id = MakeNpcId(1),
                 Name = "Test NPC 1",
                 Sprite = 2,
-                X = Random.Shared.Next(0, 10),
-                Y = Random.Shared.Next(0, 10),
+                X = 5,
+                Y = 5,
                 Direction = Direction.Up,
                 MaxHealth = 5,
                 Health = 5,
@@ -33,8 +33,8 @@ public sealed class Map : IPacketRecipient
                 Id = MakeNpcId(2),
                 Name = "Test NPC 2",
                 Sprite = 2,
-                X = Random.Shared.Next(0, 10),
-                Y = Random.Shared.Next(0, 10),
+                X = 6,
+                Y = 5,
                 Direction = Direction.Up,
                 MaxHealth = 5,
                 Health = 5,
@@ -45,8 +45,8 @@ public sealed class Map : IPacketRecipient
                 Id = MakeNpcId(3),
                 Name = "Test NPC 3",
                 Sprite = 2,
-                X = Random.Shared.Next(0, 10),
-                Y = Random.Shared.Next(0, 10),
+                X = 7,
+                Y = 5,
                 Direction = Direction.Up,
                 MaxHealth = 5,
                 Health = 5,
@@ -62,32 +62,65 @@ public sealed class Map : IPacketRecipient
 
     public void Update(float deltaTime)
     {
-        /* Don't bother updating the map if there are no players on it. */
         if (_players.Count == 0)
         {
             return;
         }
 
-        /* Update all players on the map. */
         UpdatePlayers(deltaTime);
-
-        /* Update all NPC's on the map. */
         UpdateNpcs(deltaTime);
 
         // TODO: Implement: despawn items when they reach their expiry time...
     }
 
+    /// <summary>
+    /// Updates all the players on the map.
+    /// </summary>
+    /// <param name="deltaTime">The elapsed delta time.</param>
     private void UpdatePlayers(float deltaTime)
     {
-        // TODO: Player healh regen...
+        foreach (var player in _players)
+        {
+            player.Update(deltaTime);
+        }
     }
 
+    /// <summary>
+    /// Updates all the NPC's on the map.
+    /// </summary>
+    /// <param name="deltaTime">The elapsed delta time.</param>
     private void UpdateNpcs(float deltaTime)
     {
         foreach (var npc in _npcs)
         {
             npc.Update(deltaTime);
         }
+    }
+
+    /// <summary>
+    /// Checks whether the tile at the specified <paramref name="x"/> and <paramref name="y"/> is passable.
+    /// </summary>
+    /// <param name="x">The tile X position.</param>
+    /// <param name="y">The tile Y position.</param>
+    /// <returns>True if the tile is passable; otherwise, false.</returns>
+    public bool IsPassable(int x, int y)
+    {
+        if (!_info.IsPassable(x, y))
+        {
+            return false;
+        }
+
+        if (_players.Any(player => player.Character.X == x && player.Character.Y == y))
+        {
+            return false;
+        }
+
+        if (_npcs.Any(npc => npc.X == x && npc.Y == y))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -178,27 +211,33 @@ public sealed class Map : IPacketRecipient
     /// <param name="movementType">The movement type.</param>
     public void Move(GamePlayer player, Direction direction, MovementType movementType)
     {
-        // TODO: Check to ensure the move is valid...
+        var targetX = player.Character.X;
+        var targetY = player.Character.Y;
 
         switch (direction)
         {
             case Direction.Up:
-                player.Character.Y--;
+                targetY--;
                 break;
 
             case Direction.Down:
-                player.Character.Y++;
+                targetY++;
                 break;
 
             case Direction.Left:
-                player.Character.X--;
+                targetX--;
                 break;
 
             case Direction.Right:
-                player.Character.X++;
+                targetX++;
                 break;
         }
 
+        player.Character.X = targetX;
+        player.Character.Y = targetY;
+
+        // TODO: Check to ensure the move is valid...
+        
         Send(new ActorMoveCommand(player.Id, direction, movementType), recipient => recipient.Id != player.Id);
     }
 

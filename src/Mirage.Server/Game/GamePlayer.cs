@@ -50,23 +50,19 @@ public sealed class GamePlayer
         // SendItems();
         // SendNpcs();
         // SendShops();
+        
         // SendSpells();
         // Send(new PlayerInventory(Character.Inventory.Skip(1).ToArray()));
         // SendEquipment();
-        // Send(new PlayerHp(Character.MaxHP, Character.HP));
-        // Send(new PlayerMp(Character.MaxMP, Character.MP));
-        // Send(new PlayerSp(Character.MaxSP, Character.SP));
-        //
-        // Send(new PlayerStats(
-        //     Character.Strength,
-        //     Character.Defense,
-        //     Character.Speed,
-        //     Character.Intelligence));
         //
         // WarpTo(Character.MapId, Character.X, Character.Y);
 
-
         Send<InGame>();
+    }
+
+    public void Update(float dt)
+    {
+        // TODO: Player healh regen...
     }
     
     private void SendWelcome()
@@ -116,35 +112,6 @@ public sealed class GamePlayer
         Log.Information("{CharacterName} has left {GameName}", Character.Name, Options.GameName);
 
         NewMap.Remove(this);
-    }
-
-    private bool TryPlayerMove(int x, int y, MovementType movementType)
-    {
-        if (x is >= 0 and <= Limits.MaxMapWidth && y is >= 0 and <= Limits.MaxMapHeight)
-        {
-            switch (Map.Info.Tiles[x, y].Type)
-            {
-                case TileType.Blocked:
-                case TileType.Key when !Map.DoorOpen[x, y]:
-                    return false;
-            }
-
-            Character.X = x;
-            Character.Y = y;
-
-            Map.Send(Id, new PlayerMove(Id, x, y, Character.Direction, movementType));
-
-            return true;
-        }
-
-        var (targetMapId, targetX, targetY) = Map.Info.GetAdjacentMap(Character.Direction, Character.X, Character.Y);
-        if (targetMapId == 0)
-        {
-            return false;
-        }
-
-        WarpTo(targetMapId, targetX, targetY);
-        return true;
     }
 
     public void Move(Direction direction, MovementType movementType)
@@ -771,7 +738,7 @@ public sealed class GamePlayer
 
         GettingMap = true;
 
-        Send(new CheckForMap(targetMap.Id, targetMap.Revision));
+        // TODO: Send(new CheckForMap(targetMap.Id, targetMap.Revision));
     }
 
     public void CheckEquippedItems()

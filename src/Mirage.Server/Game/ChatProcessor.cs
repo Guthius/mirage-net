@@ -413,13 +413,7 @@ public static class ChatProcessor
                 player.Tell($"Map: {player.Character.MapId}, X: {player.Character.X}, Y: {player.Character.Y}", ColorCode.Pink);
                 return true;
             }
-
-            if (chatText.StartsWith(Commands.MapEditor, StringComparison.OrdinalIgnoreCase))
-            {
-                player.Send<OpenMapEditor>();
-                return true;
-            }
-
+            
             if (chatText.StartsWith(Commands.WarpMeTo, StringComparison.OrdinalIgnoreCase))
             {
                 HandleWarpMeTo(player, chatText[Commands.WarpMeTo.Length..].Trim());

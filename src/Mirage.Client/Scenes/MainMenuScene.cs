@@ -4,7 +4,7 @@ using ImGuiVec2 = System.Numerics.Vector2;
 
 namespace Mirage.Client.Scenes;
 
-public sealed class MainMenuScene(ISceneManager sceneManager, GameClient gameState) : Scene
+public sealed class MainMenuScene(ISceneManager sceneManager, Game gameState) : Scene
 {
     private static readonly ImGuiVec2 ButtonSize = new(160, 35);
     

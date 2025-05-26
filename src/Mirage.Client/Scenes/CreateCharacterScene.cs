@@ -8,7 +8,7 @@ using ImGuiVec4 = System.Numerics.Vector4;
 
 namespace Mirage.Client.Scenes;
 
-public sealed class CreateCharacterScene(ISceneManager sceneManager, GameClient gameState) : Scene
+public sealed class CreateCharacterScene(ISceneManager sceneManager, Game gameState) : Scene
 {
     private bool _disabled;
     private string _characterName = string.Empty;

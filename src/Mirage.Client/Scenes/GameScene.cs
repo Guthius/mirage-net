@@ -13,11 +13,11 @@ namespace Mirage.Client.Scenes;
 public sealed class GameScene : Scene
 {
     private readonly GraphicsDevice _graphicsDevice;
-    private readonly GameClient _gameState;
+    private readonly Game _gameState;
     private string _chatMessage = string.Empty;
     private int _itemPickupTimer;
 
-    public GameScene(GraphicsDevice graphicsDevice, GameClient gameState)
+    public GameScene(GraphicsDevice graphicsDevice, Game gameState)
     {
         _graphicsDevice = graphicsDevice;
         _gameState = gameState;
@@ -79,7 +79,7 @@ public sealed class GameScene : Scene
         if (localPlayer.TryMove(direction, movementType))
         {
             Network.Send(new MoveRequest(direction, movementType));
-            if (_gameState.Map.GetTileType(localPlayer.X, localPlayer.Y) == TileType.Warp)
+            if (_gameState.Map.GetTileType(localPlayer.TileX, localPlayer.TileY) == TileType.Warp)
             {
                 _gameState.GettingMap = true;
             }
@@ -140,7 +140,21 @@ public sealed class GameScene : Scene
     {
         var spriteBatch = new SpriteBatch(_graphicsDevice);
 
-        spriteBatch.Begin();
+        var localPlayer = _gameState.LocalPlayer;
+        if (localPlayer is not null)
+        {
+            spriteBatch.Begin(transformMatrix:
+                Matrix.CreateTranslation(-localPlayer.X, -localPlayer.Y, 0) *
+                Matrix.CreateTranslation(
+                    _graphicsDevice.Viewport.Width / 2f, 
+                    _graphicsDevice.Viewport.Height / 2f,
+                    0));
+        }
+        else
+        {
+            spriteBatch.Begin();
+        }
+
 
         _gameState.Map.Draw(spriteBatch);
 
@@ -154,7 +168,7 @@ public sealed class GameScene : Scene
 
     public override void DrawUI(GameTime gameTime)
     {
-        //ShowMenu();
+        ShowMenu();
         //ShowInventory();
         ShowVitals();
         ShowChat();

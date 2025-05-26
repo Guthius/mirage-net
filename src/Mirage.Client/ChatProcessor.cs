@@ -14,7 +14,7 @@ public static class ChatProcessor
 
     public static void Handle(ReadOnlySpan<char> message)
     {
-        var gameState = Ioc.Default.GetRequiredService<GameClient>();
+        var gameState = Ioc.Default.GetRequiredService<Game>();
         
         message = message.Trim();
         if (message.IsEmpty)

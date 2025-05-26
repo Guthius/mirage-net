@@ -72,6 +72,11 @@ public sealed class Npc(Map map)
             return;
         }
 
+        if (!map.IsPassable(targetX, targetY))
+        {
+            return;
+        }
+
         X = targetX;
         Y = targetY;
 

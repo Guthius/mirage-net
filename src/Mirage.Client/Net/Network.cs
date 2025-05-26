@@ -59,11 +59,6 @@ public static class Network
         Parser.Register<NpcDir>(NetworkHandlers.HandleNpcDir);
         Parser.Register<PlayerPosition>(NetworkHandlers.HandlePlayerPosition);
         Parser.Register<NpcAttack>(NetworkHandlers.HandleNpcAttack);
-        Parser.Register<CheckForMap>(NetworkHandlers.HandleCheckForMap);
-        Parser.Register<MapData>(NetworkHandlers.HandleMapData);
-        Parser.Register<MapItemData>(NetworkHandlers.HandleMapItemData);
-        Parser.Register<MapNpcData>(NetworkHandlers.HandleMapNpcData);
-        Parser.Register<MapDone>(NetworkHandlers.HandleMapDone);
         Parser.Register<SpawnItem>(NetworkHandlers.HandleSpawnItem);
         Parser.Register<OpenItemEditor>(NetworkHandlers.HandleOpenItemEditor);
         Parser.Register<UpdateItem>(NetworkHandlers.HandleUpdateItem);
@@ -74,7 +69,6 @@ public static class Network
         Parser.Register<UpdateNpc>(NetworkHandlers.HandleUpdateNpc);
         Parser.Register<EditNpc>(NetworkHandlers.HandleEditNpc);
         Parser.Register<MapKey>(NetworkHandlers.HandleMapKey);
-        Parser.Register<OpenMapEditor>(NetworkHandlers.HandleOpenMapEditor);
         Parser.Register<OpenShopEditor>(NetworkHandlers.HandleOpenShopEditor);
         Parser.Register<UpdateShop>(NetworkHandlers.HandleUpdateShop);
         Parser.Register<EditShop>(NetworkHandlers.HandleEditShop);
