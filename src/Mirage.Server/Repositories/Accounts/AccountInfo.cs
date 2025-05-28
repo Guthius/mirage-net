@@ -1,7 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace Mirage.Shared.Data;
+namespace Mirage.Server.Repositories.Accounts;
 
 public sealed record AccountInfo
 {

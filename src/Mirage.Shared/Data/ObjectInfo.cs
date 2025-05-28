@@ -6,6 +6,6 @@ namespace Mirage.Shared.Data;
 public abstract record ObjectInfo
 {
     [BsonId]
-    [BsonElement("id"), BsonRepresentation(BsonType.Int32)]
+    [BsonElement("id"), BsonRepresentation(BsonType.ObjectId)]
     public string Id { get; set; } = string.Empty;
 }

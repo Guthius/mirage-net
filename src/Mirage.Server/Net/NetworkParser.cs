@@ -1,6 +1,6 @@
 ﻿using Mirage.Net;
 using Mirage.Server.Players;
-using Mirage.Shared.Data;
+using Mirage.Server.Repositories.Accounts;
 
 namespace Mirage.Server.Net;
 

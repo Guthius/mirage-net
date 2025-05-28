@@ -10,7 +10,10 @@ using Mirage.Net;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Chat;
 using Mirage.Server.Players;
-using Mirage.Server.Repositories;
+using Mirage.Server.Repositories.Accounts;
+using Mirage.Server.Repositories.Bans;
+using Mirage.Server.Repositories.Characters;
+using Mirage.Server.Repositories.Jobs;
 
 namespace Mirage.Server.Net;
 
@@ -19,16 +22,32 @@ public sealed partial class NetworkService : BackgroundService
     private readonly ILogger<NetworkService> _logger;
     private readonly IChatService _chatService;
     private readonly IPlayerService _playerService;
+    private readonly IAccountRepository _accountRepository;
+    private readonly IBanRepository _banRepository;
+    private readonly ICharacterRepository _characterRepository;
+    private readonly IJobRepository _jobRepository;
     private readonly NetworkOptions _options;
     private readonly ConcurrentQueue<int> _connectionIds = [];
     private readonly ConcurrentDictionary<int, NetworkConnection> _connections = [];
     private readonly NetworkParser _parser;
 
-    public NetworkService(ILogger<NetworkService> logger, IOptions<NetworkOptions> options, IChatService chatService, IPlayerService playerService)
+    public NetworkService(
+        ILogger<NetworkService> logger,
+        IOptions<NetworkOptions> options,
+        IChatService chatService,
+        IPlayerService playerService,
+        IAccountRepository accountRepository,
+        IBanRepository banRepository,
+        ICharacterRepository characterRepository,
+        IJobRepository jobRepository)
     {
         _logger = logger;
         _chatService = chatService;
         _playerService = playerService;
+        _accountRepository = accountRepository;
+        _banRepository = banRepository;
+        _characterRepository = characterRepository;
+        _jobRepository = jobRepository;
         _options = options.Value;
         _parser = new NetworkParser(ReportBadPacket);
 
@@ -90,7 +109,7 @@ public sealed partial class NetworkService : BackgroundService
             SingleWriter = false
         });
 
-        if (BanRepository.IsBanned(address))
+        if (_banRepository.IsBanned(address))
         {
             var disconnectCommand = PacketSerializer.GetBytes(new DisconnectCommand(
                 "You have been banned and can no longer play."));

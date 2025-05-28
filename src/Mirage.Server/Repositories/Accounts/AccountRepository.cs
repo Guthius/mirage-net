@@ -1,24 +1,24 @@
-﻿using Mirage.Shared.Data;
+﻿using Microsoft.Extensions.Logging;
+using Mirage.Server.Repositories.Characters;
 using MongoDB.Driver;
-using Serilog;
 
-namespace Mirage.Server.Repositories;
+namespace Mirage.Server.Repositories.Accounts;
 
-public static class AccountRepository
+public sealed class AccountRepository(ILogger<AccountRepository> logger, ICharacterRepository characterRepository) : IAccountRepository
 {
     private static IMongoCollection<AccountInfo> GetCollection()
     {
         return Database.GetCollection<AccountInfo>("accounts");
     }
 
-    public static bool Exists(string accountName)
+    public bool Exists(string accountName)
     {
         var count = GetCollection().CountDocuments(x => x.Name == accountName);
 
         return count > 0;
     }
 
-    public static AccountInfo Create(string accountName, string password)
+    public AccountInfo Create(string accountName, string password)
     {
         var account = new AccountInfo
         {
@@ -28,10 +28,12 @@ public static class AccountRepository
 
         GetCollection().InsertOne(account);
 
+        logger.LogInformation("Account {AccountName} has been created", accountName);
+
         return account;
     }
 
-    public static AccountInfo? Authenticate(string accountName, string password)
+    public AccountInfo? Authenticate(string accountName, string password)
     {
         var accountInfo = GetCollection().Find(x => x.Name == accountName).FirstOrDefault();
 
@@ -43,7 +45,7 @@ public static class AccountRepository
         return accountInfo;
     }
 
-    public static void Delete(string accountId)
+    public void Delete(string accountId)
     {
         var result = GetCollection().DeleteOne(x => x.Id == accountId);
 
@@ -52,8 +54,8 @@ public static class AccountRepository
             return;
         }
 
-        CharacterRepository.DeleteForAccount(accountId);
+        characterRepository.DeleteForAccount(accountId);
 
-        Log.Information("Account '{AccountId}' has been deleted", accountId);
+        logger.LogInformation("Account {AccountId} has been deleted", accountId);
     }
 }

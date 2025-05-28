@@ -2,7 +2,7 @@
 using Mirage.Net;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Players;
-using Mirage.Shared.Data;
+using Mirage.Server.Repositories.Accounts;
 
 namespace Mirage.Server.Net;
 

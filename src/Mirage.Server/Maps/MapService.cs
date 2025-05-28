@@ -1,4 +1,4 @@
-﻿using Mirage.Server.Repositories;
+﻿using Mirage.Server.Repositories.Maps;
 
 namespace Mirage.Server.Maps;
 

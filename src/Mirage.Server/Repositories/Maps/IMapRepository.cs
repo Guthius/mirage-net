@@ -1,6 +1,6 @@
 ﻿using Mirage.Shared.Data;
 
-namespace Mirage.Server.Repositories;
+namespace Mirage.Server.Repositories.Maps;
 
 public interface IMapRepository
 {

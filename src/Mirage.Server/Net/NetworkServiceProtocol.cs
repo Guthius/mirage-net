@@ -4,9 +4,8 @@ using Mirage.Net.Protocol.FromClient.New;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Assets;
 using Mirage.Server.Players;
-using Mirage.Server.Repositories;
+using Mirage.Server.Repositories.Accounts;
 using Mirage.Shared.Constants;
-using Mirage.Shared.Data;
 
 namespace Mirage.Server.Net;
 
@@ -52,7 +51,7 @@ public sealed partial class NetworkService
             return;
         }
 
-        var account = AccountRepository.Authenticate(request.AccountName, request.Password);
+        var account = _accountRepository.Authenticate(request.AccountName, request.Password);
         if (account is null)
         {
             connection.Send(new AuthResponse(AuthResult.InvalidAccountNameOrPassword));
@@ -67,8 +66,8 @@ public sealed partial class NetworkService
 
         connection.Account = account;
         connection.Send(new AuthResponse(AuthResult.Ok));
-        connection.Send(new UpdateJobListCommand(JobRepository.GetAll()));
-        connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
+        connection.Send(new UpdateJobListCommand(_jobRepository.GetAll()));
+        connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
 
         _logger.LogInformation("Account {AccountName} has logged in from {RemoteIp}", account.Name, connection.Address);
     }
@@ -97,20 +96,18 @@ public sealed partial class NetworkService
             return;
         }
 
-        if (AccountRepository.Exists(request.AccountName))
+        if (_accountRepository.Exists(request.AccountName))
         {
             connection.Send(new CreateAccountResponse(CreateAccountResult.AccountNameTaken));
             return;
         }
 
-        var account = AccountRepository.Create(request.AccountName, request.Password);
-
-        _logger.LogInformation("Account '{AccountName}' has been created.", request.AccountName);
+        var account = _accountRepository.Create(request.AccountName, request.Password);
 
         connection.Account = account;
         connection.Send(new CreateAccountResponse(CreateAccountResult.Ok));
-        connection.Send(new UpdateJobListCommand(JobRepository.GetAll()));
-        connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
+        connection.Send(new UpdateJobListCommand(_jobRepository.GetAll()));
+        connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
     }
 
     public void HandleDeleteAccount(NetworkConnection connection, DeleteAccountRequest request)
@@ -126,21 +123,21 @@ public sealed partial class NetworkService
             return;
         }
 
-        var account = AccountRepository.Authenticate(request.AccountName, request.Password);
+        var account = _accountRepository.Authenticate(request.AccountName, request.Password);
         if (account is null)
         {
             connection.Send(new DeleteAccountResponse(DeleteAccountResult.InvalidAccountNameOrPassword));
             return;
         }
 
-        AccountRepository.Delete(account.Id);
+        _accountRepository.Delete(account.Id);
 
         connection.Send(new DeleteAccountResponse(DeleteAccountResult.Ok));
     }
 
     public void HandleCreateCharacter(NetworkConnection connection, AccountInfo account, CreateCharacterRequest request)
     {
-        var result = CharacterRepository.Create(account.Id, request.CharacterName, request.Gender, request.JobId);
+        var result = _characterRepository.Create(account.Id, request.CharacterName, request.Gender, request.JobId);
 
         connection.Send(new CreateCharacterResponse(result));
         if (result != CreateCharacterResult.Ok)
@@ -150,21 +147,21 @@ public sealed partial class NetworkService
 
         _logger.LogInformation("Character {CharacterName} created by account {AccountName}", request.CharacterName, account.Name);
 
-        connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
+        connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
     }
 
     public void HandleDeleteCharacter(NetworkConnection connection, AccountInfo account, DeleteCharacterRequest request)
     {
-        CharacterRepository.Delete(request.CharacterId, account.Id);
+        _characterRepository.Delete(request.CharacterId, account.Id);
 
         _logger.LogInformation("Character deleted on account {AccountName}", account.Name);
 
-        connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, CharacterRepository.GetCharacterList(account.Id)));
+        connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
     }
 
     public void HandleSelectCharacter(NetworkConnection connection, AccountInfo account, SelectCharacterRequest request)
     {
-        var character = CharacterRepository.Get(request.CharacterId, account.Id);
+        var character = _characterRepository.Get(request.CharacterId, account.Id);
         if (character is null)
         {
             connection.Send(new SelectCharacterResponse(SelectCharacterResult.InvalidCharacter, -1));

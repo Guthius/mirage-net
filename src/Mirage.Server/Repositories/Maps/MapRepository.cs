@@ -4,7 +4,7 @@ using Mirage.Server.Assets;
 using Mirage.Shared.Data;
 using TiledSharp;
 
-namespace Mirage.Server.Repositories;
+namespace Mirage.Server.Repositories.Maps;
 
 public sealed class MapRepository(ILogger<MapRepository> logger) : IMapRepository
 {

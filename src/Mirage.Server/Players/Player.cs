@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Net.Protocol.FromServer.New;
@@ -7,9 +8,11 @@ using Mirage.Server.Maps;
 using Mirage.Server.Net;
 using Mirage.Server.Npcs;
 using Mirage.Server.Repositories;
+using Mirage.Server.Repositories.Characters;
+using Mirage.Server.Repositories.Jobs;
+using Mirage.Server.Repositories.Spells;
 using Mirage.Shared.Constants;
 using Mirage.Shared.Data;
-using Serilog;
 
 namespace Mirage.Server.Players;
 
@@ -18,9 +21,12 @@ public sealed class Player
     private const float RegenIntervalInSeconds = 10.0f;
 
     private readonly NetworkConnection _connection;
+    private readonly ILogger<Player> _logger;
     private readonly IPlayerService _players;
     private readonly IMapService _mapService;
+    private readonly ICharacterRepository _characterRepository;
     private readonly IRepository<ItemInfo> _itemRepository;
+    private readonly IJobRepository _jobRepository;
     private float _regenTimer;
 
     public int Id { get; }
@@ -39,9 +45,12 @@ public sealed class Player
     public Player(NetworkConnection connection, CharacterInfo character, Map map, IServiceProvider services)
     {
         _connection = connection;
+        _logger = services.GetRequiredService<ILogger<Player>>();
         _players = services.GetRequiredService<IPlayerService>();
         _mapService = services.GetRequiredService<IMapService>();
+        _characterRepository = services.GetRequiredService<ICharacterRepository>();
         _itemRepository = services.GetRequiredService<IRepository<ItemInfo>>();
+        _jobRepository = services.GetRequiredService<IJobRepository>();
 
         Id = connection.Id;
         Address = connection.Address;
@@ -125,13 +134,13 @@ public sealed class Player
             PartyMember = null;
         }
 
-        CharacterRepository.Save(Character);
+        _characterRepository.Save(Character);
 
         var color = Character.AccessLevel <= AccessLevel.Moderator ? ColorCode.JoinLeftColor : ColorCode.White;
 
         _players.Send(new ChatCommand($"{Character.Name} has left!", color));
 
-        Log.Information("{CharacterName} has left", Character.Name);
+        _logger.LogInformation("{CharacterName} has left", Character.Name);
 
         Map.Remove(this);
     }
@@ -407,7 +416,7 @@ public sealed class Player
 
         if (!string.IsNullOrEmpty(spellInfo.RequiredClassId) && spellInfo.RequiredClassId != Character.JobId)
         {
-            Tell($"This spell can only be learned by a {JobRepository.GetName(spellInfo.RequiredClassId)}.", ColorCode.White);
+            Tell($"This spell can only be learned by a {_jobRepository.GetName(spellInfo.RequiredClassId)}.", ColorCode.White);
             return;
         }
 

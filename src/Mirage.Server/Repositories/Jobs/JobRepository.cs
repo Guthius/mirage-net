@@ -1,35 +1,35 @@
 ﻿using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 using Mirage.Shared.Data;
 using MongoDB.Driver;
-using Serilog;
 
-namespace Mirage.Server.Repositories;
+namespace Mirage.Server.Repositories.Jobs;
 
-public static class JobRepository
+public sealed class JobRepository(ILogger<JobRepository> logger) : IJobRepository
 {
     private static List<JobInfo> Jobs { get; set; } = [];
-    
+
     private static IMongoCollection<JobInfo> GetCollection()
     {
         return Database.GetCollection<JobInfo>("classes");
     }
 
-    public static JobInfo? Get(string classId)
+    public JobInfo? Get(string classId)
     {
         return Jobs.Find(classInfo => classInfo.Id == classId);
     }
 
-    public static List<JobInfo> GetAll()
+    public List<JobInfo> GetAll()
     {
         return Jobs;
     }
 
-    public static string GetName(string classId)
+    public string GetName(string classId)
     {
         return Jobs.Find(classInfo => classInfo.Id == classId)?.Name ?? string.Empty;
     }
 
-    public static void Load()
+    public void Load()
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -47,7 +47,7 @@ public static class JobRepository
         {
             stopwatch.Stop();
 
-            Log.Information("Loaded {Count} classes in {ElapsedMs}ms", Jobs.Count, stopwatch.ElapsedMilliseconds);
+            logger.LogInformation("Loaded {Count} classes in {ElapsedMs}ms", Jobs.Count, stopwatch.ElapsedMilliseconds);
         }
     }
 
@@ -58,7 +58,7 @@ public static class JobRepository
         {
             return;
         }
-        
+
         GetCollection().InsertMany(GetDefaultClasses());
     }
 
@@ -83,7 +83,7 @@ public static class JobRepository
             Speed = 3,
             Intelligence = 13
         };
-        
+
         yield return new JobInfo
         {
             Name = "Monk",

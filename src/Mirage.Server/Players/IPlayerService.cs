@@ -1,5 +1,4 @@
-﻿using Mirage.Net;
-using Mirage.Server.Net;
+﻿using Mirage.Server.Net;
 using Mirage.Shared.Data;
 
 namespace Mirage.Server.Players;

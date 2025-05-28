@@ -1,13 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Players;
-using Mirage.Server.Repositories;
+using Mirage.Server.Repositories.Bans;
 using Mirage.Shared.Constants;
 using Mirage.Shared.Data;
 
 namespace Mirage.Server.Chat.Commands;
 
-public sealed class BanCommand(ILogger<BanCommand> logger, IPlayerService players) : Command(ChatCommandNames.Ban, AccessLevel.Mapper)
+public sealed class BanCommand(ILogger<BanCommand> logger, IPlayerService players, IBanRepository banRepository) : Command(ChatCommandNames.Ban, AccessLevel.Mapper)
 {
     public override void Execute(Player player, ReadOnlySpan<char> args)
     {
@@ -35,7 +35,7 @@ public sealed class BanCommand(ILogger<BanCommand> logger, IPlayerService player
             return;
         }
 
-        BanRepository.AddBan(targetPlayer.Address, player.Character.Name);
+        banRepository.AddBan(targetPlayer.Address, player.Character.Name);
 
         players.Send(new ChatCommand($"{targetPlayer.Character.Name} has been banned by {player.Character.Name}!", ColorCode.White));
 

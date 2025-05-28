@@ -1,15 +1,15 @@
 ﻿using Mirage.Server.Players;
-using Mirage.Server.Repositories;
+using Mirage.Server.Repositories.Bans;
 using Mirage.Shared.Constants;
 using Mirage.Shared.Data;
 
 namespace Mirage.Server.Chat.Commands;
 
-public sealed class BanListCommand() : Command(ChatCommandNames.BanList, AccessLevel.Mapper)
+public sealed class BanListCommand(IBanRepository banRepository) : Command(ChatCommandNames.BanList, AccessLevel.Mapper)
 {
     public override void Execute(Player player, ReadOnlySpan<char> args)
     {
-        var banInfos = BanRepository.GetAll();
+        var banInfos = banRepository.GetAll();
         if (banInfos.Count == 0)
         {
             return;

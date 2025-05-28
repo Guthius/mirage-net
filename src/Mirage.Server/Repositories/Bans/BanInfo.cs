@@ -1,10 +1,10 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace Mirage.Shared.Data;
+namespace Mirage.Server.Repositories.Bans;
 
 [BsonIgnoreExtraElements]
-public sealed record IpBanInfo
+public sealed record BanInfo
 {
     [BsonElement("ip"), BsonRepresentation(BsonType.String)]
     public string Ip { get; set; } = string.Empty;

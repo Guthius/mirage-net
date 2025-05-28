@@ -7,15 +7,13 @@ namespace Mirage.Server.Chat.Commands;
 
 public sealed class AdminMessageCommand(IPlayerService players) : Command(ChatCommandNames.AdminMessage, AccessLevel.Moderator)
 {
-    private const int Color = ColorCode.AdminColor;
-
     public override void Execute(Player player, ReadOnlySpan<char> args)
     {
         if (!args.IsEmpty)
         {
             players
                 .Where(x => x.Character.AccessLevel > AccessLevel.None)
-                .Send(new ChatCommand($"(admin {player.Character.Name}) {args}", Color));
+                .Send(new ChatCommand($"(admin {player.Character.Name}) {args}", ColorCode.AdminColor));
         }
     }
 }

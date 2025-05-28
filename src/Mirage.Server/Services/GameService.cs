@@ -2,11 +2,11 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Mirage.Server.Maps;
-using Mirage.Server.Repositories;
+using Mirage.Server.Repositories.Jobs;
 
 namespace Mirage.Server.Services;
 
-public sealed class GameService(ILogger<GameService> logger, IMapService mapService) : BackgroundService
+public sealed class GameService(ILogger<GameService> logger, IMapService mapService, IJobRepository jobRepository) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -35,9 +35,7 @@ public sealed class GameService(ILogger<GameService> logger, IMapService mapServ
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            JobRepository.Load();
-            NpcRepository.Load();
-            SpellRepository.Load();
+            jobRepository.Load();
         }
         finally
         {

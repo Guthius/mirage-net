@@ -6,6 +6,11 @@ using Mirage.Server.Maps;
 using Mirage.Server.Net;
 using Mirage.Server.Players;
 using Mirage.Server.Repositories;
+using Mirage.Server.Repositories.Accounts;
+using Mirage.Server.Repositories.Bans;
+using Mirage.Server.Repositories.Characters;
+using Mirage.Server.Repositories.Jobs;
+using Mirage.Server.Repositories.Maps;
 using Mirage.Server.Services;
 using Serilog;
 
@@ -32,8 +37,12 @@ try
     builder.Services.AddChatCommands();
 
     /* Repositories */
+    builder.Services.AddSingleton<IAccountRepository, AccountRepository>();
+    builder.Services.AddSingleton<IBanRepository, BanRepository>();
+    builder.Services.AddSingleton<ICharacterRepository, CharacterRepository>();
+    builder.Services.AddSingleton<IJobRepository, JobRepository>();
     builder.Services.AddSingleton<IMapRepository, MapRepository>();
-    builder.Services.AddSingleton(typeof(Repository<>), typeof(Repository<>));
+    builder.Services.AddSingleton(typeof(IRepository<>), typeof(Repository<>));
 
     /* Background Services */
     builder.Services.AddHostedService<GameService>();

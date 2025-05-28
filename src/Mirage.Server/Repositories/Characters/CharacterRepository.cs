@@ -1,32 +1,33 @@
 ﻿using Mirage.Net.Protocol.FromServer.New;
+using Mirage.Server.Repositories.Jobs;
 using Mirage.Shared.Constants;
 using Mirage.Shared.Data;
 using MongoDB.Driver;
 
-namespace Mirage.Server.Repositories;
+namespace Mirage.Server.Repositories.Characters;
 
-public static class CharacterRepository
+public sealed class CharacterRepository(IJobRepository jobRepository) : ICharacterRepository
 {
     private static IMongoCollection<CharacterInfo> GetCollection()
     {
         return Database.GetCollection<CharacterInfo>("characters");
     }
 
-    public static bool Exists(string characterName)
+    private static bool Exists(string characterName)
     {
         var count = GetCollection().CountDocuments(x => x.Name == characterName);
 
         return count > 0;
     }
 
-    public static CharacterInfo? Get(string characterId, string accountId)
+    public CharacterInfo? Get(string characterId, string accountId)
     {
         return GetCollection()
             .Find(x => x.Id == characterId && x.AccountId == accountId)
             .FirstOrDefault();
     }
 
-    public static List<CharacterSlotInfo> GetCharacterList(string accountId)
+    public List<CharacterSlotInfo> GetCharacterList(string accountId)
     {
         var projection = Builders<CharacterInfo>.Projection
             .Include(x => x.Name)
@@ -39,7 +40,7 @@ public static class CharacterRepository
             .ToList();
     }
 
-    public static CreateCharacterResult Create(string accountId, string characterName, Gender gender, string jobId)
+    public CreateCharacterResult Create(string accountId, string characterName, Gender gender, string jobId)
     {
         if (characterName.Length < 3)
         {
@@ -56,7 +57,7 @@ public static class CharacterRepository
             return CreateCharacterResult.CharacterNameInvalid;
         }
 
-        var jobInfo = JobRepository.Get(jobId);
+        var jobInfo = jobRepository.Get(jobId);
         if (jobInfo is null)
         {
             return CreateCharacterResult.InvalidJob;
@@ -99,17 +100,17 @@ public static class CharacterRepository
         return CreateCharacterResult.Ok;
     }
 
-    public static void Save(CharacterInfo characterInfo)
+    public void Save(CharacterInfo characterInfo)
     {
         GetCollection().ReplaceOne(x => x.AccountId == characterInfo.AccountId && x.Id == characterInfo.Id, characterInfo);
     }
 
-    public static void Delete(string characterId, string accountId)
+    public void Delete(string characterId, string accountId)
     {
         GetCollection().DeleteOne(x => x.Id == characterId && x.AccountId == accountId);
     }
 
-    public static void DeleteForAccount(string accountId)
+    public void DeleteForAccount(string accountId)
     {
         GetCollection().DeleteMany(x => x.AccountId == accountId);
     }
