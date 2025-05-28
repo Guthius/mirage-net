@@ -91,9 +91,6 @@ public sealed record CharacterInfo
     [BsonElement("spell_ids")]
     public int[] SpellIds { get; set; } = CreateSpellIds();
 
-    [BsonElement("map_id"), BsonRepresentation(BsonType.Int32)]
-    public int MapId { get; set; }
-
     [BsonElement("map"), BsonRepresentation(BsonType.String)]
     public string Map { get; set; } = string.Empty;
 

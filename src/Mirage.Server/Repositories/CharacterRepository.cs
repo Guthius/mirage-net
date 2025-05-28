@@ -84,7 +84,6 @@ public static class CharacterRepository
             BaseDefense = jobInfo.Defense,
             BaseSpeed = jobInfo.Speed,
             BaseIntelligence = jobInfo.Intelligence,
-            MapId = Options.StartMapId,
             Map = Options.StartMapName,
             X = Options.StartX,
             Y = Options.StartY,

@@ -1,6 +1,7 @@
-﻿using Mirage.Shared.Data;
+﻿using Mirage.Client.Assets;
+using Mirage.Shared.Data;
 
-namespace Mirage.Client.Assets;
+namespace Mirage.Client.Maps;
 
 public sealed class MapManager() : AssetManager<MapInfo>(Placeholder)
 {

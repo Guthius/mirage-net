@@ -18,7 +18,7 @@ public sealed class Player
     private const float RegenIntervalInSeconds = 10.0f;
 
     private readonly NetworkConnection _connection;
-    private readonly IPlayerService _playerService;
+    private readonly IPlayerService _players;
     private readonly IMapService _mapService;
     private readonly IRepository<ItemInfo> _itemRepository;
     private float _regenTimer;
@@ -39,7 +39,7 @@ public sealed class Player
     public Player(NetworkConnection connection, CharacterInfo character, Map map, IServiceProvider services)
     {
         _connection = connection;
-        _playerService = services.GetRequiredService<IPlayerService>();
+        _players = services.GetRequiredService<IPlayerService>();
         _mapService = services.GetRequiredService<IMapService>();
         _itemRepository = services.GetRequiredService<IRepository<ItemInfo>>();
 
@@ -73,7 +73,7 @@ public sealed class Player
 
         var color = Character.AccessLevel <= AccessLevel.Moderator ? ColorCode.JoinLeftColor : ColorCode.White;
 
-        _playerService.SendToAll(new ChatCommand($"{Character.Name} has joined the game!", color));
+        _players.Send(new ChatCommand($"{Character.Name} has joined the game!", color));
     }
 
     public void Update(float deltaTime)
@@ -129,7 +129,7 @@ public sealed class Player
 
         var color = Character.AccessLevel <= AccessLevel.Moderator ? ColorCode.JoinLeftColor : ColorCode.White;
 
-        _playerService.SendToAll(new ChatCommand($"{Character.Name} has left!", color));
+        _players.Send(new ChatCommand($"{Character.Name} has left!", color));
 
         Log.Information("{CharacterName} has left", Character.Name);
 
@@ -639,7 +639,7 @@ public sealed class Player
             Character.Exp -= Character.RequiredExp;
         }
 
-        _playerService.SendToAll(new ChatCommand($"{Character.Name} has reached level {Character.Level}!", ColorCode.Brown));
+        _players.Send(new ChatCommand($"{Character.Name} has reached level {Character.Level}!", ColorCode.Brown));
 
         Tell($"You have gained a level! You now have {Character.StatPoints} stat points to distribute.", ColorCode.BrightBlue);
     }
@@ -893,7 +893,7 @@ public sealed class Player
         Map.Send(new PlayerData(Id,
             Character.Name,
             Character.Sprite,
-            Character.MapId,
+            0,
             Character.X,
             Character.Y,
             Character.Direction,
@@ -915,7 +915,7 @@ public sealed class Player
 
     public void SendWhosOnline()
     {
-        var playerNames = _playerService.Where(x => x != this)
+        var playerNames = _players.Where(x => x != this)
             .Select(x => x.Character.Name)
             .ToList();
 

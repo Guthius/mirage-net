@@ -9,5 +9,4 @@ public interface IPlayerService : IEnumerable<Player>
     Player? Create(NetworkConnection connection, CharacterInfo character);
     void Destroy(Player player);
     Player? Find(ReadOnlySpan<char> characterName);
-    void SendToAll<TPacket>(TPacket packet) where TPacket : IPacket<TPacket>;
 }

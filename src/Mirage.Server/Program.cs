@@ -29,6 +29,7 @@ try
     builder.Services.AddSingleton<IChatService, ChatService>();
     builder.Services.AddSingleton<IMapService, MapService>();
     builder.Services.AddSingleton<IPlayerService, PlayerService>();
+    builder.Services.AddChatCommands();
 
     /* Repositories */
     builder.Services.AddSingleton<IMapRepository, MapRepository>();

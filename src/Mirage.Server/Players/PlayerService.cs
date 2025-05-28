@@ -61,7 +61,7 @@ public sealed class PlayerService(ILogger<PlayerService> logger, IMapService map
             player.Send(bytes);
         }
     }
-
+    
     public IEnumerator<Player> GetEnumerator()
     {
         return _players.Values.GetEnumerator();
