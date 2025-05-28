@@ -2,12 +2,12 @@
 
 namespace Mirage.Client.Assets;
 
-public sealed class MapManager() : AssetManager<NewMapInfo>(Placeholder)
+public sealed class MapManager() : AssetManager<MapInfo>(Placeholder)
 {
-    private static readonly NewMapInfo Placeholder = new();
+    private static readonly MapInfo Placeholder = new();
 
-    protected override NewMapInfo OnLoad(Stream stream)
+    protected override MapInfo OnLoad(Stream stream)
     {
-        return NewMapInfo.ReadFrom(stream);
+        return MapInfo.ReadFrom(stream);
     }
 }

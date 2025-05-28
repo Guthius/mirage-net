@@ -15,7 +15,7 @@ public sealed record PlayerInventory(InventorySlotInfo[] Slots) : IPacket<Player
         {
             slots[i] = new InventorySlotInfo
             {
-                ItemId = reader.ReadInt32(),
+                ItemId = reader.ReadString(),
                 Quantity = reader.ReadInt32(),
                 Durability = reader.ReadInt32()
             };
@@ -28,7 +28,7 @@ public sealed record PlayerInventory(InventorySlotInfo[] Slots) : IPacket<Player
     {
         foreach (var slot in Slots)
         {
-            writer.WriteInt32(slot.ItemId);
+            writer.WriteString(slot.ItemId);
             writer.WriteInt32(slot.Quantity);
             writer.WriteInt32(slot.Durability);
         }

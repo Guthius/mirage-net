@@ -4,12 +4,8 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Mirage.Shared.Data;
 
-[BsonIgnoreExtraElements]
-public sealed record ShopInfo
+public sealed record ShopInfo : ObjectInfo
 {
-    [BsonElement("id"), BsonRepresentation(BsonType.Int32)]
-    public int Id { get; set; }
-
     [BsonElement("name"), BsonRepresentation(BsonType.String)]
     public string Name { get; set; } = string.Empty;
 

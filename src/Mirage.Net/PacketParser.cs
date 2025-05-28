@@ -9,21 +9,6 @@ public sealed class PacketParser(Action<int, string>? reportBadPacket = null)
     /// </summary>
     /// <param name="handler">The handler.</param>
     /// <typeparam name="TPacket">The packet type.</typeparam>
-    public void Register<TPacket>(ServerPacketHandler<TPacket> handler) where TPacket : IPacket<TPacket>
-    {
-        _handlers[TPacket.PacketId] = (playerId, packetReader) =>
-        {
-            var packet = TPacket.ReadFrom(packetReader);
-
-            handler(playerId, packet);
-        };
-    }
-
-    /// <summary>
-    /// Registers a handler for packets of type <typeparamref name="TPacket"/>.
-    /// </summary>
-    /// <param name="handler">The handler.</param>
-    /// <typeparam name="TPacket">The packet type.</typeparam>
     public void Register<TPacket>(ClientPacketHandler<TPacket> handler) where TPacket : IPacket<TPacket>
     {
         _handlers[TPacket.PacketId] = (_, packetReader) =>
@@ -32,16 +17,6 @@ public sealed class PacketParser(Action<int, string>? reportBadPacket = null)
 
             handler(packet);
         };
-    }
-
-    /// <summary>
-    /// Registers a handler for packets of type <typeparamref name="TPacket"/>.
-    /// </summary>
-    /// <param name="handler">The handler.</param>
-    /// <typeparam name="TPacket">The packet type.</typeparam>
-    public void Register<TPacket>(Action handler) where TPacket : IPacket<TPacket>
-    {
-        _handlers[TPacket.PacketId] = (_, _) => { handler(); };
     }
 
     /// <summary>

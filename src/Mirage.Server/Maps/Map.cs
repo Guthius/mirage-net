@@ -3,7 +3,6 @@ using AStarNavigator.Algorithms;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Maps.Pathfinding;
-using Mirage.Server.Net;
 using Mirage.Server.Npcs;
 using Mirage.Server.Players;
 using Mirage.Shared.Constants;
@@ -11,17 +10,17 @@ using Mirage.Shared.Data;
 
 namespace Mirage.Server.Maps;
 
-public sealed class Map : IPacketRecipient
+public sealed class Map
 {
     private readonly List<Player> _players = [];
     private readonly List<Npc> _npcs = [];
-    private readonly NewMapInfo _info;
+    private readonly MapInfo _info;
     private readonly ITileNavigator _navigator;
 
     public string Name => _info.Name;
     public string FileName { get; }
 
-    public Map(string fileName, NewMapInfo info)
+    public Map(string fileName, MapInfo info)
     {
         FileName = fileName;
 
@@ -95,10 +94,6 @@ public sealed class Map : IPacketRecipient
         // TODO: Implement: despawn items when they reach their expiry time...
     }
 
-    /// <summary>
-    /// Updates all the players on the map.
-    /// </summary>
-    /// <param name="deltaTime">The elapsed delta time.</param>
     private void UpdatePlayers(float deltaTime)
     {
         foreach (var player in _players)
@@ -107,10 +102,6 @@ public sealed class Map : IPacketRecipient
         }
     }
 
-    /// <summary>
-    /// Updates all the NPC's on the map.
-    /// </summary>
-    /// <param name="deltaTime">The elapsed delta time.</param>
     private void UpdateNpcs(float deltaTime)
     {
         foreach (var npc in _npcs)
@@ -138,7 +129,7 @@ public sealed class Map : IPacketRecipient
 
         return true;
     }
-    
+
     public void Add(Player player)
     {
         _players.Add(player);
@@ -200,7 +191,7 @@ public sealed class Map : IPacketRecipient
             player.Character.MaxSP,
             player.Character.SP));
     }
-    
+
     public void Remove(Player player)
     {
         if (!_players.Remove(player))
@@ -210,7 +201,7 @@ public sealed class Map : IPacketRecipient
 
         Send(new DestroyActorCommand(player.Id));
     }
-    
+
     public void Move(Player player, Direction direction, MovementType movementType)
     {
         var targetX = player.Character.X;
@@ -253,7 +244,7 @@ public sealed class Map : IPacketRecipient
 
         Send(new ActorMoveCommand(player.Id, direction, movementType), recipient => recipient.Id != player.Id);
     }
-    
+
     public void Attack(Player player)
     {
         Send(new ActorAttackCommand(player.Id), recipient => recipient.Id != player.Id);
@@ -280,7 +271,7 @@ public sealed class Map : IPacketRecipient
 
         player.Attack(target);
     }
-    
+
     private static (int, int) GetAdjacentPosition(Direction direction, int x, int y)
     {
         return direction switch
@@ -311,7 +302,7 @@ public sealed class Map : IPacketRecipient
         }
 
         // Check for a player.
-        var otherPlayer = player.NewMap.GetPlayerAt(x, y);
+        var otherPlayer = player.Map.GetPlayerAt(x, y);
         if (otherPlayer is not null && otherPlayer != player)
         {
             var levelDifference = otherPlayer.Character.Level - player.Character.Level;
@@ -359,7 +350,7 @@ public sealed class Map : IPacketRecipient
         // }
 
         // Check for an NPC
-        var npc = player.NewMap.GetNpcAt(x, y);
+        var npc = player.Map.GetNpcAt(x, y);
         if (npc is null)
         {
             return;
@@ -370,27 +361,16 @@ public sealed class Map : IPacketRecipient
         player.Tell($"Your target is now a {npc.Info.Name}.", ColorCode.Yellow);
     }
 
-    /// <summary>
-    /// Sends the specified <paramref name="packet"/> to all players on the map.
-    /// </summary>
-    /// <param name="packet">The packet to send.</param>
-    /// <typeparam name="TPacket">The packet type.</typeparam>
     public void Send<TPacket>(TPacket packet) where TPacket : IPacket<TPacket>
     {
         var bytes = PacketSerializer.GetBytes(packet);
 
         foreach (var player in _players)
         {
-            Network.SendData(player.Id, bytes);
+            player.Send(bytes);
         }
     }
 
-    /// <summary>
-    /// Sends the specified <paramref name="packet"/> to all players on the map.
-    /// </summary>
-    /// <param name="packet">The packet to send.</param>
-    /// <param name="predicate"></param>
-    /// <typeparam name="TPacket">The packet type.</typeparam>
     public void Send<TPacket>(TPacket packet, Func<Player, bool> predicate) where TPacket : IPacket<TPacket>
     {
         var bytes = PacketSerializer.GetBytes(packet);
@@ -399,16 +379,11 @@ public sealed class Map : IPacketRecipient
         {
             if (predicate(player))
             {
-                Network.SendData(player.Id, bytes);
+                player.Send(bytes);
             }
         }
     }
 
-    /// <summary>
-    /// Sends a message to all players on the map.
-    /// </summary>
-    /// <param name="message">The message.</param>
-    /// <param name="color">The message color.</param>
     public void SendMessage(string message, int color)
     {
         Send(new ChatCommand(message, color));

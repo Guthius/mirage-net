@@ -1,4 +1,4 @@
-namespace Mirage.Net.Protocol.FromClient;
+namespace Mirage.Net.Protocol.FromClient.New;
 
 public sealed record SearchRequest(int X, int Y) : IPacket<SearchRequest>
 {

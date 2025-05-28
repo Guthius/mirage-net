@@ -13,7 +13,7 @@ public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
     private readonly MapManager _mapManager = new();
     private readonly ConcurrentDictionary<int, Actor> _actors = new();
     private readonly Dictionary<int, Asset<Texture2D>> _tilesets = [];
-    private NewMapInfo? _info;
+    private MapInfo? _info;
 
     public void Load(string mapId)
     {
@@ -34,7 +34,7 @@ public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
         }
     }
 
-    private void LoadTilesets(NewMapInfo map)
+    private void LoadTilesets(MapInfo map)
     {
         _tilesets.Clear();
 
@@ -70,7 +70,7 @@ public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
         DrawMapName(spriteBatch);
     }
 
-    private void DrawLayer(SpriteBatch spriteBatch, NewMapInfo mapInfo, MapLayerInfo layerInfo)
+    private void DrawLayer(SpriteBatch spriteBatch, MapInfo mapInfo, MapLayerInfo layerInfo)
     {
         for (var y = 0; y < mapInfo.Height; y++)
         {

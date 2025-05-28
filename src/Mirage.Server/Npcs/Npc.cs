@@ -1,7 +1,6 @@
 ﻿using AStarNavigator;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Maps;
-using Mirage.Server.Net;
 using Mirage.Server.Npcs.States;
 using Mirage.Server.Players;
 using Mirage.Shared.Constants;
@@ -166,7 +165,7 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
             return false;
         }
 
-        Network.SendGlobalMessage($"{target.Character.Name} has been killed by a {Info.Name}.", ColorCode.BrightRed);
+        Map.Send(new ChatCommand($"{target.Character.Name} has been killed by a {Info.Name}.", ColorCode.BrightRed));
 
         target.Kill(Math.Max(0, target.Character.Exp / 10));
 

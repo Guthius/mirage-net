@@ -1,7 +1,6 @@
 ﻿using Mirage.Net.Protocol.FromServer;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Maps;
-using Mirage.Server.Net;
 using Mirage.Server.Players;
 using Mirage.Server.Repositories;
 using Mirage.Shared.Constants;
@@ -10,7 +9,7 @@ using Serilog;
 
 namespace Mirage.Server.Chat;
 
-public static class ChatProcessor
+public sealed class ChatService(IPlayerService playerService, IMapService mapService) : IChatService
 {
     private static class Commands
     {
@@ -36,7 +35,7 @@ public static class ChatProcessor
         public const string DestroyBanList = "/destroybanlist";
     }
 
-    public static void Handle(Player player, ReadOnlySpan<char> message)
+    public void Handle(Player player, ReadOnlySpan<char> message)
     {
         message = message.Trim();
         if (message.IsEmpty)
@@ -117,14 +116,14 @@ public static class ChatProcessor
             return;
         }
 
-        player.NewMap.SendMessage($"{player.Character.Name} says '{message}'", ColorCode.SayColor);
+        player.Map.SendMessage($"{player.Character.Name} says '{message}'", ColorCode.SayColor);
     }
 
-    private static void HandleBroadcast(Player player, ReadOnlySpan<char> message)
+    private void HandleBroadcast(Player player, ReadOnlySpan<char> message)
     {
         if (!message.IsEmpty)
         {
-            Network.SendToAll(new ChatCommand($"{player.Character.Name}: {message}", ColorCode.BroadcastColor));
+            playerService.SendToAll(new ChatCommand($"{player.Character.Name}: {message}", ColorCode.BroadcastColor));
         }
     }
 
@@ -132,11 +131,11 @@ public static class ChatProcessor
     {
         if (!emote.IsEmpty)
         {
-            player.NewMap.SendMessage($"{player.Character.Name} {emote}", ColorCode.EmoteColor);
+            player.Map.SendMessage($"{player.Character.Name} {emote}", ColorCode.EmoteColor);
         }
     }
 
-    private static void HandleWhisper(Player player, ReadOnlySpan<char> message)
+    private void HandleWhisper(Player player, ReadOnlySpan<char> message)
     {
         var space = message.IndexOf(' ');
         if (space == -1)
@@ -153,7 +152,7 @@ public static class ChatProcessor
             return;
         }
 
-        var targetPlayerId = Network.FindPlayer(targetName);
+        var targetPlayerId = playerService.Find(targetName);
         if (targetPlayerId is null)
         {
             player.Tell("Player is not online.", ColorCode.White);
@@ -162,7 +161,7 @@ public static class ChatProcessor
 
         if (targetPlayerId == player)
         {
-            player.NewMap.SendMessage($"{player.Character.Name} begins to mumble to himself, what a wierdo...", ColorCode.Green);
+            player.Map.SendMessage($"{player.Character.Name} begins to mumble to himself, what a wierdo...", ColorCode.Green);
 
             return;
         }
@@ -183,21 +182,21 @@ public static class ChatProcessor
         player.Tell("Available Commands: /help, /info, /who, /fps, /inv, /stats, /train, /trade, /party, /join, /leave", ColorCode.HelpColor);
     }
 
-    private static void HandleInfo(Player player, ReadOnlySpan<char> targetName)
+    private void HandleInfo(Player player, ReadOnlySpan<char> targetName)
     {
         if (targetName.IsEmpty)
         {
             return;
         }
 
-        var targetPlayer = Network.FindPlayer(targetName);
+        var targetPlayer = playerService.Find(targetName);
         if (targetPlayer is null)
         {
             player.Tell("Player is not online.", ColorCode.White);
             return;
         }
 
-        player.Tell($"Account: {Network.Sessions[targetPlayer.Id]?.Account?.Name}, Name: {targetPlayer.Character.Name}", ColorCode.BrightGreen);
+        player.Tell($"Name: {targetPlayer.Character.Name}", ColorCode.BrightGreen);
         if (player.Character.AccessLevel <= AccessLevel.Moderator)
         {
             return;
@@ -227,43 +226,44 @@ public static class ChatProcessor
 
     private static void HandleTrade(Player player)
     {
-        var mapInfo = MapRepository.Get(player.Character.MapId);
-        if (mapInfo is null)
-        {
-            return;
-        }
-
-        var shopInfo = ShopRepository.Get(mapInfo.ShopId);
-        if (shopInfo is null)
-        {
-            player.Tell("There is no shop here.", ColorCode.BrightRed);
-            return;
-        }
-
-        foreach (var tradeInfo in shopInfo.Trades)
-        {
-            var itemInfo = ItemRepository.Get(tradeInfo.GetItemId);
-            if (itemInfo is null || itemInfo.Type != ItemType.Spell)
-            {
-                continue;
-            }
-
-            var spellInfo = SpellRepository.Get(itemInfo.Data1);
-            if (spellInfo is null)
-            {
-                continue;
-            }
-
-            player.Tell(!string.IsNullOrEmpty(spellInfo.RequiredClassId)
-                    ? $"{itemInfo.Name} can be used by all classes."
-                    : $"{itemInfo.Name} can only be used by a {JobRepository.GetName(spellInfo.RequiredClassId)};",
-                ColorCode.Yellow);
-        }
-
-        player.Send(new Trade(shopInfo.Id, shopInfo.FixesItems, shopInfo.Trades));
+        // TODO:
+        // var mapInfo = MapRepository.Get(player.Character.MapId);
+        // if (mapInfo is null)
+        // {
+        //     return;
+        // }
+        //
+        // var shopInfo = ShopRepository.Get(mapInfo.ShopId);
+        // if (shopInfo is null)
+        // {
+        //     player.Tell("There is no shop here.", ColorCode.BrightRed);
+        //     return;
+        // }
+        //
+        // foreach (var tradeInfo in shopInfo.Trades)
+        // {
+        //     var itemInfo = ItemRepository.Get(tradeInfo.GetItemId);
+        //     if (itemInfo is null || itemInfo.Type != ItemType.Spell)
+        //     {
+        //         continue;
+        //     }
+        //
+        //     var spellInfo = SpellRepository.Get(itemInfo.Data1);
+        //     if (spellInfo is null)
+        //     {
+        //         continue;
+        //     }
+        //
+        //     player.Tell(!string.IsNullOrEmpty(spellInfo.RequiredClassId)
+        //             ? $"{itemInfo.Name} can be used by all classes."
+        //             : $"{itemInfo.Name} can only be used by a {JobRepository.GetName(spellInfo.RequiredClassId)};",
+        //         ColorCode.Yellow);
+        // }
+        //
+        // player.Send(new Trade(shopInfo.Id, shopInfo.FixesItems, shopInfo.Trades));
     }
 
-    private static void HandlePartyInvite(Player player, ReadOnlySpan<char> targetName)
+    private void HandlePartyInvite(Player player, ReadOnlySpan<char> targetName)
     {
         if (targetName.IsEmpty)
         {
@@ -277,7 +277,7 @@ public static class ChatProcessor
             return;
         }
 
-        var targetPlayer = Network.FindPlayer(targetName);
+        var targetPlayer = playerService.Find(targetName);
         if (targetPlayer is null)
         {
             player.Tell("Player is not online.", ColorCode.White);
@@ -367,7 +367,7 @@ public static class ChatProcessor
         player.InParty = false;
     }
 
-    private static bool HandleAdmin(Player player, ReadOnlySpan<char> chatText)
+    private bool HandleAdmin(Player player, ReadOnlySpan<char> chatText)
     {
         var access = player.Character.AccessLevel;
         if (access <= AccessLevel.None)
@@ -472,14 +472,14 @@ public static class ChatProcessor
         return false;
     }
 
-    private static void HandleKick(Player player, ReadOnlySpan<char> targetName)
+    private void HandleKick(Player player, ReadOnlySpan<char> targetName)
     {
         if (targetName.IsEmpty)
         {
             return;
         }
 
-        var targetPlayer = Network.FindPlayer(targetName);
+        var targetPlayer = playerService.Find(targetName);
         if (targetPlayer is null)
         {
             player.Tell("Player is not online.", ColorCode.White);
@@ -498,37 +498,37 @@ public static class ChatProcessor
             return;
         }
 
-        Network.SendGlobalMessage($"{targetPlayer.Character.Name} has been kicked from {Options.GameName} by {player.Character.Name}!", ColorCode.White);
+        playerService.SendToAll(new ChatCommand($"{targetPlayer.Character.Name} has been kicked by {player.Character.Name}!", ColorCode.White));
 
         Log.Information("{CharacterName} has kicked {TargetCharacterName}.", player.Character.Name, targetPlayer.Character.Name);
 
         targetPlayer.Disconnect($"You have been kicked by {player.Character.Name}!");
     }
 
-    private static void HandleGlobalMessage(Player player, ReadOnlySpan<char> message)
+    private void HandleGlobalMessage(Player player, ReadOnlySpan<char> message)
     {
         if (!message.IsEmpty)
         {
-            Network.SendToAll(new ChatCommand($"(global) {player.Character.Name}: {message}", ColorCode.GlobalColor));
+            playerService.SendToAll(new ChatCommand($"(global) {player.Character.Name}: {message}", ColorCode.GlobalColor));
         }
     }
 
-    private static void HandleAdminMessage(Player player, ReadOnlySpan<char> message)
+    private void HandleAdminMessage(Player player, ReadOnlySpan<char> message)
     {
         if (!message.IsEmpty)
         {
-            Network.SendToAll(new ChatCommand($"(admin {player.Character.Name}) {message}", ColorCode.AdminColor));
+            playerService.SendToAll(new ChatCommand($"(admin {player.Character.Name}) {message}", ColorCode.AdminColor));
         }
     }
 
-    private static void HandleWarpMeTo(Player player, ReadOnlySpan<char> targetName)
+    private void HandleWarpMeTo(Player player, ReadOnlySpan<char> targetName)
     {
         if (targetName.IsEmpty)
         {
             return;
         }
 
-        var targetPlayer = Network.FindPlayer(targetName);
+        var targetPlayer = playerService.Find(targetName);
         if (targetPlayer is null)
         {
             player.Tell("Player is not online.", ColorCode.White);
@@ -541,7 +541,7 @@ public static class ChatProcessor
             return;
         }
 
-        player.WarpTo(targetPlayer.NewMap, targetPlayer.Character.X, targetPlayer.Character.Y);
+        player.WarpTo(targetPlayer.Map, targetPlayer.Character.X, targetPlayer.Character.Y);
 
         Log.Information("{CharacterName} has warped to {TargetCharacterName}, map #{MapId}.",
             player.Character.Name,
@@ -553,14 +553,14 @@ public static class ChatProcessor
         player.Tell($"You have been warped to {targetPlayer.Character.Name}.", ColorCode.BrightBlue);
     }
 
-    private static void HandleWarpToMe(Player player, ReadOnlySpan<char> targetName)
+    private void HandleWarpToMe(Player player, ReadOnlySpan<char> targetName)
     {
         if (targetName.IsEmpty)
         {
             return;
         }
 
-        var targetPlayer = Network.FindPlayer(targetName);
+        var targetPlayer = playerService.Find(targetName);
         if (targetPlayer is null)
         {
             player.Tell("Player is not online.", ColorCode.White);
@@ -573,7 +573,7 @@ public static class ChatProcessor
             return;
         }
 
-        targetPlayer.WarpTo(player.NewMap, player.Character.X, player.Character.Y);
+        targetPlayer.WarpTo(player.Map, player.Character.X, player.Character.Y);
 
         Log.Information("{CharacterName} has warped {TargetCharacterName} to self, map #{MapId}.",
             player.Character.Name,
@@ -585,14 +585,14 @@ public static class ChatProcessor
         player.Tell($"{targetPlayer.Character.Name} has been summoned.", ColorCode.BrightBlue);
     }
 
-    private static void HandleWarpTo(Player player, ReadOnlySpan<char> targetMapId)
+    private void HandleWarpTo(Player player, ReadOnlySpan<char> targetMapName)
     {
-        if (targetMapId.IsEmpty)
+        if (targetMapName.IsEmpty)
         {
             return;
         }
 
-        var map = MapManager.GetByName(new string(targetMapId));
+        var map = mapService.GetByName(new string(targetMapName));
         if (map is null)
         {
             player.Tell("The specified map does not exist.", ColorCode.Red);
@@ -621,7 +621,7 @@ public static class ChatProcessor
         player.SendPlayerData();
     }
 
-    private static void HandleSetMotd(Player player, ReadOnlySpan<char> motd)
+    private void HandleSetMotd(Player player, ReadOnlySpan<char> motd)
     {
         if (motd.IsEmpty)
         {
@@ -632,7 +632,7 @@ public static class ChatProcessor
 
         Log.Information("{CharacterName} changed MOTD to: {NewMotd}", player.Character.Name, new string(motd));
 
-        Network.SendToAll(new ChatCommand($"MOTD changed to: {motd}", ColorCode.BrightCyan));
+        playerService.SendToAll(new ChatCommand($"MOTD changed to: {motd}", ColorCode.BrightCyan));
     }
 
     private static void HandleBanList(Player player)
@@ -653,14 +653,14 @@ public static class ChatProcessor
         }
     }
 
-    private static void HandleBan(Player player, ReadOnlySpan<char> targetName)
+    private void HandleBan(Player player, ReadOnlySpan<char> targetName)
     {
         if (targetName.IsEmpty)
         {
             return;
         }
 
-        var targetPlayer = Network.FindPlayer(targetName);
+        var targetPlayer = playerService.Find(targetName);
         if (targetPlayer is null)
         {
             player.Tell("Player is not online.", ColorCode.White);
@@ -679,9 +679,9 @@ public static class ChatProcessor
             return;
         }
 
-        BanRepository.AddBan(Network.GetIP(targetPlayer.Id), player.Character.Name);
+        BanRepository.AddBan(targetPlayer.Address, player.Character.Name);
 
-        Network.SendGlobalMessage($"{targetPlayer.Character.Name} has been banned from {Options.GameName} by {player.Character.Name}!", ColorCode.White);
+        playerService.SendToAll(new ChatCommand($"{targetPlayer.Character.Name} has been banned by {player.Character.Name}!", ColorCode.White));
 
         Log.Information("{CharacterName} has banned {BannedCharacterName}",
             targetPlayer.Character.Name, player.Character);
@@ -689,7 +689,7 @@ public static class ChatProcessor
         targetPlayer.Disconnect($"You have been banned by {player.Character.Name}!");
     }
 
-    private static void HandleSetAccessLevel(Player player, ReadOnlySpan<char> args)
+    private void HandleSetAccessLevel(Player player, ReadOnlySpan<char> args)
     {
         var space = args.IndexOf(' ');
         if (space == -1)
@@ -708,7 +708,7 @@ public static class ChatProcessor
             return;
         }
 
-        var targetPlayer = Network.FindPlayer(targetName);
+        var targetPlayer = playerService.Find(targetName);
         if (targetPlayer is null)
         {
             player.Tell("Player is not online.", ColorCode.White);
@@ -717,14 +717,14 @@ public static class ChatProcessor
 
         if (targetPlayer.Character.AccessLevel <= AccessLevel.None)
         {
-            Network.SendGlobalMessage($"{targetPlayer.Character.Name} has been blessed with administrative access.", ColorCode.BrightBlue);
+            playerService.SendToAll(new ChatCommand($"{targetPlayer.Character.Name} has been blessed with administrative access.", ColorCode.BrightBlue));
         }
 
         targetPlayer.Character.AccessLevel = (AccessLevel) accessLevel;
 
         Log.Information("{CharacterName} has modified {TargetCharacterName}'s access..", player.Character.Name, targetPlayer.Character.Name);
 
-        targetPlayer.NewMap.Send(new PlayerData(
+        targetPlayer.Map.Send(new PlayerData(
             targetPlayer.Id,
             targetPlayer.Character.Name,
             targetPlayer.Character.Sprite,

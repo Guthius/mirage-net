@@ -1,42 +1,49 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using System.Diagnostics;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Mirage.Server.Maps;
-using Mirage.Server.Net;
 using Mirage.Server.Repositories;
-using Serilog;
 
 namespace Mirage.Server.Services;
 
-public sealed class GameService : BackgroundService
+public sealed class GameService(ILogger<GameService> logger, IMapService mapService) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        JobRepository.Load();
-        NewMapRepository.Load();
-        ItemRepository.Load();
-        NpcRepository.Load();
-        ShopRepository.Load();
-        SpellRepository.Load();
+        LoadData();
 
-        MapManager.Initialize();
+        logger.LogInformation("Game logic service has started");
 
-        Network.Start();
-
-        var lastUpdateTime = DateTime.UtcNow;
-
+        var lastUpdate = DateTime.UtcNow;
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(10, stoppingToken);
 
-            var currentTime = DateTime.UtcNow;
-            var deltaTime = (float) (currentTime - lastUpdateTime).TotalSeconds;
+            var now = DateTime.UtcNow;
+            var dt = (float) (now - lastUpdate).TotalSeconds;
 
-            lastUpdateTime = currentTime;
+            lastUpdate = now;
 
-            MapManager.Update(deltaTime);
+            mapService.Update(dt);
         }
 
-        Log.Information("Shutting down server...");
+        logger.LogInformation("Game logic service has stopped");
+    }
 
-        Network.SavePlayers();
+    private void LoadData()
+    {
+        var stopwatch = Stopwatch.StartNew();
+        try
+        {
+            JobRepository.Load();
+            NpcRepository.Load();
+            SpellRepository.Load();
+        }
+        finally
+        {
+            stopwatch.Stop();
+
+            logger.LogInformation("Game data loaded in {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
+        }
     }
 }
