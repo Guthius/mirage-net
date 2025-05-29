@@ -1,6 +1,6 @@
 ﻿using System.Buffers;
 using Microsoft.Extensions.Logging;
-using Mirage.Net.Protocol.FromClient.New;
+using Mirage.Net.Protocol.FromClient;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Server.Assets;
 using Mirage.Server.Players;
@@ -29,7 +29,8 @@ public sealed partial class NetworkService
         _parser.Register<MoveRequest>(HandleMove);
         _parser.Register<AttackRequest>(HandleAttack);
         _parser.Register<SetDirectionRequest>(HandleSetDirection);
-        _parser.Register<SearchRequest>(HandleSearch);
+        _parser.Register<LookAtRequest>(HandleLookAt);
+        _parser.Register<ItemPickupRequest>(HandleItemPickup);
 
         // Social
         _parser.Register<SayRequest>(HandleSay);
@@ -38,7 +39,7 @@ public sealed partial class NetworkService
         _parser.Register<DownloadAssetRequest>(HandleDownloadAsset);
     }
 
-    public void HandleAuth(NetworkConnection connection, AuthRequest request)
+    private void HandleAuth(NetworkConnection connection, AuthRequest request)
     {
         if (connection.Account is not null)
         {
@@ -72,7 +73,7 @@ public sealed partial class NetworkService
         _logger.LogInformation("Account {AccountName} has logged in from {RemoteIp}", account.Name, connection.Address);
     }
 
-    public void HandleCreateAccount(NetworkConnection connection, CreateAccountRequest request)
+    private void HandleCreateAccount(NetworkConnection connection, CreateAccountRequest request)
     {
         if (connection.Account is not null)
         {
@@ -110,7 +111,7 @@ public sealed partial class NetworkService
         connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
     }
 
-    public void HandleDeleteAccount(NetworkConnection connection, DeleteAccountRequest request)
+    private void HandleDeleteAccount(NetworkConnection connection, DeleteAccountRequest request)
     {
         if (connection.Account is not null)
         {
@@ -135,7 +136,7 @@ public sealed partial class NetworkService
         connection.Send(new DeleteAccountResponse(DeleteAccountResult.Ok));
     }
 
-    public void HandleCreateCharacter(NetworkConnection connection, AccountInfo account, CreateCharacterRequest request)
+    private void HandleCreateCharacter(NetworkConnection connection, AccountInfo account, CreateCharacterRequest request)
     {
         var result = _characterRepository.Create(account.Id, request.CharacterName, request.Gender, request.JobId);
 
@@ -150,7 +151,7 @@ public sealed partial class NetworkService
         connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
     }
 
-    public void HandleDeleteCharacter(NetworkConnection connection, AccountInfo account, DeleteCharacterRequest request)
+    private void HandleDeleteCharacter(NetworkConnection connection, AccountInfo account, DeleteCharacterRequest request)
     {
         _characterRepository.Delete(request.CharacterId, account.Id);
 
@@ -159,7 +160,7 @@ public sealed partial class NetworkService
         connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
     }
 
-    public void HandleSelectCharacter(NetworkConnection connection, AccountInfo account, SelectCharacterRequest request)
+    private void HandleSelectCharacter(NetworkConnection connection, AccountInfo account, SelectCharacterRequest request)
     {
         var character = _characterRepository.Get(request.CharacterId, account.Id);
         if (character is null)
@@ -187,7 +188,7 @@ public sealed partial class NetworkService
             character.Name, account.Name);
     }
 
-    public static void HandleMove(Player player, MoveRequest request)
+    private static void HandleMove(Player player, MoveRequest request)
     {
         if (player.CastedSpell)
         {
@@ -210,29 +211,34 @@ public sealed partial class NetworkService
         player.Map.Move(player, request.Direction, request.Movement);
     }
 
-    public static void HandleAttack(Player player, AttackRequest request)
+    private static void HandleAttack(Player player, AttackRequest request)
     {
         player.Map.Attack(player);
     }
 
-    public static void HandleSetDirection(Player player, SetDirectionRequest request)
+    private static void HandleSetDirection(Player player, SetDirectionRequest request)
     {
         player.Character.Direction = request.Direction;
         player.Map.Send(new SetActorDirectionCommand(player.Id, player.Character.Direction),
             p => p.Id != player.Id);
     }
 
-    public static void HandleSearch(Player player, SearchRequest request)
+    private static void HandleLookAt(Player player, LookAtRequest request)
     {
         player.Map.LookAt(player, request.X, request.Y);
     }
 
-    public void HandleSay(Player player, SayRequest request)
+    private static void HandleItemPickup(Player player, ItemPickupRequest request)
+    {
+        player.Map.ItemPickup(player);
+    }
+
+    private void HandleSay(Player player, SayRequest request)
     {
         _chatService.Handle(player, request.Message);
     }
 
-    public void HandleDownloadAsset(Player player, DownloadAssetRequest request)
+    private void HandleDownloadAsset(Player player, DownloadAssetRequest request)
     {
         const int chunkSize = 1024;
 

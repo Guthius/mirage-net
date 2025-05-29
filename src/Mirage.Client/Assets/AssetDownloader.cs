@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using Mirage.Client.Net;
-using Mirage.Net.Protocol.FromClient.New;
+using Mirage.Net.Protocol.FromClient;
 
 namespace Mirage.Client.Assets;
 

@@ -4,11 +4,8 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace Mirage.Shared.Data;
 
 [BsonIgnoreExtraElements]
-public sealed record NpcInfo
+public sealed record NpcInfo : ObjectInfo
 {
-    [BsonElement("id"), BsonRepresentation(BsonType.Int32)]
-    public int Id { get; set; }
-
     [BsonElement("name"), BsonRepresentation(BsonType.String)]
     public string Name { get; set; } = string.Empty;
 
@@ -27,14 +24,8 @@ public sealed record NpcInfo
     [BsonElement("range"), BsonRepresentation(BsonType.Int32)]
     public int Range { get; set; }
 
-    [BsonElement("drop_chance"), BsonRepresentation(BsonType.Int32)]
-    public int DropChance { get; set; }
-
-    [BsonElement("drop_item_id"), BsonRepresentation(BsonType.Int32)]
-    public int DropItemId { get; set; }
-
-    [BsonElement("drop_item_quantity"), BsonRepresentation(BsonType.Int32)]
-    public int DropItemQuantity { get; set; }
+    [BsonElement("loot_table")]
+    public List<NpcLootInfo> LootTable { get; set; } = [];
 
     [BsonElement("strength"), BsonRepresentation(BsonType.Int32)]
     public int Strength { get; set; }

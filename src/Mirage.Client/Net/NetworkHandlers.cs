@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.DependencyInjection;
 using Mirage.Client.Assets;
+using Mirage.Client.Localization;
 using Mirage.Client.Scenes;
-using Mirage.Net.Protocol.FromServer;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Shared.Data;
 
@@ -19,7 +19,7 @@ public static class NetworkHandlers
         switch (response.Result)
         {
             case CreateAccountResult.Ok:
-                GameState.ShowAlert("Your account has been created!");
+                GameState.ShowAlert(SR.AccountCreated);
                 SceneManager.SwitchTo<CharacterSelectScene>();
                 break;
 
@@ -36,7 +36,7 @@ public static class NetworkHandlers
                 break;
 
             default:
-                GameState.ShowAlert("Unknown error.");
+                GameState.ShowAlert(SR.UnknownError);
                 break;
         }
     }
@@ -46,7 +46,7 @@ public static class NetworkHandlers
         switch (response.Result)
         {
             case DeleteAccountResult.Ok:
-                GameState.ShowAlert("Your account has been deleted!");
+                GameState.ShowAlert(SR.AccountDeleted);
                 break;
 
             case DeleteAccountResult.InvalidAccountNameOrPassword:
@@ -58,7 +58,7 @@ public static class NetworkHandlers
                 break;
 
             default:
-                GameState.ShowAlert("Unknown error.");
+                GameState.ShowAlert(SR.UnknownError);
                 break;
         }
 
@@ -87,7 +87,7 @@ public static class NetworkHandlers
                 break;
 
             default:
-                GameState.ShowAlert("Unknown error.");
+                GameState.ShowAlert(SR.UnknownError);
                 break;
         }
     }
@@ -132,7 +132,7 @@ public static class NetworkHandlers
                 break;
 
             default:
-                GameState.ShowAlert("Unknown error.");
+                GameState.ShowAlert(SR.UnknownError);
                 break;
         }
     }
@@ -154,7 +154,7 @@ public static class NetworkHandlers
                 return;
 
             default:
-                GameState.ShowAlert("Unknown error.");
+                GameState.ShowAlert(SR.UnknownError);
                 return;
         }
     }
@@ -228,6 +228,24 @@ public static class NetworkHandlers
         actor?.QueueAttack();
     }
 
+    public static void HandleSetActorAccessLevel(SetActorAccessLevelCommand command)
+    {
+        var actor = GameState.Map.GetActor(command.ActorId);
+        if (actor is null)
+        {
+            return;
+        }
+
+        actor.AccessLevel = command.AccessLevel;
+    }
+
+    public static void HandleSetActorDirection(SetActorDirectionCommand command)
+    {
+        var actor = GameState.Map.GetActor(command.ActorId);
+
+        actor?.SetDirection(command.Direction);
+    }
+
     public static void HandleSetActorPosition(SetActorPositionCommand command)
     {
         var actor = GameState.Map.GetActor(command.ActorId);
@@ -238,11 +256,29 @@ public static class NetworkHandlers
             command.Y);
     }
 
-    public static void HandleSetActorDirection(SetActorDirectionCommand command)
+    public static void HandleSetActorSprite(SetActorSpriteCommand command)
     {
         var actor = GameState.Map.GetActor(command.ActorId);
+        if (actor is null)
+        {
+            return;
+        }
 
-        actor?.SetDirection(command.Direction);
+        actor.Sprite = command.Sprite;
+    }
+
+    public static void HandleCreateItem(CreateItemCommand command)
+    {
+        GameState.Map.CreateItem(
+            command.Id,
+            command.Sprite,
+            command.X,
+            command.Y);
+    }
+
+    public static void HandleDestroyItem(DestroyItemCommand command)
+    {
+        GameState.Map.DestroyItem(command.Id);
     }
 
     public static void HandleChat(ChatCommand command)
@@ -269,50 +305,5 @@ public static class NetworkHandlers
         GameState.ClearStatus();
 
         SceneManager.SwitchTo<MainMenuScene>();
-    }
-
-    //---
-
-    public static void HandleInventory(PlayerInventory playerInventory)
-    {
-        GameState.Inventory = playerInventory.Slots;
-    }
-
-    public static void HandlePlayerInventoryUpdate(PlayerInventoryUpdate playerInventoryUpdate)
-    {
-        var slot = playerInventoryUpdate.InventorySlot;
-
-        GameState.Inventory[slot - 1].ItemId = playerInventoryUpdate.ItemId;
-        GameState.Inventory[slot - 1].Quantity = playerInventoryUpdate.Quantity;
-        GameState.Inventory[slot - 1].Durability = playerInventoryUpdate.Durability;
-    }
-
-    public static void HandlePlayerEquipment(PlayerEquipment playerEquipment)
-    {
-    }
-
-    public static void HandleSpawnItem(SpawnItem spawnItem)
-    {
-    }
-
-    public static void HandleTrade(Trade trade)
-    {
-    }
-
-    public static void HandlePlayerSpells(PlayerSpells playerSpells)
-    {
-        // My.Forms.frmMirage.picPlayerSpells.Visible = true;
-        // My.Forms.frmMirage.lstSpells.Items.Clear();
-        //
-        // for (var slot = 1; slot <= Limits.MaxPlayerSpells; slot++)
-        // {
-        //     modTypes.Player[modGameLogic.MyIndex].Spell[slot] = playerSpells.SpellIds[slot];
-        //
-        //     My.Forms.frmMirage.lstSpells.Items.Add(modTypes.Player[modGameLogic.MyIndex].Spell[slot] != 0
-        //         ? $"{slot}: {modTypes.Spell[modTypes.Player[modGameLogic.MyIndex].Spell[slot]].Name}"
-        //         : "<free spells slot>");
-        // }
-        //
-        // My.Forms.frmMirage.lstSpells.SelectedIndex = 0;
     }
 }

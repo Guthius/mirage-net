@@ -2,7 +2,7 @@ namespace Mirage.Net.Protocol.FromServer;
 
 public sealed record PlayerEquipment(int ArmorSlot, int WeaponSlot, int HelmetSlot, int ShieldSlot) : IPacket<PlayerEquipment>
 {
-    public static string PacketId => "playerworneq";
+    public static string PacketId => nameof(PlayerEquipment);
 
     public static PlayerEquipment ReadFrom(PacketReader reader)
     {
@@ -12,7 +12,7 @@ public sealed record PlayerEquipment(int ArmorSlot, int WeaponSlot, int HelmetSl
             HelmetSlot: reader.ReadInt32(),
             ShieldSlot: reader.ReadInt32());
     }
-    
+
     public void WriteTo(PacketWriter writer)
     {
         writer.WriteInt32(ArmorSlot);

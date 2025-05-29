@@ -142,10 +142,10 @@ public sealed class Actor(Game game, int id, int x, int y)
     {
         var color = GetNameColor(IsPlayerKiller, AccessLevel);
         var width = (int) Textures.Font.MeasureString(Name).X;
-        var x = X + 16 - width / 2;
-        var y = Y - 24;
+        var dx = X + 16 - width / 2;
+        var dy = Y - 24;
 
-        spriteBatch.DrawString(Textures.Font, Name, new Vector2(x, y), color);
+        spriteBatch.DrawString(Textures.Font, Name, new Vector2(dx, dy), color);
     }
 
     private static Color GetNameColor(bool playerKiller, AccessLevel accessLevel)

@@ -125,7 +125,7 @@ public sealed record MapInfo
             {
                 tiles[i] = new TileInfo
                 {
-                    Type = (TileType) reader.ReadInt32()
+                    Type = (TileTypes) reader.ReadInt32()
                 };
             }
 
@@ -138,13 +138,13 @@ public sealed record MapInfo
         return x >= 0 && x < Width && y >= 0 && y < Height;
     }
 
-    public TileType GetTileType(int x, int y)
+    public TileTypes GetTileType(int x, int y)
     {
-        return InBounds(x, y) ? Tiles[y * Width + x].Type : TileType.Walkable;
+        return InBounds(x, y) ? Tiles[y * Width + x].Type : TileTypes.None;
     }
 
     public bool IsPassable(int x, int y)
     {
-        return InBounds(x, y) && GetTileType(x, y) == TileType.Walkable;
+        return InBounds(x, y) && GetTileType(x, y) == TileTypes.None;
     }
 }

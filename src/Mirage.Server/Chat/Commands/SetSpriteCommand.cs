@@ -1,4 +1,5 @@
-﻿using Mirage.Server.Players;
+﻿using Mirage.Net.Protocol.FromServer.New;
+using Mirage.Server.Players;
 using Mirage.Shared.Data;
 
 namespace Mirage.Server.Chat.Commands;
@@ -18,6 +19,6 @@ public sealed class SetSpriteCommand() : Command(ChatCommandNames.SetSprite, Acc
         }
 
         player.Character.Sprite = sprite;
-        player.SendPlayerData();
+        player.Map.Send(new SetActorSpriteCommand(player.Id, player.Character.Sprite));
     }
 }

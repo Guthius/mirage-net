@@ -1,6 +1,6 @@
 ﻿using Mirage.Shared.Data;
 
-namespace Mirage.Net.Protocol.FromClient.New;
+namespace Mirage.Net.Protocol.FromClient;
 
 public sealed record MoveRequest(Direction Direction, MovementType Movement) : IPacket<MoveRequest>
 {

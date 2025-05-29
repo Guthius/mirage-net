@@ -86,7 +86,7 @@ public sealed record CharacterInfo
     public int ShieldSlot { get; set; }
 
     [BsonElement("inventory")]
-    public InventorySlotInfo[] Inventory { get; set; } = CreateInventory();
+    public List<InventorySlotInfo> Inventory { get; set; } = [];
 
     [BsonElement("spell_ids")]
     public int[] SpellIds { get; set; } = CreateSpellIds();
@@ -129,18 +129,6 @@ public sealed record CharacterInfo
 
     [BsonIgnore]
     public int SPRegen => Math.Min(2, Speed / 2);
-
-    private static InventorySlotInfo[] CreateInventory()
-    {
-        var inventory = new InventorySlotInfo[Limits.MaxInventory + 1];
-
-        for (var slot = 0; slot < inventory.Length; slot++)
-        {
-            inventory[slot] = new InventorySlotInfo();
-        }
-
-        return inventory;
-    }
 
     private static int[] CreateSpellIds()
     {

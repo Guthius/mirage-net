@@ -4,7 +4,7 @@ namespace Mirage.Net.Protocol.FromServer;
 
 public sealed record PlayerData(int PlayerId, string Name, int Sprite, int MapId, int X, int Y, Direction Dir, AccessLevel Access, bool PlayerKiller) : IPacket<PlayerData>
 {
-    public static string PacketId => "playerdata";
+    public static string PacketId => nameof(PlayerData);
 
     public static PlayerData ReadFrom(PacketReader reader)
     {

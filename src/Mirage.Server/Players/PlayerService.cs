@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
-using Mirage.Net;
 using Mirage.Server.Maps;
 using Mirage.Server.Net;
 using Mirage.Shared.Data;
@@ -52,16 +51,6 @@ public sealed class PlayerService(ILogger<PlayerService> logger, IMapService map
         return null;
     }
 
-    public void SendToAll<TPacket>(TPacket packet) where TPacket : IPacket<TPacket>
-    {
-        var bytes = PacketSerializer.GetBytes(packet);
-
-        foreach (var player in _players.Values)
-        {
-            player.Send(bytes);
-        }
-    }
-    
     public IEnumerator<Player> GetEnumerator()
     {
         return _players.Values.GetEnumerator();

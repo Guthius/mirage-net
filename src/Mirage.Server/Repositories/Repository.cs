@@ -52,7 +52,7 @@ public sealed class Repository<T> : IRepository<T> where T : ObjectInfo
         foreach (var ch in collectionName)
         {
             stringBuilder.Append(char.ToLowerInvariant(ch));
-            if (char.IsUpper(ch))
+            if (char.IsUpper(ch) && stringBuilder.Length > 1)
             {
                 stringBuilder.Append('_');
             }

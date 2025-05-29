@@ -1,6 +1,6 @@
 using Mirage.Shared.Data;
 
-namespace Mirage.Net.Protocol.FromClient.New;
+namespace Mirage.Net.Protocol.FromClient;
 
 public sealed record CreateCharacterRequest(string CharacterName, Gender Gender, string JobId) : IPacket<CreateCharacterRequest>
 {

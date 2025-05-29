@@ -12,6 +12,7 @@ public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
     private readonly TextureManager _textureManager = new(graphicsDevice);
     private readonly MapManager _mapManager = new();
     private readonly ConcurrentDictionary<int, Actor> _actors = new();
+    private readonly ConcurrentDictionary<int, Item> _items = [];
     private readonly Dictionary<int, Asset<Texture2D>> _tilesets = [];
     private MapInfo? _info;
 
@@ -142,10 +143,31 @@ public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
 
     private void DrawActors(SpriteBatch spriteBatch)
     {
+        var tileWidth = _info?.TileWidth ?? 32;
+        var tileHeight = _info?.TileHeight ?? 32;
+
+        foreach (var item in _items.Values)
+        {
+            DrawItem(spriteBatch, item, tileWidth, tileHeight);
+        }
+
         foreach (var actor in _actors.Values)
         {
             actor.Draw(spriteBatch);
         }
+    }
+
+    private static void DrawItem(SpriteBatch spriteBatch, Item item, int tileWidth, int tileHeight)
+    {
+        var y = item.Sprite * 32;
+
+        spriteBatch.Draw(
+            Textures.Items,
+            new Vector2(
+                item.X * tileWidth,
+                item.Y * tileHeight),
+            new Rectangle(0, y, 32, 32),
+            Color.White);
     }
 
     private void DrawActorNames(SpriteBatch spriteBatch)
@@ -199,9 +221,19 @@ public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
         return actor;
     }
 
+    public void CreateItem(int id, int sprite, int x, int y)
+    {
+        _items[id] = new Item(id, sprite, x, y);
+    }
+
     public void DestroyActor(int actorId)
     {
         _actors.TryRemove(actorId, out _);
+    }
+
+    public void DestroyItem(int itemId)
+    {
+        _items.TryRemove(itemId, out _);
     }
 
     public bool IsPassable(int x, int y)
@@ -214,8 +246,8 @@ public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
         return _info?.IsPassable(x, y) ?? false;
     }
 
-    public TileType GetTileType(int x, int y)
+    public TileTypes GetTileType(int x, int y)
     {
-        return _info?.GetTileType(x, y) ?? TileType.Walkable;
+        return _info?.GetTileType(x, y) ?? TileTypes.None;
     }
 }

@@ -6,7 +6,7 @@ namespace Mirage.Client;
 
 public static class ColorCodeTranslator
 {
-    public static Color GetColor(int colorCode)
+    private static Color GetColor(int colorCode)
     {
         return colorCode switch
         {

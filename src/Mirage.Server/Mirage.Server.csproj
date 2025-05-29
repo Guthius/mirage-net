@@ -7,8 +7,8 @@
     <ItemGroup>
         <PackageReference Include="AStarNavigator" Version="1.0.63"/>
         <PackageReference Include="BCrypt.Net-Next" Version="4.0.3"/>
-        <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.5" />
+        <PackageReference Include="JetBrains.Annotations" Version="2024.3.0"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.5"/>
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.5"/>
         <PackageReference Include="MongoDB.Driver" Version="3.4.0"/>
         <PackageReference Include="Serilog" Version="4.2.0"/>
@@ -30,5 +30,5 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-    
+
 </Project>

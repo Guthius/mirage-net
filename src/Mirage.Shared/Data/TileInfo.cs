@@ -2,5 +2,5 @@
 
 public struct TileInfo
 {
-    public TileType Type { get; set; }
+    public TileTypes Type { get; set; }
 }

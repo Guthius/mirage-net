@@ -6,13 +6,13 @@ public sealed class MapService : IMapService
 {
     private readonly Dictionary<string, Map> _maps = new(StringComparer.OrdinalIgnoreCase);
 
-    public MapService(IMapRepository mapRepository)
+    public MapService(IMapRepository mapRepository, IServiceProvider services)
     {
         var mapInfos = mapRepository.Load();
 
         foreach (var (fileName, mapInfo) in mapInfos)
         {
-            _maps[fileName] = new Map(fileName, mapInfo);
+            _maps[fileName] = new Map(fileName, mapInfo, services);
         }
     }
 

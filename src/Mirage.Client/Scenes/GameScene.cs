@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Mirage.Client.Net;
 using Mirage.Net.Protocol.FromClient;
-using Mirage.Net.Protocol.FromClient.New;
 using Mirage.Shared.Data;
 using Keys = Microsoft.Xna.Framework.Input.Keys;
 using ImGuiVec2 = System.Numerics.Vector2;
@@ -49,14 +48,11 @@ public sealed class GameScene : Scene
 
     private void CheckForKeyboardInput()
     {
-        if (IsKeyJustPressed(Keys.Enter) && !ImGui.GetIO().WantTextInput)
+        if (IsKeyJustPressed(Keys.Enter) && !ImGui.GetIO().WantTextInput && Environment.TickCount > _itemPickupTimer + 250)
         {
-            if (Environment.TickCount > _itemPickupTimer + 250)
-            {
-                _itemPickupTimer = Environment.TickCount;
+            _itemPickupTimer = Environment.TickCount;
 
-                Network.Send<PickupItemRequest>();
-            }
+            Network.Send<ItemPickupRequest>();
         }
 
         CheckAttack();
@@ -85,7 +81,7 @@ public sealed class GameScene : Scene
         if (localPlayer.TryMove(direction, movementType))
         {
             Network.Send(new MoveRequest(direction, movementType));
-            if (_gameState.Map.GetTileType(localPlayer.TileX, localPlayer.TileY) == TileType.Warp)
+            if (_gameState.Map.GetTileType(localPlayer.TileX, localPlayer.TileY) == TileTypes.Warp)
             {
                 _gameState.GettingMap = true;
             }
@@ -225,33 +221,34 @@ public sealed class GameScene : Scene
 
     private void ShowMenu()
     {
+        var buttonSize = new ImGuiVec2(100, 26);
+        
         ImGui.Begin("Menu", ImGuiWindowFlags.AlwaysAutoResize);
-        if (ImGui.Button("Inventory"))
+        if (ImGui.Button("Inventory", buttonSize))
         {
             _openInventory = !_openInventory;
         }
 
-        if (ImGui.Button("Spells"))
+        if (ImGui.Button("Spells", buttonSize))
         {
         }
 
-        if (ImGui.Button("Stats"))
+        if (ImGui.Button("Stats", buttonSize))
         {
         }
 
-        if (ImGui.Button("Train"))
+        if (ImGui.Button("Train", buttonSize))
         {
             // using var frmTraining = new frmTraining();
             //
             // frmTraining.ShowDialog();
         }
 
-        if (ImGui.Button("Trade"))
+        if (ImGui.Button("Trade", buttonSize))
         {
-            Network.Send<ShopRequest>();
         }
 
-        if (ImGui.Button("Quit"))
+        if (ImGui.Button("Quit", buttonSize))
         {
             _gameState.Exit();
         }

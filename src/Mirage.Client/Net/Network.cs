@@ -3,7 +3,6 @@ using System.Net.Sockets;
 using System.Threading.Channels;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Mirage.Net;
-using Mirage.Net.Protocol.FromServer;
 using Mirage.Net.Protocol.FromServer.New;
 using Mirage.Shared.Constants;
 
@@ -41,8 +40,12 @@ public static class Network
         Parser.Register<UpdateActorVitalsCommand>(NetworkHandlers.HandleUpdateActorVitals);
         Parser.Register<ActorMoveCommand>(NetworkHandlers.HandleActorMove);
         Parser.Register<ActorAttackCommand>(NetworkHandlers.HandleActorAttack);
-        Parser.Register<SetActorPositionCommand>(NetworkHandlers.HandleSetActorPosition);
+        Parser.Register<SetActorAccessLevelCommand>(NetworkHandlers.HandleSetActorAccessLevel);
         Parser.Register<SetActorDirectionCommand>(NetworkHandlers.HandleSetActorDirection);
+        Parser.Register<SetActorPositionCommand>(NetworkHandlers.HandleSetActorPosition);
+        Parser.Register<SetActorSpriteCommand>(NetworkHandlers.HandleSetActorSprite);
+        Parser.Register<CreateItemCommand>(NetworkHandlers.HandleCreateItem);
+        Parser.Register<DestroyItemCommand>(NetworkHandlers.HandleDestroyItem);
 
         // Social
         Parser.Register<ChatCommand>(NetworkHandlers.HandleChat);
@@ -53,15 +56,6 @@ public static class Network
 
         // Misc
         Parser.Register<DisconnectCommand>(NetworkHandlers.HandleDisconnect);
-
-        //---
-
-        Parser.Register<PlayerInventory>(NetworkHandlers.HandleInventory);
-        Parser.Register<PlayerInventoryUpdate>(NetworkHandlers.HandlePlayerInventoryUpdate);
-        Parser.Register<PlayerEquipment>(NetworkHandlers.HandlePlayerEquipment);
-        Parser.Register<SpawnItem>(NetworkHandlers.HandleSpawnItem);
-        Parser.Register<Trade>(NetworkHandlers.HandleTrade);
-        Parser.Register<PlayerSpells>(NetworkHandlers.HandlePlayerSpells);
     }
 
     public static async Task<bool> ConnectAsync()

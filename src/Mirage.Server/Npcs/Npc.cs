@@ -17,12 +17,13 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
 
     public Map Map { get; } = map;
     public NpcInfo Info { get; } = info;
-    public int Id { get; set; }
+    public int Id { get; init; }
     public int X { get; set; }
     public int Y { get; set; }
-    public Direction Direction { get; set; } = Direction.Down;
-    public int Health { get; set; } = info.MaxHealth;
+    public Direction Direction { get; private set; } = Direction.Down;
+    public int Health { get; private set; } = info.MaxHealth;
     public bool Alive => _state is not Dead;
+    public bool IsAttackable => Info.Behavior != NpcBehavior.Friendly && Info.Behavior != NpcBehavior.Shopkeeper;
 
     public void Update(float deltaTime)
     {
@@ -180,13 +181,33 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
         return true;
     }
 
-    public void Kill()
+    private void Kill()
     {
         _state = new Dead(Info.SpawnSecs);
 
         Map.Send(new DestroyActorCommand(Id));
 
-        // TODO: Implement loot drop logic
+        DropLoot();
+    }
+
+    private void DropLoot()
+    {
+        foreach (var lootInfo in Info.LootTable)
+        {
+            var roll = Random.Shared.NextSingle() * 100.0f;
+            if (roll > lootInfo.DropRatePercentage)
+            {
+                continue;
+            }
+
+            var quantity = Random.Shared.Next(lootInfo.MinQuantity, lootInfo.MaxQuantity + 1);
+            if (quantity <= 0)
+            {
+                continue;
+            }
+
+            Map.SpawnItem(lootInfo.ItemId, quantity, X, Y);
+        }
     }
 
     public void Respawn()

@@ -43,7 +43,7 @@ public abstract class AssetManager<TAsset>(TAsset placeholder)
         return asset;
     }
 
-    protected string GetPath(string fileName, string category)
+    private static string GetPath(string fileName, string category)
     {
         var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 

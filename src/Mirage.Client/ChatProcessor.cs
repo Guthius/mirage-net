@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.DependencyInjection;
 using Mirage.Client.Net;
-using Mirage.Net.Protocol.FromClient.New;
+using Mirage.Net.Protocol.FromClient;
 
 namespace Mirage.Client;
 
@@ -15,7 +15,7 @@ public static class ChatProcessor
     public static void Handle(ReadOnlySpan<char> message)
     {
         var gameState = Ioc.Default.GetRequiredService<Game>();
-        
+
         message = message.Trim();
         if (message.IsEmpty)
         {
@@ -24,16 +24,14 @@ public static class ChatProcessor
 
         if (message.StartsWith(Commands.Fps, StringComparison.OrdinalIgnoreCase))
         {
-            // TODO: gameState.ChatHistory.Add(new ChatInfo($"FPS: {modGameLogic.GameFPS}", ColorCode.Pink));
-            gameState.ChatHistoryUpdated = true;
-            
+            gameState.ShowFps = !gameState.ShowFps;
+
             return;
         }
 
         if (message.StartsWith(Commands.Train, StringComparison.OrdinalIgnoreCase))
         {
-            // using var frmTraining = new frmTraining();
-            // frmTraining.ShowDialog();
+            // TODO: Show stat training window...
             return;
         }
 

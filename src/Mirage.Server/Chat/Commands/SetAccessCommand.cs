@@ -39,10 +39,12 @@ public sealed class SetAccessCommand(ILogger<SetAccessCommand> logger, IPlayerSe
             players.Send(new ChatCommand($"{targetPlayer.Character.Name} has been blessed with administrative access.", ColorCode.BrightBlue));
         }
 
-        targetPlayer.Character.AccessLevel = (AccessLevel) accessLevel;
+        targetPlayer.Character.AccessLevel = (AccessLevel)accessLevel;
 
         logger.LogInformation("{CharacterName} has modified {TargetCharacterName}'s access..", player.Character.Name, targetPlayer.Character.Name);
 
-        targetPlayer.SendPlayerData();
+        targetPlayer.Map.Send(new SetActorAccessLevelCommand(
+            targetPlayer.Id,
+            targetPlayer.Character.AccessLevel));
     }
 }

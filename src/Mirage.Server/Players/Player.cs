@@ -218,12 +218,8 @@ public sealed class Player
 
         Character.Inventory[slot].ItemId = itemId;
         Character.Inventory[slot].Quantity += quantity;
-
-        if (itemInfo.Type is ItemType.Armor or ItemType.Weapon or ItemType.Helmet or ItemType.Shield)
-        {
-            Character.Inventory[slot].Durability = itemInfo.Data1;
-        }
-
+        Character.Inventory[slot].Durability = itemInfo.Durability;
+        
         SendInventoryUpdate(slot);
     }
 
@@ -286,7 +282,7 @@ public sealed class Player
             case ItemType.PotionSubHp:
             case ItemType.PotionSubMp:
             case ItemType.PotionSubSp:
-                UsePotion(slot, itemInfo.Type, itemInfo.Data1);
+                UsePotion(slot, itemInfo.Type, itemInfo.PotionStrength);
                 break;
 
             case ItemType.Spell:
@@ -302,9 +298,9 @@ public sealed class Player
             case ItemType.Armor:
                 if (inventorySlot != Character.ArmorSlot)
                 {
-                    if (Character.Defense < itemInfo.Data2)
+                    if (Character.Defense < itemInfo.RequiredDefense)
                     {
-                        Tell($"Your defense is to low to wear this armor!  Required DEF ({itemInfo.Data2})", ColorCode.BrightRed);
+                        Tell($"Your defense is to low to wear this armor!  Required DEF ({itemInfo.RequiredDefense})", ColorCode.BrightRed);
                         return;
                     }
 
@@ -321,9 +317,9 @@ public sealed class Player
             case ItemType.Weapon:
                 if (inventorySlot != Character.WeaponSlot)
                 {
-                    if (Character.Strength < itemInfo.Data2)
+                    if (Character.Strength < itemInfo.RequiredStrength)
                     {
-                        Tell($"Your strength is to low to wear this armor!  Required STR ({itemInfo.Data2})", ColorCode.BrightRed);
+                        Tell($"Your strength is to low to wear this armor!  Required STR ({itemInfo.RequiredStrength})", ColorCode.BrightRed);
                         return;
                     }
 
@@ -340,9 +336,9 @@ public sealed class Player
             case ItemType.Helmet:
                 if (inventorySlot != Character.HelmetSlot)
                 {
-                    if (Character.Speed < itemInfo.Data2)
+                    if (Character.Speed < itemInfo.RequiredSpeed)
                     {
-                        Tell($"Your speed coordination is to low to wear this helmet!  Required SPEED ({itemInfo.Data2})", ColorCode.BrightRed);
+                        Tell($"Your speed coordination is to low to wear this helmet!  Required SPEED ({itemInfo.RequiredSpeed})", ColorCode.BrightRed);
                         return;
                     }
 
@@ -407,7 +403,7 @@ public sealed class Player
 
     private void UseSpell(int inventorySlot, ItemInfo itemInfo)
     {
-        var spellInfo = SpellRepository.Get(itemInfo.Data1);
+        var spellInfo = SpellRepository.Get(itemInfo.SpellId);
         if (spellInfo is null)
         {
             Tell("This scroll is not connected to a spell, please inform an admin!", ColorCode.White);
@@ -699,7 +695,7 @@ public sealed class Player
             return damage;
         }
 
-        damage += itemInfo.Data2;
+        damage += itemInfo.Damage;
 
         ReduceDurability(weaponSlot);
 
@@ -716,7 +712,7 @@ public sealed class Player
 
         if (armorItemInfo is not null)
         {
-            protection += armorItemInfo.Data2;
+            protection += armorItemInfo.Protection;
 
             ReduceDurability(armorSlot);
         }
@@ -734,7 +730,7 @@ public sealed class Player
             return protection;
         }
 
-        protection += helmItemInfo.Data2;
+        protection += helmItemInfo.Protection;
 
         ReduceDurability(helmSlot);
 

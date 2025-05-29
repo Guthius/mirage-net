@@ -143,12 +143,9 @@ public sealed partial class NetworkService : BackgroundService
 
             _logger.LogInformation("Connection with {Address} has been terminated", address);
 
-            if (_connections.TryRemove(id, out var connection))
+            if (_connections.TryRemove(id, out var connection) && connection.Player is not null)
             {
-                if (connection.Player is not null)
-                {
-                    _playerService.Destroy(connection.Player);
-                }
+                _playerService.Destroy(connection.Player);
             }
 
             linkedTokenSource.Dispose();
@@ -227,11 +224,11 @@ public sealed partial class NetworkService : BackgroundService
         }
     }
 
-    public bool IsAccountLoggedIn(string accountName)
+    private bool IsAccountLoggedIn(string accountName)
     {
-        foreach (var connection in _connections.Values)
+        foreach (var account in _connections.Values.Select(x => x.Account))
         {
-            if (connection.Account is not null && connection.Account.Name.Equals(accountName, StringComparison.CurrentCultureIgnoreCase))
+            if (account is not null && account.Name.Equals(accountName, StringComparison.CurrentCultureIgnoreCase))
             {
                 return true;
             }

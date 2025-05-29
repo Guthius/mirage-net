@@ -1,4 +1,4 @@
-﻿namespace Mirage.Net.Protocol.FromClient.New;
+﻿namespace Mirage.Net.Protocol.FromClient;
 
 public sealed record CreateAccountRequest(string AccountName, string Password) : IPacket<CreateAccountRequest>
 {

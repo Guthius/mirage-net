@@ -127,12 +127,12 @@ public sealed class MapRepository(ILogger<MapRepository> logger) : IMapRepositor
         }
     }
 
-    private static TileType GetType(string type)
+    private static TileTypes GetType(string type)
     {
         return type.ToLowerInvariant() switch
         {
-            "wall" => TileType.Blocked,
-            _ => TileType.Walkable
+            "wall" => TileTypes.Blocked,
+            _ => TileTypes.None
         };
     }
 

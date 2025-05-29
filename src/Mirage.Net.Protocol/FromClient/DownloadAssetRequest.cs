@@ -1,4 +1,4 @@
-﻿namespace Mirage.Net.Protocol.FromClient.New;
+﻿namespace Mirage.Net.Protocol.FromClient;
 
 public sealed record DownloadAssetRequest(int Handle, string Hash) : IPacket<DownloadAssetRequest>
 {

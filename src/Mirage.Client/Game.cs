@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.DependencyInjection;
+﻿using System.Globalization;
+using CommunityToolkit.Mvvm.DependencyInjection;
 using ImGuiNET;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
@@ -30,6 +31,7 @@ public sealed class Game : Microsoft.Xna.Framework.Game
     public int LocalPlayerId { get; set; }
     public Actor? LocalPlayer { get; set; }
     public ImGuiRenderer ImGuiRenderer { get; private set; } = null!;
+    public bool ShowFps { get; set; } = true;
 
     private static void Main()
     {
@@ -103,7 +105,7 @@ public sealed class Game : Microsoft.Xna.Framework.Game
         {
             return;
         }
-
+        
         scene.Draw(gameTime);
 
         ImGuiRenderer.BeginLayout(gameTime);
@@ -114,6 +116,8 @@ public sealed class Game : Microsoft.Xna.Framework.Game
         DrawAlert();
 
         ImGuiRenderer.EndLayout();
+
+        DrawFps(gameTime);
     }
 
     public void SetStatus(string status)
@@ -185,5 +189,23 @@ public sealed class Game : Microsoft.Xna.Framework.Game
 
         ImGui.PopStyleVar();
         ImGui.EndPopup();
+    }
+
+    private void DrawFps(GameTime gameTime)
+    {
+        if (!ShowFps)
+        {
+            return;
+        }
+        
+        var frameRate = 1 / gameTime.ElapsedGameTime.TotalSeconds;
+        var frameRateStr = "FPS: " + frameRate.ToString("0.00", CultureInfo.InvariantCulture);
+
+        var spriteBatch = new SpriteBatch(GraphicsDevice);
+
+        spriteBatch.Begin();
+        spriteBatch.DrawString(Textures.Font, frameRateStr, new Vector2(6, 6), Color.Black);
+        spriteBatch.DrawString(Textures.Font, frameRateStr, new Vector2(5, 5), Color.White);
+        spriteBatch.End();
     }
 }

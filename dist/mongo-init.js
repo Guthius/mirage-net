@@ -41,49 +41,41 @@ db.classes.insertMany([
 db.items.drop();
 db.items.insertMany([
     {
-        _id: 1,
-        data1: 0,
-        data2: 0,
-        data3: 0,
-        name: "Gold",
-        sprite: 0,
-        type: 12
+        _id: '68234080be15fb3f0f2d4cb0',
+        name: 'Gold',
+        type: 12,
+        sprite: 0
     },
     {
-        _id: 2,
-        data1: 180,
-        data2: 2,
-        data3: 0,
-        name: "Tarnished Dagger",
+        _id: '68234080be15fb3f0f2d4cb1',
+        name: 'Tarnished Dagger',
+        type: 1,
         sprite: 13,
-        type: 1
+        durability: 180,
+        damage: 2
     },
     {
-        _id: 3,
-        data1: 30,
-        data2: 0,
-        data3: 0,
-        name: "Healing Potion",
+        _id: '68234080be15fb3f0f2d4cb2',
+        name: 'Healing Potion',
+        type: 5,
         sprite: 25,
-        type: 5
+        potion_strength: 30
     },
     {
-        _id: 4,
-        data1: 80,
-        data2: 2,
-        data3: 0,
-        name: "Rusty Mail",
+        _id: '68234080be15fb3f0f2d4cb3',
+        name: 'Rusty Mail',
+        type: 2,
         sprite: 5,
-        type: 2
+        durability: 80,
+        protection: 2
     },
     {
-        _id: 5,
-        data1: 100,
-        data2: 3,
-        data3: 0,
-        name: "Steel Dagger",
+        _id: '68234080be15fb3f0f2d4cb4',
+        name: 'Steel Dagger',
+        type: 1,
         sprite: 10,
-        type: 1
+        durability: 100,
+        damage: 3
     }
 ]);
 

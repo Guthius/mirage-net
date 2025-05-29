@@ -5,9 +5,9 @@ namespace Mirage.Server.Maps.Pathfinding;
 
 public sealed class NeighborProvider(int width, int height) : INeighborProvider
 {
-    private static readonly double[,] Neighbors = new double[,]
+    private static readonly double[,] Neighbors =
     {
-        {0, -1}, {1, 0}, {0, 1}, {-1, 0}
+        { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 }
     };
 
     public IEnumerable<Tile> GetNeighbors(Tile tile)

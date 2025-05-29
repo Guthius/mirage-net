@@ -1,7 +1,7 @@
 ﻿using ImGuiNET;
 using Microsoft.Xna.Framework;
 using Mirage.Client.Net;
-using Mirage.Net.Protocol.FromClient.New;
+using Mirage.Net.Protocol.FromClient;
 using Mirage.Shared.Data;
 using ImGuiVec2 = System.Numerics.Vector2;
 using ImGuiVec4 = System.Numerics.Vector4;

@@ -2,3 +2,4 @@
 
 [*.cs]
 resharper_separate_local_functions_with_jump_statement_highlighting = none
+csharp_place_field_attribute_on_same_line = false

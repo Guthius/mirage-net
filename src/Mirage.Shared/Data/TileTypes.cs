@@ -1,9 +1,9 @@
 namespace Mirage.Shared.Data;
 
 [Flags]
-public enum TileType
+public enum TileTypes
 {
-    Walkable = 0,
+    None = 0,
     Blocked = 1,
     Warp = 2,
     Item = 4,

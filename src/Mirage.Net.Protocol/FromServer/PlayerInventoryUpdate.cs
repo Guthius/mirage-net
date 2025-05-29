@@ -2,7 +2,7 @@ namespace Mirage.Net.Protocol.FromServer;
 
 public sealed record PlayerInventoryUpdate(int InventorySlot, string ItemId, int Quantity, int Durability) : IPacket<PlayerInventoryUpdate>
 {
-    public static string PacketId => "playerinvupdate";
+    public static string PacketId => nameof(PlayerInventoryUpdate);
 
     public static PlayerInventoryUpdate ReadFrom(PacketReader reader)
     {
