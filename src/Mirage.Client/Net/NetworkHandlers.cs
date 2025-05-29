@@ -283,8 +283,7 @@ public static class NetworkHandlers
 
     public static void HandleChat(ChatCommand command)
     {
-        GameState.ChatHistory.Add(new ChatInfo(command.Message, command.Color));
-        GameState.ChatHistoryUpdated = true;
+        GameState.AddChat(new ChatInfo(command.Message, command.Color));
     }
 
     public static void HandleDownloadAssetChunk(DownloadAssetChunkCommand command)

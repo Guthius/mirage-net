@@ -16,22 +16,27 @@ namespace Mirage.Client;
 
 public sealed class Game : Microsoft.Xna.Framework.Game
 {
+    private const int MaxChatHistory = 500;
+    
     private readonly ISceneManager _sceneManager;
     private string _status = string.Empty;
     private string _alertMessage = string.Empty;
+    private readonly List<ChatInfo> _chatHistory = [];
+    private volatile List<ChatInfo> _chatHistorySnapshot = [];
+    private readonly Lock _chatLock = new();
 
     public List<JobInfo> Jobs { get; set; } = [];
     public int MaxCharacters { get; set; }
     public List<CharacterSlotInfo> Characters { get; set; } = [];
     public InventorySlotInfo[] Inventory { get; set; } = [];
-    public List<ChatInfo> ChatHistory { get; set; } = [];
-    public bool ChatHistoryUpdated { get; set; }
     public Map Map { get; private set; } = null!;
     public bool GettingMap { get; set; }
     public int LocalPlayerId { get; set; }
     public Actor? LocalPlayer { get; set; }
     public ImGuiRenderer ImGuiRenderer { get; private set; } = null!;
     public bool ShowFps { get; set; } = true;
+    public IReadOnlyList<ChatInfo> ChatHistory => _chatHistorySnapshot;
+    public bool ChatHistoryUpdated { get; set; }
 
     private static void Main()
     {
@@ -105,7 +110,7 @@ public sealed class Game : Microsoft.Xna.Framework.Game
         {
             return;
         }
-        
+
         scene.Draw(gameTime);
 
         ImGuiRenderer.BeginLayout(gameTime);
@@ -197,7 +202,7 @@ public sealed class Game : Microsoft.Xna.Framework.Game
         {
             return;
         }
-        
+
         var frameRate = 1 / gameTime.ElapsedGameTime.TotalSeconds;
         var frameRateStr = "FPS: " + frameRate.ToString("0.00", CultureInfo.InvariantCulture);
 
@@ -207,5 +212,30 @@ public sealed class Game : Microsoft.Xna.Framework.Game
         spriteBatch.DrawString(Textures.Font, frameRateStr, new Vector2(6, 6), Color.Black);
         spriteBatch.DrawString(Textures.Font, frameRateStr, new Vector2(5, 5), Color.White);
         spriteBatch.End();
+    }
+
+    public void ClearChatHistory()
+    {
+        lock (_chatLock)
+        {
+            _chatHistory.Clear();
+            _chatHistorySnapshot = [];
+        }
+    }
+
+    public void AddChat(ChatInfo chatInfo)
+    {
+        lock (_chatLock)
+        {
+            _chatHistory.Add(chatInfo);
+            if (_chatHistory.Count > MaxChatHistory)
+            {
+                _chatHistory.RemoveAt(0);
+            }
+
+            _chatHistorySnapshot = _chatHistory.ToList();
+
+            ChatHistoryUpdated = true;
+        }
     }
 }

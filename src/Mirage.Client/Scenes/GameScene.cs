@@ -33,7 +33,7 @@ public sealed class GameScene : Scene
 
     protected override void OnHide()
     {
-        _gameState.ChatHistory.Clear();
+        _gameState.ClearChatHistory();
     }
 
     protected override void OnUpdate(GameTime gameTime)
