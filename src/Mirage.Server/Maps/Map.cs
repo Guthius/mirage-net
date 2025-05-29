@@ -3,7 +3,7 @@ using AStarNavigator.Algorithms;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Mirage.Net;
-using Mirage.Net.Protocol.FromServer.New;
+using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Maps.Pathfinding;
 using Mirage.Server.Npcs;
 using Mirage.Server.Players;
@@ -184,12 +184,12 @@ public sealed class Map
                 otherPlayer.Character.X,
                 otherPlayer.Character.Y,
                 otherPlayer.Character.Direction,
-                otherPlayer.Character.MaxHP,
-                otherPlayer.Character.HP,
-                otherPlayer.Character.MaxMP,
-                otherPlayer.Character.MP,
-                otherPlayer.Character.MaxSP,
-                otherPlayer.Character.SP));
+                otherPlayer.Character.MaxHealth,
+                otherPlayer.Character.Health,
+                otherPlayer.Character.MaxMana,
+                otherPlayer.Character.Mana,
+                otherPlayer.Character.MaxStamina,
+                otherPlayer.Character.Stamina));
         }
 
         foreach (var npc in _npcs)
@@ -230,12 +230,12 @@ public sealed class Map
             player.Character.X,
             player.Character.Y,
             player.Character.Direction,
-            player.Character.MaxHP,
-            player.Character.HP,
-            player.Character.MaxMP,
-            player.Character.MP,
-            player.Character.MaxSP,
-            player.Character.SP));
+            player.Character.MaxHealth,
+            player.Character.Health,
+            player.Character.MaxMana,
+            player.Character.Mana,
+            player.Character.MaxStamina,
+            player.Character.Stamina));
     }
 
     public void Remove(Player player)
@@ -420,21 +420,16 @@ public sealed class Map
         return id;
     }
 
-    public void SpawnItem(string itemId, int quantity, int x, int y)
+    public void SpawnItem(ItemInfo itemInfo, int x, int y, int quantity, int? durability = null)
     {
         if (!_info.InBounds(x, y) || quantity <= 0)
         {
             return;
         }
 
-        var itemInfo = _itemRepository.Get(itemId);
-        if (itemInfo is null)
-        {
-            _logger.LogWarning("[{Map}] Attempted to drop item that does not exist: {ItemId}", FileName, itemId);
-            return;
-        }
+        durability ??= itemInfo.Durability;
 
-        var item = new MapItem(GetNextItemId(), itemInfo, quantity, x, y, true)
+        var item = new MapItem(GetNextItemId(), itemInfo, durability.Value, quantity, x, y, true)
         {
             LifeTime = ItemLifetimeInSeconds
         };
@@ -448,6 +443,17 @@ public sealed class Map
             item.Y));
     }
 
+    public void SpawnItem(string itemId, int x, int y, int quantity, int? durability = null)
+    {
+        var itemInfo = _itemRepository.Get(itemId);
+        if (itemInfo is null)
+        {
+            _logger.LogWarning("[{Map}] Attempted to spawn item that does not exist: {ItemId}", FileName, itemId);
+            return;
+        }
+
+        SpawnItem(itemInfo, x, y, quantity, durability);
+    }
 
     public void ItemPickup(Player player)
     {
@@ -459,7 +465,7 @@ public sealed class Map
                 return;
             }
 
-            if (!player.Inventory.Give(item.Info, item.Quantity))
+            if (!player.Inventory.Add(item.Info, item.Quantity, item.Durability))
             {
                 player.Tell("Your inventory is full!", ColorCode.Red);
                 return;

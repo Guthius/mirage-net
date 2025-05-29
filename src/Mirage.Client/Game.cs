@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Mirage.Client.Entities;
 using Mirage.Client.Extensions;
+using Mirage.Client.Inventory;
 using Mirage.Client.Maps;
 using Mirage.Client.Scenes;
 using Mirage.Shared.Data;
@@ -28,7 +29,6 @@ public sealed class Game : Microsoft.Xna.Framework.Game
     public List<JobInfo> Jobs { get; set; } = [];
     public int MaxCharacters { get; set; }
     public List<CharacterSlotInfo> Characters { get; set; } = [];
-    public InventorySlotInfo[] Inventory { get; set; } = [];
     public Map Map { get; private set; } = null!;
     public bool GettingMap { get; set; }
     public int LocalPlayerId { get; set; }
@@ -37,6 +37,8 @@ public sealed class Game : Microsoft.Xna.Framework.Game
     public bool ShowFps { get; set; } = true;
     public IReadOnlyList<ChatInfo> ChatHistory => _chatHistorySnapshot;
     public bool ChatHistoryUpdated { get; set; }
+
+    public InventoryStore Inventory { get; } = new();
 
     private static void Main()
     {

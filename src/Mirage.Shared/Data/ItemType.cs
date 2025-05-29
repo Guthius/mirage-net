@@ -13,6 +13,5 @@ public enum ItemType
     PotionSubHp = 8,
     PotionSubMp = 9,
     PotionSubSp = 10,
-    Currency = 12,
-    Spell = 13
+    Currency = 12
 }

@@ -28,7 +28,7 @@ public sealed class InfoCommand(IPlayerService players) : Command(ChatCommandNam
 
         player.Tell($"-=- Stats for {targetPlayer.Character.Name} -=-", ColorCode.BrightGreen);
         player.Tell($"Level: {targetPlayer.Character.Level}  Exp: {targetPlayer.Character.Exp}/{targetPlayer.Character.RequiredExp}", ColorCode.BrightGreen);
-        player.Tell($"HP: {targetPlayer.Character.HP}/{targetPlayer.Character.MaxHP}  MP: {targetPlayer.Character.MP}/{targetPlayer.Character.MaxMP}  SP: {targetPlayer.Character.SP}/{targetPlayer.Character.MaxSP}", ColorCode.BrightGreen);
+        player.Tell($"HP: {targetPlayer.Character.Health}/{targetPlayer.Character.MaxHealth}  MP: {targetPlayer.Character.Mana}/{targetPlayer.Character.MaxMana}  SP: {targetPlayer.Character.Stamina}/{targetPlayer.Character.MaxStamina}", ColorCode.BrightGreen);
         player.Tell($"STR: {targetPlayer.Character.Strength}  DEF: {targetPlayer.Character.Defense}  MAGI: {targetPlayer.Character.Intelligence}  SPEED: {targetPlayer.Character.Speed}", ColorCode.BrightGreen);
 
         player.Tell($"Critical Hit Chance: {targetPlayer.Character.CriticalHitRate}%, Block Chance: {targetPlayer.Character.BlockRate}%", ColorCode.BrightGreen);

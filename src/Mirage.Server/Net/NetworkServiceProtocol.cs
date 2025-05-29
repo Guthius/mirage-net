@@ -1,7 +1,7 @@
 ﻿using System.Buffers;
 using Microsoft.Extensions.Logging;
 using Mirage.Net.Protocol.FromClient;
-using Mirage.Net.Protocol.FromServer.New;
+using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Assets;
 using Mirage.Server.Players;
 using Mirage.Server.Repositories.Accounts;
@@ -30,7 +30,9 @@ public sealed partial class NetworkService
         _parser.Register<AttackRequest>(HandleAttack);
         _parser.Register<SetDirectionRequest>(HandleSetDirection);
         _parser.Register<LookAtRequest>(HandleLookAt);
+        _parser.Register<DropItemRequest>(HandleDropItem);
         _parser.Register<ItemPickupRequest>(HandleItemPickup);
+        _parser.Register<UseItemRequest>(HandleUseItem);
 
         // Social
         _parser.Register<SayRequest>(HandleSay);
@@ -228,9 +230,19 @@ public sealed partial class NetworkService
         player.Map.LookAt(player, request.X, request.Y);
     }
 
+    private static void HandleDropItem(Player player, DropItemRequest request)
+    {
+        player.Inventory.Drop(request.SlotIndex, request.Quantity);
+    }
+
     private static void HandleItemPickup(Player player, ItemPickupRequest request)
     {
         player.Map.ItemPickup(player);
+    }
+
+    private static void HandleUseItem(Player player, UseItemRequest request)
+    {
+        player.Inventory.Use(request.SlotIndex);
     }
 
     private void HandleSay(Player player, SayRequest request)

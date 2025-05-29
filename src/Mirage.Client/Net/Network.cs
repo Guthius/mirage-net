@@ -3,7 +3,7 @@ using System.Net.Sockets;
 using System.Threading.Channels;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Mirage.Net;
-using Mirage.Net.Protocol.FromServer.New;
+using Mirage.Net.Protocol.FromServer;
 using Mirage.Shared.Constants;
 
 namespace Mirage.Client.Net;
@@ -30,6 +30,13 @@ public static class Network
         Parser.Register<CreateCharacterResponse>(NetworkHandlers.HandleCreateCharacter);
         Parser.Register<SelectCharacterResponse>(NetworkHandlers.HandleSelectCharacter);
 
+        // Inventory
+        Parser.Register<ClearInventorySlotCommand>(NetworkHandlers.HandleClearInventorySlot);
+        Parser.Register<UpdateEquipmentCommand>(NetworkHandlers.HandleUpdateEquipment);
+        Parser.Register<UpdateInventoryCommand>(NetworkHandlers.HandleUpdateInventory);
+        Parser.Register<UpdateInventorySlotCommand>(NetworkHandlers.HandleUpdateInventorySlot);
+        Parser.Register<UpdateInventorySlotQuantityCommand>(NetworkHandlers.HandleUpdateInventorySlotQuantity);
+
         // Map Management
         Parser.Register<LoadMapCommand>(NetworkHandlers.HandleLoadMap);
         Parser.Register<EnterGameCommand>(NetworkHandlers.HandleEnterGame);
@@ -42,6 +49,7 @@ public static class Network
         Parser.Register<ActorAttackCommand>(NetworkHandlers.HandleActorAttack);
         Parser.Register<SetActorAccessLevelCommand>(NetworkHandlers.HandleSetActorAccessLevel);
         Parser.Register<SetActorDirectionCommand>(NetworkHandlers.HandleSetActorDirection);
+        Parser.Register<SetActorPlayerKillerCommand>(NetworkHandlers.HandleSetActorPlayerKiller);
         Parser.Register<SetActorPositionCommand>(NetworkHandlers.HandleSetActorPosition);
         Parser.Register<SetActorSpriteCommand>(NetworkHandlers.HandleSetActorSprite);
         Parser.Register<CreateItemCommand>(NetworkHandlers.HandleCreateItem);

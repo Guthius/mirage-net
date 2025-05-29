@@ -1,13 +1,18 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson.Serialization.Options;
 
 namespace Mirage.Shared.Data;
 
 public sealed class CharacterInventoryInfo
 {
-    [BsonElement("defense"), BsonRepresentation(BsonType.Int32)]
-    public int Size { get; set; }
+    [BsonElement("size"), BsonRepresentation(BsonType.Int32)]
+    public int Size { get; set; } = 20;
 
     [BsonElement("slots")]
-    public List<InventorySlotInfo> Slots { get; set; } = [];
+    [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfDocuments)]
+    public Dictionary<int, InventorySlotInfo> Slots { get; set; } = [];
+
+    [BsonElement("equipment")]
+    public EquipmentInfo Equipment { get; set; } = new();
 }

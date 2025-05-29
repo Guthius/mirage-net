@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using Mirage.Net.Protocol.FromServer.New;
+using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Players;
 using Mirage.Server.Repositories.Bans;
 using Mirage.Shared.Constants;

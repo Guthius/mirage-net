@@ -1,5 +1,5 @@
 ﻿using AStarNavigator;
-using Mirage.Net.Protocol.FromServer.New;
+using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Maps;
 using Mirage.Server.Npcs.States;
 using Mirage.Server.Players;
@@ -23,7 +23,7 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
     public Direction Direction { get; private set; } = Direction.Down;
     public int Health { get; private set; } = info.MaxHealth;
     public bool Alive => _state is not Dead;
-    public bool IsAttackable => Info.Behavior != NpcBehavior.Friendly && Info.Behavior != NpcBehavior.Shopkeeper;
+    public bool IsAttackable => Info.Behavior != NpcBehavior.Friendly;
 
     public void Update(float deltaTime)
     {
@@ -128,9 +128,6 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
             attacker.Tell($"A {Info.Name} says, '{Info.AttackSay}' to you.", ColorCode.SayColor);
 
             _state = new Hunt(attacker);
-
-            // TODO: Implement guard AI. When a guard is attacked, all other guards should target the attacker...
-
             return;
         }
 
@@ -144,9 +141,9 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
 
     public bool Attack(Player target)
     {
-        if (target.TryBlockHit(out var shieldInfo))
+        if (target.TryBlockHit(out var shield))
         {
-            target.Tell($"Your {shieldInfo.Name} blocks the {Info.Name}'s hit!", ColorCode.BrightCyan);
+            target.Tell($"Your {shield.Item.Name} blocks the {Info.Name}'s hit!", ColorCode.BrightCyan);
             return false;
         }
 
@@ -159,9 +156,9 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
 
         target.Tell($"A {Info.Name} hit you for {damage} hit points.", ColorCode.BrightRed);
 
-        if (damage < target.Character.HP)
+        if (damage < target.Character.Health)
         {
-            target.Character.HP -= damage;
+            target.Character.Health -= damage;
             target.SendVitals();
             return false;
         }
@@ -176,8 +173,7 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
         }
 
         target.Character.PlayerKiller = false;
-        // TODO: target.SendPlayerData(); - Need to tell map the player is no longer a pker
-
+        target.Map.Send(new SetActorPlayerKillerCommand(target.Id, false));
         return true;
     }
 
@@ -206,7 +202,7 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
                 continue;
             }
 
-            Map.SpawnItem(lootInfo.ItemId, quantity, X, Y);
+            Map.SpawnItem(lootInfo.ItemId, X, Y, quantity);
         }
     }
 

@@ -1,4 +1,3 @@
-using Mirage.Shared.Constants;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -37,14 +36,14 @@ public sealed record CharacterInfo
     [BsonElement("player_killer"), BsonRepresentation(BsonType.Boolean)]
     public bool PlayerKiller { get; set; }
 
-    [BsonElement("hp"), BsonRepresentation(BsonType.Int32)]
-    public int HP { get; set; }
+    [BsonElement("health"), BsonRepresentation(BsonType.Int32)]
+    public int Health { get; set; }
 
-    [BsonElement("mp"), BsonRepresentation(BsonType.Int32)]
-    public int MP { get; set; }
+    [BsonElement("mana"), BsonRepresentation(BsonType.Int32)]
+    public int Mana { get; set; }
 
-    [BsonElement("sp"), BsonRepresentation(BsonType.Int32)]
-    public int SP { get; set; }
+    [BsonElement("stamina"), BsonRepresentation(BsonType.Int32)]
+    public int Stamina { get; set; }
 
     [BsonElement("strength"), BsonRepresentation(BsonType.Int32)]
     public int Strength { get; set; }
@@ -73,23 +72,8 @@ public sealed record CharacterInfo
     [BsonElement("stat_points"), BsonRepresentation(BsonType.Int32)]
     public int StatPoints { get; set; }
 
-    [BsonElement("armor_slot"), BsonRepresentation(BsonType.Int32)]
-    public int ArmorSlot { get; set; }
-
-    [BsonElement("weapon_slot"), BsonRepresentation(BsonType.Int32)]
-    public int WeaponSlot { get; set; }
-
-    [BsonElement("helmet_slot"), BsonRepresentation(BsonType.Int32)]
-    public int HelmetSlot { get; set; }
-
-    [BsonElement("shield_slot"), BsonRepresentation(BsonType.Int32)]
-    public int ShieldSlot { get; set; }
-
     [BsonElement("inventory")]
-    public List<InventorySlotInfo> Inventory { get; set; } = [];
-
-    [BsonElement("spell_ids")]
-    public int[] SpellIds { get; set; } = CreateSpellIds();
+    public CharacterInventoryInfo Inventory { get; set; } = new();
 
     [BsonElement("map"), BsonRepresentation(BsonType.String)]
     public string Map { get; set; } = string.Empty;
@@ -104,13 +88,13 @@ public sealed record CharacterInfo
     public Direction Direction { get; set; }
 
     [BsonIgnore]
-    public int MaxHP => (Level + Strength / 2 + BaseStrength) * 2;
+    public int MaxHealth => (Level + Strength / 2 + BaseStrength) * 2;
 
     [BsonIgnore]
-    public int MaxMP => (Level + Intelligence / 2 + BaseIntelligence) * 2;
+    public int MaxMana => (Level + Intelligence / 2 + BaseIntelligence) * 2;
 
     [BsonIgnore]
-    public int MaxSP => (Level + Speed / 2 + BaseSpeed) * 2;
+    public int MaxStamina => (Level + Speed / 2 + BaseSpeed) * 2;
 
     [BsonIgnore]
     public int CriticalHitRate => Math.Min(100, Strength / 2 + Level / 2);
@@ -122,16 +106,11 @@ public sealed record CharacterInfo
     public int RequiredExp => (Level + 1) * (Strength + Defense + Intelligence + Speed + StatPoints) * 25;
 
     [BsonIgnore]
-    public int HPRegen => Math.Min(2, Defense / 2);
+    public int HealthRegen => Math.Min(2, Defense / 2);
 
     [BsonIgnore]
-    public int MPRegen => Math.Min(2, Intelligence / 2);
+    public int ManaRegen => Math.Min(2, Intelligence / 2);
 
     [BsonIgnore]
-    public int SPRegen => Math.Min(2, Speed / 2);
-
-    private static int[] CreateSpellIds()
-    {
-        return new int[Limits.MaxPlayerSpells + 1];
-    }
+    public int StaminaRegen => Math.Min(2, Speed / 2);
 }

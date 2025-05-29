@@ -3,7 +3,6 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Mirage.Shared.Data;
 
-[BsonIgnoreExtraElements]
 public sealed record NpcInfo : ObjectInfo
 {
     [BsonElement("name"), BsonRepresentation(BsonType.String)]
@@ -41,12 +40,6 @@ public sealed record NpcInfo : ObjectInfo
 
     [BsonIgnore]
     public int MaxHealth => Strength * Defense;
-
-    [BsonIgnore]
-    public int MaxMana => Intelligence * 2;
-
-    [BsonIgnore]
-    public int MaxStamina => Speed * 2;
 
     [BsonIgnore]
     public int HealthRegen => Math.Max(1, Defense / 3);

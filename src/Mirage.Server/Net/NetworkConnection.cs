@@ -1,6 +1,6 @@
 ﻿using System.Threading.Channels;
 using Mirage.Net;
-using Mirage.Net.Protocol.FromServer.New;
+using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Players;
 using Mirage.Server.Repositories.Accounts;
 

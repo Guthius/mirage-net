@@ -1,7 +1,9 @@
 ﻿using ImGuiNET;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Mirage.Client.Inventory;
 using Mirage.Client.Net;
+using Mirage.Client.UI;
 using Mirage.Net.Protocol.FromClient;
 using Mirage.Shared.Data;
 using Keys = Microsoft.Xna.Framework.Input.Keys;
@@ -179,7 +181,9 @@ public sealed class GameScene : Scene
         spriteBatch.End();
 
         ShowMenu();
-        //ShowInventory();
+
+        InventoryWindow.Show(_gameState);
+
         ShowVitals();
         ShowChat();
     }
@@ -222,29 +226,19 @@ public sealed class GameScene : Scene
     private void ShowMenu()
     {
         var buttonSize = new ImGuiVec2(100, 26);
-        
+
         ImGui.Begin("Menu", ImGuiWindowFlags.AlwaysAutoResize);
         if (ImGui.Button("Inventory", buttonSize))
         {
-            _openInventory = !_openInventory;
+            InventoryWindow.Open();
         }
 
-        if (ImGui.Button("Spells", buttonSize))
+        if (ImGui.Button("Character", buttonSize))
         {
-        }
-
-        if (ImGui.Button("Stats", buttonSize))
-        {
+            CharacterWindow.Show();
         }
 
         if (ImGui.Button("Train", buttonSize))
-        {
-            // using var frmTraining = new frmTraining();
-            //
-            // frmTraining.ShowDialog();
-        }
-
-        if (ImGui.Button("Trade", buttonSize))
         {
         }
 
@@ -254,112 +248,6 @@ public sealed class GameScene : Scene
         }
 
         ImGui.End();
-    }
-
-    private bool _openInventory;
-    private int _selectedInventorySlot;
-    private string _dropItemName = string.Empty;
-    private int _dropQuantity = 1;
-    private int _maxDropQuantity;
-
-    private void ShowInventory()
-    {
-        // if (!_openInventory)
-        // {
-        //     return;
-        // }
-        //
-        // if (!ImGui.Begin("Backpack", ref _openInventory, ImGuiWindowFlags.AlwaysAutoResize))
-        // {
-        //     return;
-        // }
-        //
-        // var inventorySlots = GetInventorySlots().ToArray();
-        //
-        // ImGui.ListBox("##Items", ref _selectedInventorySlot, inventorySlots, inventorySlots.Length);
-        // ImGui.BeginDisabled(_gameState.Inventory[_selectedInventorySlot].ItemId <= 0);
-        // if (ImGui.Button("Use Item"))
-        // {
-        //     Network.Send(new UseItemRequest(_selectedInventorySlot + 1));
-        // }
-        //
-        // if (ImGui.Button("Drop Item"))
-        // {
-        //     var selectedItemId = _gameState.Inventory[_selectedInventorySlot].ItemId;
-        //
-        //     _dropQuantity = 1;
-        //     _maxDropQuantity = Math.Max(1, _gameState.Inventory[_selectedInventorySlot].Quantity);
-        //     _dropItemName = modTypes.Item[selectedItemId].Name;
-        //
-        //     ImGui.OpenPopup("Drop");
-        // }
-        //
-        // ImGui.EndDisabled();
-        //
-        // if (ImGui.BeginPopupModal("Drop"))
-        // {
-        //     ImGui.Text($"Drop {_dropItemName}");
-        //     ImGui.InputInt("Quantity", ref _dropQuantity, 1, 10);
-        //     _dropQuantity = Math.Min(_dropQuantity, _maxDropQuantity);
-        //     ImGui.SameLine();
-        //     ImGui.Text($" of {_maxDropQuantity}");
-        //     ImGui.Separator();
-        //
-        //     if (ImGui.Button("OK"))
-        //     {
-        //         Network.Send(new DropItemRequest(_selectedInventorySlot + 1, _dropQuantity));
-        //         ImGui.CloseCurrentPopup();
-        //     }
-        //
-        //     ImGui.SameLine();
-        //     ImGui.SetItemDefaultFocus();
-        //     if (ImGui.Button("Cancel"))
-        //     {
-        //         ImGui.CloseCurrentPopup();
-        //     }
-        //
-        //     ImGui.EndPopup();
-        // }
-        //
-        // ImGui.End();
-        //
-        // IEnumerable<string> GetInventorySlots()
-        // {
-        //     var index = 0;
-        //
-        //     foreach (var slot in _gameState.Inventory)
-        //     {
-        //         index++;
-        //
-        //         var itemId = slot.ItemId;
-        //         if (itemId is <= 0 or > Limits.MaxItems)
-        //         {
-        //             yield return $"{index}: <Free>";
-        //             continue;
-        //         }
-        //
-        //         ref var itemInfo = ref modTypes.Item[itemId];
-        //         if (itemInfo.Type == modTypes.ITEM_TYPE_CURRENCY)
-        //         {
-        //             yield return $"{index}: {itemInfo.Name} ({slot.Quantity})";
-        //             continue;
-        //         }
-        //
-        //         var equipped =
-        //             modTypes.Player[modGameLogic.MyIndex].ArmorSlot == index ||
-        //             modTypes.Player[modGameLogic.MyIndex].WeaponSlot == index ||
-        //             modTypes.Player[modGameLogic.MyIndex].ShieldSlot == index ||
-        //             modTypes.Player[modGameLogic.MyIndex].HelmetSlot == index;
-        //         
-        //         if (equipped)
-        //         {
-        //             yield return $"{index}: {itemInfo.Name} (worn)";
-        //             continue;
-        //         }
-        //
-        //         ImGui.Selectable($"{index}: {itemInfo.Name}");
-        //     }
-        // }
     }
 
     private void ShowChat()

@@ -1,4 +1,4 @@
-﻿using Mirage.Net.Protocol.FromServer.New;
+﻿using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Repositories.Jobs;
 using Mirage.Shared.Constants;
 using Mirage.Shared.Data;
@@ -99,9 +99,9 @@ public sealed class CharacterRepository(IJobRepository jobRepository) : ICharact
             Direction = Direction.Down
         };
 
-        characterInfo.HP = characterInfo.MaxHP;
-        characterInfo.MP = characterInfo.MaxMP;
-        characterInfo.SP = characterInfo.MaxSP;
+        characterInfo.Health = characterInfo.MaxHealth;
+        characterInfo.Mana = characterInfo.MaxMana;
+        characterInfo.Stamina = characterInfo.MaxStamina;
 
         GetCollection().InsertOne(characterInfo);
 

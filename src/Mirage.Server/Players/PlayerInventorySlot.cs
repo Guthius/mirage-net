@@ -1,7 +1,10 @@
+using Mirage.Shared.Data;
+
 namespace Mirage.Server.Players;
 
-public sealed class PlayerInventorySlot
+public sealed record PlayerInventorySlot
 {
-    public string ItemId { get; set; } = string.Empty;
+    public required ItemInfo Item { get; set; }
     public int Quantity { get; set; }
+    public int Durability { get; set; }
 }

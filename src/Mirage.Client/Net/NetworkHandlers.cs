@@ -1,8 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.DependencyInjection;
 using Mirage.Client.Assets;
+using Mirage.Client.Inventory;
 using Mirage.Client.Localization;
 using Mirage.Client.Scenes;
-using Mirage.Net.Protocol.FromServer.New;
+using Mirage.Net.Protocol.FromServer;
 using Mirage.Shared.Data;
 
 namespace Mirage.Client.Net;
@@ -159,6 +160,55 @@ public static class NetworkHandlers
         }
     }
 
+    public static void HandleClearInventorySlot(ClearInventorySlotCommand command)
+    {
+        GameState.Inventory.Clear(command.Slot);
+    }
+
+    public static void HandleUpdateEquipment(UpdateEquipmentCommand command)
+    {
+        GameState.Inventory.Weapon = ToSlot(command.Weapon);
+        GameState.Inventory.Armor = ToSlot(command.Armor);
+        GameState.Inventory.Helmet = ToSlot(command.Helmet);
+        GameState.Inventory.Shield = ToSlot(command.Shield);
+
+        static EquipmentSlot? ToSlot(UpdateEquipmentCommand.Slot? slot)
+        {
+            if (slot is null)
+            {
+                return null;
+            }
+
+            return new EquipmentSlot(
+                slot.Sprite,
+                slot.ItemName,
+                slot.Damage,
+                slot.Protection);
+        }
+    }
+
+    public static void HandleUpdateInventory(UpdateInventoryCommand command)
+    {
+        GameState.Inventory.Size = command.InventorySize;
+    }
+
+    public static void HandleUpdateInventorySlot(UpdateInventorySlotCommand command)
+    {
+        GameState.Inventory.Update(
+            command.SlotIndex,
+            command.Type,
+            command.Sprite,
+            command.ItemName,
+            command.Quantity);
+    }
+
+    public static void HandleUpdateInventorySlotQuantity(UpdateInventorySlotQuantityCommand command)
+    {
+        GameState.Inventory.UpdateQuantity(
+            command.SlotIndex,
+            command.Quantity);
+    }
+
     public static void HandleLoadMap(LoadMapCommand command)
     {
         GameState.Map.Load(command.MapId);
@@ -244,6 +294,17 @@ public static class NetworkHandlers
         var actor = GameState.Map.GetActor(command.ActorId);
 
         actor?.SetDirection(command.Direction);
+    }
+
+    public static void HandleSetActorPlayerKiller(SetActorPlayerKillerCommand command)
+    {
+        var actor = GameState.Map.GetActor(command.ActorId);
+        if (actor is null)
+        {
+            return;
+        }
+
+        actor.IsPlayerKiller = command.PlayerKiller;
     }
 
     public static void HandleSetActorPosition(SetActorPositionCommand command)

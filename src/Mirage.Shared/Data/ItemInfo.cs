@@ -3,7 +3,6 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Mirage.Shared.Data;
 
-[BsonIgnoreExtraElements]
 public sealed record ItemInfo : ObjectInfo
 {
     [BsonElement("name"), BsonRepresentation(BsonType.String)]
