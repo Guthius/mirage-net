@@ -7,8 +7,8 @@ db.accounts.insertMany([
     }
 ]);
 
-db.classes.drop();
-db.classes.insertMany([
+db.jobs.drop();
+db.jobs.insertMany([
     {
         _id: '68234080be15fb3f0f2d4cac',
         defense: 7,

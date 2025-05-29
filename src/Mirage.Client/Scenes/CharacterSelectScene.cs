@@ -28,7 +28,7 @@ public sealed class CharacterSelectScene(ISceneManager sceneManager, Game gameSt
 
         foreach (var slotInfo in gameState.Characters)
         {
-            if (ImGui.Button($"{slotInfo.Name} a level {slotInfo.Level} {slotInfo.JobId}", new ImGuiVec2(200, 40)))
+            if (ImGui.Button($"{slotInfo.Name} a level {slotInfo.Level} {slotInfo.JobName}", new ImGuiVec2(200, 40)))
             {
                 _disabled = true;
 

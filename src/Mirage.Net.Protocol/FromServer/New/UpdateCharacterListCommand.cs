@@ -14,7 +14,7 @@ public sealed record UpdateCharacterListCommand(int MaxCharacters, List<Characte
             {
                 CharacterId = reader.ReadString(),
                 Name = reader.ReadString(),
-                JobId = reader.ReadString(),
+                JobName = reader.ReadString(),
                 Level = reader.ReadInt32()
             }));
     }
@@ -26,7 +26,7 @@ public sealed record UpdateCharacterListCommand(int MaxCharacters, List<Characte
         {
             writer.WriteString(character.CharacterId);
             writer.WriteString(character.Name);
-            writer.WriteString(character.JobId);
+            writer.WriteString(character.JobName);
             writer.WriteInt32(character.Level);
         });
     }

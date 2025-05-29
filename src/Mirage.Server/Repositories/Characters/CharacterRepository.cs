@@ -35,8 +35,16 @@ public sealed class CharacterRepository(IJobRepository jobRepository) : ICharact
             .Include(x => x.Level);
 
         return GetCollection()
-            .Find(x => x.AccountId == accountId)
-            .Project<CharacterSlotInfo>(projection)
+            .Find(characterInfo => characterInfo.AccountId == accountId)
+            .Project(projection)
+            .ToEnumerable()
+            .Select(document => new CharacterSlotInfo
+            {
+                CharacterId = document["_id"].AsObjectId.ToString(),
+                Name = document["name"].AsString,
+                JobName = jobRepository.GetName(document["job_id"].AsString),
+                Level = document["level"].AsInt32,
+            })
             .ToList();
     }
 

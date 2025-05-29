@@ -11,12 +11,12 @@ public sealed class JobRepository(ILogger<JobRepository> logger) : IJobRepositor
 
     private static IMongoCollection<JobInfo> GetCollection()
     {
-        return Database.GetCollection<JobInfo>("classes");
+        return Database.GetCollection<JobInfo>("jobs");
     }
 
-    public JobInfo? Get(string classId)
+    public JobInfo? Get(string jobId)
     {
-        return Jobs.Find(classInfo => classInfo.Id == classId);
+        return Jobs.Find(classInfo => classInfo.Id == jobId);
     }
 
     public List<JobInfo> GetAll()
@@ -24,9 +24,9 @@ public sealed class JobRepository(ILogger<JobRepository> logger) : IJobRepositor
         return Jobs;
     }
 
-    public string GetName(string classId)
+    public string GetName(string jobId)
     {
-        return Jobs.Find(classInfo => classInfo.Id == classId)?.Name ?? string.Empty;
+        return Jobs.Find(classInfo => classInfo.Id == jobId)?.Name ?? string.Empty;
     }
 
     public void Load()
@@ -35,7 +35,7 @@ public sealed class JobRepository(ILogger<JobRepository> logger) : IJobRepositor
 
         try
         {
-            CreateDefaultClasses();
+            CreateDefaultJobs();
 
             var classInfos = GetCollection()
                 .Find(Builders<JobInfo>.Filter.Empty)
@@ -47,11 +47,11 @@ public sealed class JobRepository(ILogger<JobRepository> logger) : IJobRepositor
         {
             stopwatch.Stop();
 
-            logger.LogInformation("Loaded {Count} classes in {ElapsedMs}ms", Jobs.Count, stopwatch.ElapsedMilliseconds);
+            logger.LogInformation("Loaded {Count} jobs in {ElapsedMs}ms", Jobs.Count, stopwatch.ElapsedMilliseconds);
         }
     }
 
-    private static void CreateDefaultClasses()
+    private static void CreateDefaultJobs()
     {
         var count = GetCollection().CountDocuments(x => true);
         if (count > 0)
@@ -59,10 +59,10 @@ public sealed class JobRepository(ILogger<JobRepository> logger) : IJobRepositor
             return;
         }
 
-        GetCollection().InsertMany(GetDefaultClasses());
+        GetCollection().InsertMany(GetDefaultJobs());
     }
 
-    private static IEnumerable<JobInfo> GetDefaultClasses()
+    private static IEnumerable<JobInfo> GetDefaultJobs()
     {
         yield return new JobInfo
         {
