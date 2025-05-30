@@ -210,6 +210,8 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
     {
         Health = Info.MaxHealth;
 
+        (X, Y) = Map.GetRandomFreePosition(X, Y);
+
         Map.Send(new CreateActorCommand(
             Id, Info.Name, Info.Sprite,
             false, AccessLevel.None,

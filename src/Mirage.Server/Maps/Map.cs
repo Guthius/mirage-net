@@ -46,6 +46,24 @@ public sealed class Map
         SpawnNpcs();
     }
 
+    public (int, int) GetRandomFreePosition(int defaultX, int defaultY)
+    {
+        const int maxTries = 100;
+
+        for (var tries = 0; tries < maxTries; tries++)
+        {
+            var x = Random.Shared.Next(0, _info.Width);
+            var y = Random.Shared.Next(0, _info.Height);
+
+            if (IsPassable(x, y))
+            {
+                return (x, y);
+            }
+        }
+
+        return (defaultX, defaultY);
+    }
+
     private void SpawnNpcs()
     {
         var npcInfo = new NpcInfo
@@ -73,25 +91,29 @@ public sealed class Map
             Intelligence = 0
         };
 
+        var (x1, y1) = GetRandomFreePosition(5, 5);
+        var (x2, y2) = GetRandomFreePosition(6, 5);
+        var (x3, y3) = GetRandomFreePosition(7, 5);
+
         _npcs.Clear();
         _npcs.AddRange(
             new Npc(this, npcInfo, _navigator)
             {
                 Id = MakeNpcId(1),
-                X = 5,
-                Y = 5,
+                X = x1,
+                Y = y1
             },
             new Npc(this, npcInfo, _navigator)
             {
                 Id = MakeNpcId(2),
-                X = 6,
-                Y = 5,
+                X = x2,
+                Y = y2
             },
             new Npc(this, npcInfo, _navigator)
             {
                 Id = MakeNpcId(3),
-                X = 7,
-                Y = 5
+                X = x3,
+                Y = y3
             });
     }
 
