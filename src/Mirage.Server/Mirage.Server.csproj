@@ -24,7 +24,7 @@
 
     <ItemGroup>
         <None Update="Content\**">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="appsettings*.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>

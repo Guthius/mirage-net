@@ -68,7 +68,6 @@ public sealed class PlayerInventory
             return;
         }
 
-        _player.Character.Inventory.Slots.Remove(slotIndex);
         _player.Send(new ClearInventorySlotCommand(slotIndex));
     }
 
@@ -101,13 +100,6 @@ public sealed class PlayerInventory
                 Durability = durability.Value
             };
 
-            _player.Character.Inventory.Slots[slotIndex] = new InventorySlotInfo
-            {
-                ItemId = itemInfo.Id,
-                Quantity = quantity,
-                Durability = durability.Value
-            };
-
             _player.Send(new UpdateInventorySlotCommand(slotIndex, itemInfo.Type, itemInfo.Sprite, itemInfo.Name, quantity));
 
             quantity--;
@@ -132,12 +124,6 @@ public sealed class PlayerInventory
             slot.Quantity += quantity;
 
             _player.Send(new UpdateInventorySlotCommand(slotIndex, itemInfo.Type, itemInfo.Sprite, itemInfo.Name, slot.Quantity));
-            _player.Character.Inventory.Slots[slotIndex] = new InventorySlotInfo
-            {
-                ItemId = itemInfo.Id,
-                Quantity = slot.Quantity,
-                Durability = 0
-            };
             return true;
         }
 
@@ -155,13 +141,6 @@ public sealed class PlayerInventory
             };
 
             _player.Send(new UpdateInventorySlotCommand(slotIndex, itemInfo.Type, itemInfo.Sprite, itemInfo.Name, quantity));
-            _player.Character.Inventory.Slots[slotIndex] = new InventorySlotInfo
-            {
-                ItemId = itemInfo.Id,
-                Quantity = quantity,
-                Durability = 0
-            };
-
             return true;
         }
 
@@ -425,9 +404,46 @@ public sealed class PlayerInventory
                 slot.Item.Name,
                 slot.Quantity));
         }
+        else
+        {
+            Clear(slotIndex);
+        }
 
         Equipment.SendToPlayer();
+    }
 
-        Clear(slotIndex);
+    public void UpdateCharacter()
+    {
+        _player.Character.Inventory.Size = Size;
+        _player.Character.Inventory.Slots.Clear();
+
+        foreach (var (slotIndex, slot) in _slots)
+        {
+            _player.Character.Inventory.Slots.Add(slotIndex, new InventorySlotInfo
+            {
+                ItemId = slot.Item.Id,
+                Quantity = slot.Quantity,
+                Durability = slot.Durability
+            });
+        }
+
+        _player.Character.Inventory.Equipment.Weapon = MapEquipment(Equipment.Weapon);
+        _player.Character.Inventory.Equipment.Armor = MapEquipment(Equipment.Armor);
+        _player.Character.Inventory.Equipment.Helmet = MapEquipment(Equipment.Helmet);
+        _player.Character.Inventory.Equipment.Shield = MapEquipment(Equipment.Shield);
+
+        static EquipmentSlotInfo? MapEquipment(PlayerEquipmentSlot? slot)
+        {
+            if (slot is null)
+            {
+                return null;
+            }
+
+            return new EquipmentSlotInfo
+            {
+                ItemId = slot.Item.Id,
+                Durability = slot.Durability
+            };
+        }
     }
 }

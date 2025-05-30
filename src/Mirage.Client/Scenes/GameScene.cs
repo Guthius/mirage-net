@@ -15,14 +15,13 @@ namespace Mirage.Client.Scenes;
 public sealed class GameScene : Scene
 {
     private readonly GraphicsDevice _graphicsDevice;
-    private readonly Game _gameState;
-    private string _chatMessage = string.Empty;
+    private readonly Game _game;
     private int _itemPickupTimer;
 
-    public GameScene(GraphicsDevice graphicsDevice, Game gameState)
+    public GameScene(GraphicsDevice graphicsDevice, Game game)
     {
         _graphicsDevice = graphicsDevice;
-        _gameState = gameState;
+        _game = game;
 
         Textures.Sprites = Texture2D.FromFile(graphicsDevice, "Content/Sprites.png");
         Textures.Items = Texture2D.FromFile(graphicsDevice, "Content/Items.png");
@@ -30,17 +29,17 @@ public sealed class GameScene : Scene
 
     protected override void OnShow()
     {
-        _gameState.ClearStatus();
+        _game.ClearStatus();
     }
 
     protected override void OnHide()
     {
-        _gameState.ClearChatHistory();
+        _game.ClearChatHistory();
     }
 
     protected override void OnUpdate(GameTime gameTime)
     {
-        _gameState.Map.Update(gameTime);
+        _game.Map.Update(gameTime);
 
         if (!ImGui.GetIO().WantTextInput)
         {
@@ -63,12 +62,12 @@ public sealed class GameScene : Scene
 
     private void CheckMovement()
     {
-        if (_gameState.GettingMap)
+        if (_game.GettingMap)
         {
             return;
         }
 
-        var localPlayer = _gameState.LocalPlayer;
+        var localPlayer = _game.LocalPlayer;
         if (localPlayer is null || localPlayer.Busy)
         {
             return;
@@ -83,9 +82,9 @@ public sealed class GameScene : Scene
         if (localPlayer.TryMove(direction, movementType))
         {
             Network.Send(new MoveRequest(direction, movementType));
-            if (_gameState.Map.GetTileType(localPlayer.TileX, localPlayer.TileY) == TileTypes.Warp)
+            if (_game.Map.GetTileType(localPlayer.TileX, localPlayer.TileY) == TileTypes.Warp)
             {
-                _gameState.GettingMap = true;
+                _game.GettingMap = true;
             }
 
             return;
@@ -117,12 +116,12 @@ public sealed class GameScene : Scene
 
     private void CheckAttack()
     {
-        if (_gameState.GettingMap)
+        if (_game.GettingMap)
         {
             return;
         }
 
-        var localPlayer = _gameState.LocalPlayer;
+        var localPlayer = _game.LocalPlayer;
         if (localPlayer is null || localPlayer.Busy)
         {
             return;
@@ -144,7 +143,7 @@ public sealed class GameScene : Scene
     {
         var spriteBatch = new SpriteBatch(_graphicsDevice);
 
-        var localPlayer = _gameState.LocalPlayer;
+        var localPlayer = _game.LocalPlayer;
         if (localPlayer is not null)
         {
             spriteBatch.Begin(transformMatrix:
@@ -160,9 +159,9 @@ public sealed class GameScene : Scene
         }
 
 
-        _gameState.Map.Draw(spriteBatch);
+        _game.Map.Draw(spriteBatch);
 
-        if (_gameState.GettingMap)
+        if (_game.GettingMap)
         {
             // TODO: modText.DrawText(50, 50, "Receiving Map...", modText.BrightCyan);
         }
@@ -176,21 +175,23 @@ public sealed class GameScene : Scene
 
         spriteBatch.Begin();
 
-        _gameState.Map.DrawUI(spriteBatch);
+        _game.Map.DrawUI(spriteBatch);
 
         spriteBatch.End();
 
         ShowMenu();
 
-        InventoryWindow.Show(_gameState);
+        InventoryWindow.Show(_game);
+        CharacterWindow.Show(_game);
 
         ShowVitals();
-        ShowChat();
+
+        ChatWindow.Show(_game);
     }
 
     private void ShowVitals()
     {
-        var localPlayer = _gameState.LocalPlayer;
+        var localPlayer = _game.LocalPlayer;
         if (localPlayer is null)
         {
             return;
@@ -235,7 +236,7 @@ public sealed class GameScene : Scene
 
         if (ImGui.Button("Character", buttonSize))
         {
-            CharacterWindow.Show();
+            CharacterWindow.Open();
         }
 
         if (ImGui.Button("Train", buttonSize))
@@ -244,48 +245,7 @@ public sealed class GameScene : Scene
 
         if (ImGui.Button("Quit", buttonSize))
         {
-            _gameState.Exit();
-        }
-
-        ImGui.End();
-    }
-
-    private void ShowChat()
-    {
-        var inputTextHeight = ImGui.GetTextLineHeight() + ImGui.GetStyle().FramePadding.Y * 2;
-        var inputRowHeight = inputTextHeight + ImGui.GetStyle().FramePadding.Y * 2;
-
-        ImGui.Begin("Chat");
-
-        var contentArea = ImGui.GetContentRegionAvail();
-
-        ImGui.BeginListBox("##ChatMessages", contentArea with {Y = contentArea.Y - inputRowHeight});
-
-        foreach (var chat in _gameState.ChatHistory)
-        {
-            ImGui.PushStyleColor(ImGuiCol.Text, ColorCodeTranslator.GetImGuiColor(chat.ColorCode));
-            ImGui.TextWrapped(chat.Message);
-            ImGui.PopStyleColor();
-        }
-
-        if (_gameState.ChatHistoryUpdated)
-        {
-            ImGui.SetScrollHereY(1.0f);
-            _gameState.ChatHistoryUpdated = false;
-        }
-
-        ImGui.EndListBox();
-        if (ImGui.InputText("##Message", ref _chatMessage, 256, ImGuiInputTextFlags.EnterReturnsTrue))
-        {
-            ChatProcessor.Handle(_chatMessage);
-            _chatMessage = string.Empty;
-        }
-
-        ImGui.SameLine();
-        if (ImGui.Button("Send"))
-        {
-            ChatProcessor.Handle(_chatMessage);
-            _chatMessage = string.Empty;
+            _game.Exit();
         }
 
         ImGui.End();

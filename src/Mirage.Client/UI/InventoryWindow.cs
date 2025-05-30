@@ -28,9 +28,7 @@ public static class InventoryWindow
             return;
         }
 
-        var title = $"Inventory ({game.Inventory.Slots.Count}/{game.Inventory.Size})";
-
-        if (!ImGui.Begin($"{title}##Inventory", ref _open, ImGuiWindowFlags.AlwaysAutoResize))
+        if (!ImGui.Begin($"Inventory", ref _open, ImGuiWindowFlags.AlwaysAutoResize))
         {
             ImGui.End();
             return;
@@ -72,11 +70,15 @@ public static class InventoryWindow
 
             if (ImGui.BeginPopup($"item_context_menu_{index}"))
             {
+                var usable = slot.Type != ItemType.Currency;
+
+                ImGui.BeginDisabled(!usable);
                 if (ImGui.MenuItem("Use"))
                 {
                     UseItem(slotIndex);
                 }
 
+                ImGui.EndDisabled();
                 ImGui.Separator();
 
                 if (ImGui.MenuItem("Drop"))

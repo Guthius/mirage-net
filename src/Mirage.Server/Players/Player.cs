@@ -119,6 +119,8 @@ public sealed class Player
             PartyMember = null;
         }
 
+        Inventory.UpdateCharacter();
+
         _characterRepository.Save(Character);
 
         var color = Character.AccessLevel <= AccessLevel.Moderator ? ColorCode.JoinLeftColor : ColorCode.White;

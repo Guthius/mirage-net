@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="5" nextobjectid="1">
  <properties>
-  <property name="name" value="Mirage.NET Plains"/>
+  <property name="name" value="Test Forest"/>
   <property name="pvp_enabled" type="bool" value="false"/>
  </properties>
  <tileset firstgid="1" source="Tiles.tsx"/>

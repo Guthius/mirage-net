@@ -83,6 +83,20 @@ public sealed class Map
                     DropRatePercentage = 100,
                     MinQuantity = 1,
                     MaxQuantity = 4
+                },
+                new NpcLootInfo
+                {
+                    ItemId = "68234080be15fb3f0f2d4cb1",
+                    DropRatePercentage = 25,
+                    MinQuantity = 1,
+                    MaxQuantity = 1
+                },
+                new NpcLootInfo
+                {
+                    ItemId = "68234080be15fb3f0f2d4cb3",
+                    DropRatePercentage = 5,
+                    MinQuantity = 1,
+                    MaxQuantity = 1
                 }
             ],
             Strength = 4,
