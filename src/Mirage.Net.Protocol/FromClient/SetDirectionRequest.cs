@@ -1,10 +1,10 @@
-using Mirage.Game.Data;
+using Mirage.Shared.Data;
 
 namespace Mirage.Net.Protocol.FromClient;
 
 public sealed record SetDirectionRequest(Direction Direction) : IPacket<SetDirectionRequest>
 {
-    public static string PacketId => "playerdir";
+    public static string PacketId => nameof(SetDirectionRequest);
 
     public static SetDirectionRequest ReadFrom(PacketReader reader)
     {

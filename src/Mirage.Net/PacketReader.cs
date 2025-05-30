@@ -31,7 +31,7 @@ public sealed class PacketReader(ReadOnlyMemory<byte> data)
 
         return value;
     }
-
+    
     public string ReadString()
     {
         var bytes = GetNextField();
@@ -39,6 +39,11 @@ public sealed class PacketReader(ReadOnlyMemory<byte> data)
         return Encoding.UTF8.GetString(bytes);
     }
 
+    public byte[] ReadBytes()
+    {
+        return Convert.FromBase64String(ReadString());
+    }
+    
     public int ReadInt32()
     {
         return int.Parse(ReadString());
@@ -52,5 +57,18 @@ public sealed class PacketReader(ReadOnlyMemory<byte> data)
     public TEnum ReadEnum<TEnum>() where TEnum : Enum
     {
         return (TEnum) Enum.ToObject(typeof(TEnum), ReadInt32());
+    }
+
+    public List<T> ReadList<T>(Func<T> itemReader)
+    {
+        var itemCount = ReadInt32();
+        var items = new List<T>(itemCount);
+
+        for (var i = 0; i < itemCount; i++)
+        {
+            items.Add(itemReader());
+        }
+
+        return items;
     }
 }

@@ -1,147 +1,60 @@
-using Mirage.Game.Constants;
-using Mirage.Net.Protocol.FromServer;
-using Mirage.Server.Game;
-using Mirage.Server.Game.Managers;
-using Mirage.Server.Modules;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Mirage.Server.Chat;
+using Mirage.Server.Maps;
 using Mirage.Server.Net;
+using Mirage.Server.Players;
+using Mirage.Server.Repositories;
+using Mirage.Server.Repositories.Accounts;
+using Mirage.Server.Repositories.Bans;
+using Mirage.Server.Repositories.Characters;
+using Mirage.Server.Repositories.Jobs;
+using Mirage.Server.Repositories.Maps;
+using Mirage.Server.Services;
 using Serilog;
 
-namespace Mirage.Server;
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
-internal static class Program
+try
 {
-    private static readonly CancellationTokenSource CancellationTokenSource = new();
+    var builder = Host.CreateApplicationBuilder(args);
 
-    private static int _minPassed;
-    
-    // Used for respawning items
-    public static int SpawnSeconds;
-    
-    public static void CheckSpawnMapItems()
+    builder.Services.Configure<NetworkOptions>(options =>
     {
-        SpawnSeconds += 1;
-        if (SpawnSeconds < 120)
-        {
-            return;
-        }
+        options.Port = builder.Configuration.GetValue("Network:Port", 4000);
+        options.MaxConnections = builder.Configuration.GetValue("Network:MaxConnections", 1000);
+    });
 
-        for (var mapId = 1; mapId <= Limits.MaxMaps; mapId++)
-        {
-            var map = GameState.GetMap(mapId);
-            if (map.PlayersOnMap)
-            {
-                continue;
-            }
+    builder.Services.AddSerilog();
 
-            map.RespawnItems();
-        }
+    /* Services */
+    builder.Services.AddSingleton<IChatService, ChatService>();
+    builder.Services.AddSingleton<IMapService, MapService>();
+    builder.Services.AddSingleton<IPlayerService, PlayerService>();
+    builder.Services.AddChatCommands();
 
-        SpawnSeconds = 0;
-    }
-    
-    public static async Task RunTimedEvents(CancellationToken cancellationToken)
-    {
-        const int savePlayersInterval = 60000;
-        const int spawnMapItemsInterval = 1000;
+    /* Repositories */
+    builder.Services.AddSingleton<IAccountRepository, AccountRepository>();
+    builder.Services.AddSingleton<IBanRepository, BanRepository>();
+    builder.Services.AddSingleton<ICharacterRepository, CharacterRepository>();
+    builder.Services.AddSingleton<IJobRepository, JobRepository>();
+    builder.Services.AddSingleton<IMapRepository, MapRepository>();
+    builder.Services.AddSingleton(typeof(IRepository<>), typeof(Repository<>));
 
-        var savePlayerTimeLeft = savePlayersInterval;
-        var spawnMapItemsTimeLeft = spawnMapItemsInterval;
+    /* Background Services */
+    builder.Services.AddHostedService<GameService>();
+    builder.Services.AddHostedService<NetworkService>();
 
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            await Task.Delay(500, cancellationToken);
-
-            savePlayerTimeLeft -= 500;
-            if (savePlayerTimeLeft <= 0)
-            {
-                _minPassed += 1;
-                if (_minPassed < 10)
-                {
-                    return;
-                }
-
-                if (GameState.OnlinePlayerCount() > 0)
-                {
-                    Network.SendToAll(new GlobalMessage("Saving all online players...", Color.Pink));
-
-                    GameState.SavePlayers();
-                }
-
-                _minPassed = 0;
-                
-                savePlayerTimeLeft += savePlayersInterval;
-            }
-
-            spawnMapItemsTimeLeft -= 500;
-            if (spawnMapItemsTimeLeft <= 0)
-            {
-                CheckSpawnMapItems();
-                
-                spawnMapItemsTimeLeft += spawnMapItemsInterval;
-            }
-
-            GameState.Update();
-        }
-    }
-
-    public static void Main()
-    {
-        Log.Logger = new LoggerConfiguration()
-            .WriteTo.Console()
-            .CreateLogger();
-
-        AppDomain.CurrentDomain.ProcessExit += (_, _) =>
-        {
-            CancellationTokenSource.Cancel();
-
-            Log.Information("Shutting down server...");
-
-            GameState.SavePlayers();
-
-            Environment.Exit(0);
-        };
-        
-        ClassManager.Load();
-        MapManager.Load();
-        ItemManager.Load();
-        NpcManager.Load();
-        ShopManager.Load();
-        SpellManager.Load();
-        
-        modGameLogic.SpawnAllMapsItems();
-        modGameLogic.SpawnAllMapNpcs();
-
-        Network.Start();
-
-        SpawnSeconds = 0;
-        
-        // TODO: Start game AI timers...
-
-        _ = Task.Run(async () => await RunTimedEvents(CancellationTokenSource.Token));
-
-        while (true)
-        {
-            var command = Console.ReadLine();
-            if (command is null)
-            {
-                break;
-            }
-
-            if (command.Equals("quit", StringComparison.OrdinalIgnoreCase))
-            {
-                break;
-            }
-
-            if (command.Equals("reloadclasses", StringComparison.OrdinalIgnoreCase))
-            {
-                ClassManager.Load();
-
-                Log.Information("All classes reloaded");
-
-                continue;
-            }
-
-            Network.SendToAll(new GlobalMessage(command, Color.White));
-        }
-    }
+    await builder.Build().RunAsync();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Server terminated unexpectedly");
+}
+finally
+{
+    await Log.CloseAndFlushAsync();
 }

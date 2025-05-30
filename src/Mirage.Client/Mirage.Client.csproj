@@ -2,33 +2,55 @@
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
-        <TargetFramework>net9.0-windows</TargetFramework>
-        <Nullable>enable</Nullable>
-        <UseWindowsForms>true</UseWindowsForms>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <RootNamespace>Mirage</RootNamespace>
-        <GenerateResourceUsePreserializedResources>True</GenerateResourceUsePreserializedResources>
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
         <IsPackable>false</IsPackable>
-        <Product>Mirage</Product>
-        <AssemblyVersion>3.0.0.3</AssemblyVersion>
+        <RollForward>Major</RollForward>
+        <PublishReadyToRun>false</PublishReadyToRun>
+        <TieredCompilation>false</TieredCompilation>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="MessagePack" Version="3.1.1" />
-        <PackageReference Include="SFML.Audio" Version="2.6.0" />
-        <PackageReference Include="SFML.Graphics" Version="2.6.0" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0"/>
+        <PackageReference Include="Jarodwr.MonoGameImGuiNet" Version="1.0.0"/>
+        <PackageReference Include="MessagePack" Version="3.1.1"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5"/>
         <PackageReference Include="System.Resources.Extensions" Version="9.0.0"/>
+        <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.1.303"/>
+        <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Mirage.Compat\Mirage.Compat.csproj"/>
+        <ProjectReference Include="..\Mirage.Net.Protocol\Mirage.Net.Protocol.csproj"/>
+        <ProjectReference Include="..\Mirage.Net\Mirage.Net.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="Assets\**">
+        <None Update="Content\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="appsettings.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Update="Localization\SR.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>SR.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Localization\SR.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>SR.resx</DependentUpon>
+        </Compile>
+    </ItemGroup>
+
+    <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
+        <Message Text="Restoring dotnet tools" Importance="High"/>
+        <Exec Command="dotnet tool restore"/>
+    </Target>
 
 </Project>

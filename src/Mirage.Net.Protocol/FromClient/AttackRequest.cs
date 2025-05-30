@@ -2,7 +2,7 @@
 
 public sealed record AttackRequest : IPacket<AttackRequest>
 {
-    public static string PacketId => "attack";
+    public static string PacketId => nameof(AttackRequest);
     
     public static AttackRequest ReadFrom(PacketReader reader)
     {

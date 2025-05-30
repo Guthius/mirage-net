@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 
 # Rider
 .idea
+
+# Tiled
+*.tiled-session

@@ -2,7 +2,7 @@ namespace Mirage.Net.Protocol.FromClient;
 
 public sealed record DeleteAccountRequest(string AccountName, string Password) : IPacket<DeleteAccountRequest>
 {
-    public static string PacketId => "delaccount";
+    public static string PacketId => nameof(DeleteAccountRequest);
 
     public static DeleteAccountRequest ReadFrom(PacketReader reader)
     {

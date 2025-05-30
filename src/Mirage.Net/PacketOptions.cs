@@ -1,6 +1,6 @@
 namespace Mirage.Net;
 
-internal static class PacketOptions
+public static class PacketOptions
 {
     public const byte PacketDelimiter = 237;
 
