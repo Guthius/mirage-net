@@ -14,7 +14,7 @@ This is a full conversion of the Mirage 3.0.3 game engine from VB6 to C#.
 - Character creation
 - Basic combat system
 - NPC's
-- items & Spells
+- Items (Inventory + Equipment)
 
 ## Running the Server
 
