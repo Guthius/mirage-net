@@ -18,12 +18,12 @@ public sealed class WarpToCommand(ILogger<WarpToCommand> logger, IMapService map
         var map = mapService.GetByName(new string(args));
         if (map is null)
         {
-            player.Tell("The specified map does not exist.", ColorCode.Red);
+            player.Tell("The specified map does not exist.", ColorCodes.Red);
             return;
         }
 
         player.WarpTo(map, player.Character.X, player.Character.Y);
-        player.Tell($"You have been warped to {map.Name}", ColorCode.BrightBlue);
+        player.Tell($"You have been warped to {map.Name}", ColorCodes.Blue);
 
         logger.LogInformation("{CharacterName} warped to {MapName}", player.Character.Name, map.FileName);
     }

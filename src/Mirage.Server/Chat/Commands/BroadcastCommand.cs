@@ -11,7 +11,7 @@ public sealed class BroadcastCommand(IPlayerService players) : Command(ChatComma
     {
         if (!args.IsEmpty)
         {
-            players.Send(new ChatCommand($"{player.Character.Name}: {args}", ColorCode.BroadcastColor));
+            players.Send(new ChatCommand($"{player.Character.Name}: {args}", ColorCodes.BroadcastColor));
         }
     }
 }

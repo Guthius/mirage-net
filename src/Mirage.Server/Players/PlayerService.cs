@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Mirage.Server.Maps;
 using Mirage.Server.Net;
-using Mirage.Shared.Data;
+using Mirage.Server.Repositories.Characters.Data;
 
 namespace Mirage.Server.Players;
 

@@ -19,6 +19,6 @@ public sealed class SetMotdCommand(ILogger<SetMotdCommand> logger, IPlayerServic
 
         logger.LogInformation("{CharacterName} changed MOTD to: {NewMotd}", player.Character.Name, new string(args));
 
-        players.Send(new ChatCommand($"MOTD changed to: {args}", ColorCode.BrightCyan));
+        players.Send(new ChatCommand($"MOTD changed to: {args}", ColorCodes.Cyan));
     }
 }

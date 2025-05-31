@@ -18,6 +18,7 @@ public sealed class Map
     public const float ItemLifetimeInSeconds = 30f;
 
     private readonly ILogger<Map> _logger;
+    private readonly IMapService _mapService;
     private readonly IRepository<ItemInfo> _itemRepository;
     private readonly List<Player> _players = [];
     private readonly List<Npc> _npcs = [];
@@ -29,10 +30,13 @@ public sealed class Map
 
     public string Name => _info.Name;
     public string FileName { get; }
+    public int Width => _info.Width;
+    public int Height => _info.Height;
 
-    public Map(string fileName, MapInfo info, IServiceProvider services)
+    public Map(string fileName, MapInfo info, IMapService mapService, IServiceProvider services)
     {
         _logger = services.GetRequiredService<ILogger<Map>>();
+        _mapService = mapService;
         _itemRepository = services.GetRequiredService<IRepository<ItemInfo>>();
         _info = info;
         _navigator = new TileNavigator(
@@ -44,6 +48,11 @@ public sealed class Map
         FileName = fileName;
 
         SpawnNpcs();
+    }
+
+    public bool InBounds(int x, int y)
+    {
+        return x >= 0 && x < _info.Width && y >= 0 && y < _info.Height;
     }
 
     public (int, int) GetRandomFreePosition(int defaultX, int defaultY)
@@ -105,30 +114,20 @@ public sealed class Map
             Intelligence = 0
         };
 
-        var (x1, y1) = GetRandomFreePosition(5, 5);
-        var (x2, y2) = GetRandomFreePosition(6, 5);
-        var (x3, y3) = GetRandomFreePosition(7, 5);
+        var npcs = Enumerable.Range(1, 50).Select(i =>
+        {
+            var (x, y) = GetRandomFreePosition(0, 0);
+
+            return new Npc(this, npcInfo, _navigator)
+            {
+                Id = MakeNpcId(i),
+                X = x,
+                Y = y
+            };
+        });
 
         _npcs.Clear();
-        _npcs.AddRange(
-            new Npc(this, npcInfo, _navigator)
-            {
-                Id = MakeNpcId(1),
-                X = x1,
-                Y = y1
-            },
-            new Npc(this, npcInfo, _navigator)
-            {
-                Id = MakeNpcId(2),
-                X = x2,
-                Y = y2
-            },
-            new Npc(this, npcInfo, _navigator)
-            {
-                Id = MakeNpcId(3),
-                X = x3,
-                Y = y3
-            });
+        _npcs.AddRange(npcs);
     }
 
     private static int MakeNpcId(int slot)
@@ -327,6 +326,63 @@ public sealed class Map
         Send(new ActorMoveCommand(player.Id, direction, movementType), recipient => recipient.Id != player.Id);
     }
 
+    public void MoveMap(Player player, Direction direction)
+    {
+        var (x, y) = direction switch
+        {
+            Direction.Up => (player.Character.X, 0),
+            Direction.Down => (player.Character.X, _info.Height - 1),
+            Direction.Left => (0, player.Character.Y),
+            Direction.Right => (player.Character.X, _info.Width - 1),
+            _ => (-1, -1)
+        };
+
+        if (player.Character.X != x && player.Character.Y != y)
+        {
+            _logger.LogWarning(
+                "Invalid map transition attempt by player {CharacterName} at position ({X},{Y}). " +
+                "Player must be at map edge (expected position: ({ExpectedX},{ExpectedY})) to move {Direction}",
+                player.Character.Name,
+                player.Character.X,
+                player.Character.Y,
+                x, y, direction);
+
+            return;
+        }
+
+        var targetMapName = direction switch
+        {
+            Direction.Up => _info.Links.Up,
+            Direction.Down => _info.Links.Down,
+            Direction.Left => _info.Links.Left,
+            Direction.Right => _info.Links.Right,
+            _ => null
+        };
+
+        if (string.IsNullOrEmpty(targetMapName))
+        {
+            return;
+        }
+
+        var targetMap = _mapService.GetByName(targetMapName);
+        if (targetMap is null)
+        {
+            return;
+        }
+
+        var (targetX, targetY) = direction switch
+        {
+            Direction.Up => (player.Character.X, targetMap.Height - 1),
+            Direction.Down => (player.Character.X, 0),
+            Direction.Left => (player.Character.X, targetMap.Width - 1),
+            Direction.Right => (player.Character.X, 0),
+            _ => (0, 0)
+        };
+
+        player.Character.Direction = direction;
+        player.WarpTo(targetMap, targetX, targetY);
+    }
+
     public void Attack(Player player)
     {
         Send(new ActorAttackCommand(player.Id), recipient => recipient.Id != player.Id);
@@ -344,7 +400,7 @@ public sealed class Map
 
         if (!target.IsAttackable)
         {
-            player.Tell($"You cannot attack a {target.Info.Name}!", ColorCode.BrightBlue);
+            player.Tell($"You cannot attack a {target.Info.Name}!", ColorCodes.Blue);
             return;
         }
 
@@ -388,29 +444,29 @@ public sealed class Map
             switch (levelDifference)
             {
                 case >= 5:
-                    player.Tell("You wouldn't stand a chance.", ColorCode.BrightRed);
+                    player.Tell("You wouldn't stand a chance.", ColorCodes.Red);
                     break;
 
                 case > 0:
-                    player.Tell("This one seems to have an advantage over you.", ColorCode.Yellow);
+                    player.Tell("This one seems to have an advantage over you.", ColorCodes.Yellow);
                     break;
 
                 case <= -5:
-                    player.Tell("You could slaughter that player.", ColorCode.BrightBlue);
+                    player.Tell("You could slaughter that player.", ColorCodes.Blue);
                     break;
 
                 case < 0:
-                    player.Tell("You would have an advantage over that player.", ColorCode.Yellow);
+                    player.Tell("You would have an advantage over that player.", ColorCodes.Yellow);
                     break;
 
                 default:
-                    player.Tell("This would be an even fight.", ColorCode.White);
+                    player.Tell("This would be an even fight.", ColorCodes.White);
                     break;
             }
 
             player.TargetPlayer = otherPlayer;
             player.TargetNpc = null;
-            player.Tell($"Your target is now {otherPlayer.Character.Name}.", ColorCode.Yellow);
+            player.Tell($"Your target is now {otherPlayer.Character.Name}.", ColorCodes.Yellow);
             return;
         }
 
@@ -433,7 +489,7 @@ public sealed class Map
                 return item.Quantity + ' ' + item.Info.Name + 's';
             });
 
-            player.Tell($"You see {string.Join(",", itemNames)}", ColorCode.Yellow);
+            player.Tell($"You see {string.Join(",", itemNames)}", ColorCodes.Yellow);
             return;
         }
 
@@ -446,7 +502,7 @@ public sealed class Map
 
         player.TargetPlayer = null;
         player.TargetNpc = npc;
-        player.Tell($"Your target is now a {npc.Info.Name}.", ColorCode.Yellow);
+        player.Tell($"Your target is now a {npc.Info.Name}.", ColorCodes.Yellow);
     }
 
     private int GetNextItemId()
@@ -503,7 +559,7 @@ public sealed class Map
 
             if (!player.Inventory.Add(item.Info, item.Quantity, item.Durability))
             {
-                player.Tell("Your inventory is full!", ColorCode.Red);
+                player.Tell("Your inventory is full!", ColorCodes.Red);
                 return;
             }
 
@@ -539,7 +595,7 @@ public sealed class Map
         }
     }
 
-    public void SendMessage(string message, int color)
+    public void SendMessage(string message, ColorCode color)
     {
         Send(new ChatCommand(message, color));
     }

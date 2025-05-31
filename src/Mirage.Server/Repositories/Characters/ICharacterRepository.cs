@@ -1,4 +1,5 @@
 ﻿using Mirage.Net.Protocol.FromServer;
+using Mirage.Server.Repositories.Characters.Data;
 using Mirage.Shared.Data;
 
 namespace Mirage.Server.Repositories.Characters;

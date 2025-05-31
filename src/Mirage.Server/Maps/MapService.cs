@@ -12,7 +12,7 @@ public sealed class MapService : IMapService
 
         foreach (var (fileName, mapInfo) in mapInfos)
         {
-            _maps[fileName] = new Map(fileName, mapInfo, services);
+            _maps[fileName] = new Map(fileName, mapInfo, this, services);
         }
     }
 

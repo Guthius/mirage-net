@@ -19,6 +19,11 @@ public sealed class PacketWriter
         _stringBuilder.Append(PacketOptions.FieldDelimiter);
     }
 
+    public void WriteByte(byte value)
+    {
+        WriteInt32(value);
+    }
+
     public void WriteInt32(int value)
     {
         _stringBuilder.Append(value);

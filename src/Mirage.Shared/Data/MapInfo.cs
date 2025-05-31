@@ -12,6 +12,7 @@ public sealed record MapInfo
     public List<TilesetInfo> Tilesets { get; set; } = [];
     public List<MapLayerInfo> Layers { get; set; } = [];
     public TileInfo[] Tiles { get; set; } = [];
+    public MapLinksInfo Links { get; set; } = new();
 
     public void WriteTo(Stream stream)
     {
@@ -31,6 +32,8 @@ public sealed record MapInfo
             binaryWriter.Write(tileset.FirstGid);
             binaryWriter.Write(tileset.TileWidth);
             binaryWriter.Write(tileset.TileHeight);
+            binaryWriter.Write(tileset.ImageWidth);
+            binaryWriter.Write(tileset.ImageHeight);
         }
 
         binaryWriter.Write(Layers.Count);
@@ -49,6 +52,11 @@ public sealed record MapInfo
         {
             binaryWriter.Write((int) tile.Type);
         }
+
+        binaryWriter.Write(Links.Up);
+        binaryWriter.Write(Links.Down);
+        binaryWriter.Write(Links.Left);
+        binaryWriter.Write(Links.Right);
     }
 
     public static MapInfo ReadFrom(Stream stream)
@@ -65,7 +73,14 @@ public sealed record MapInfo
             Height = reader.ReadInt32(),
             Tilesets = ReadTilesets(),
             Layers = ReadLayers(),
-            Tiles = ReadTiles()
+            Tiles = ReadTiles(),
+            Links = new MapLinksInfo
+            {
+                Up = reader.ReadString(),
+                Down = reader.ReadString(),
+                Left = reader.ReadString(),
+                Right = reader.ReadString()
+            }
         };
 
         List<TilesetInfo> ReadTilesets()
@@ -80,7 +95,9 @@ public sealed record MapInfo
                     Id = reader.ReadString(),
                     FirstGid = reader.ReadInt32(),
                     TileWidth = reader.ReadInt32(),
-                    TileHeight = reader.ReadInt32()
+                    TileHeight = reader.ReadInt32(),
+                    ImageWidth = reader.ReadInt32(),
+                    ImageHeight = reader.ReadInt32()
                 });
             }
 

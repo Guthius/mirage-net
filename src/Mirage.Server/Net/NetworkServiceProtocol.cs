@@ -5,7 +5,6 @@ using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Assets;
 using Mirage.Server.Players;
 using Mirage.Server.Repositories.Accounts;
-using Mirage.Shared.Constants;
 
 namespace Mirage.Server.Net;
 
@@ -27,6 +26,7 @@ public sealed partial class NetworkService
 
         // Player Actions
         _parser.Register<MoveRequest>(HandleMove);
+        _parser.Register<MoveMapRequest>(HandleMoveMap);
         _parser.Register<AttackRequest>(HandleAttack);
         _parser.Register<SetDirectionRequest>(HandleSetDirection);
         _parser.Register<LookAtRequest>(HandleLookAt);
@@ -70,7 +70,7 @@ public sealed partial class NetworkService
         connection.Account = account;
         connection.Send(new AuthResponse(AuthResult.Ok));
         connection.Send(new UpdateJobListCommand(_jobRepository.GetAll()));
-        connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
+        connection.Send(new UpdateCharacterListCommand(account.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
 
         _logger.LogInformation("Account {AccountName} has logged in from {RemoteIp}", account.Name, connection.Address);
     }
@@ -110,7 +110,7 @@ public sealed partial class NetworkService
         connection.Account = account;
         connection.Send(new CreateAccountResponse(CreateAccountResult.Ok));
         connection.Send(new UpdateJobListCommand(_jobRepository.GetAll()));
-        connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
+        connection.Send(new UpdateCharacterListCommand(account.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
     }
 
     private void HandleDeleteAccount(NetworkConnection connection, DeleteAccountRequest request)
@@ -150,7 +150,7 @@ public sealed partial class NetworkService
 
         _logger.LogInformation("Character {CharacterName} created by account {AccountName}", request.CharacterName, account.Name);
 
-        connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
+        connection.Send(new UpdateCharacterListCommand(account.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
     }
 
     private void HandleDeleteCharacter(NetworkConnection connection, AccountInfo account, DeleteCharacterRequest request)
@@ -159,7 +159,7 @@ public sealed partial class NetworkService
 
         _logger.LogInformation("Character deleted on account {AccountName}", account.Name);
 
-        connection.Send(new UpdateCharacterListCommand(Limits.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
+        connection.Send(new UpdateCharacterListCommand(account.MaxCharacters, _characterRepository.GetCharacterList(account.Id)));
     }
 
     private void HandleSelectCharacter(NetworkConnection connection, AccountInfo account, SelectCharacterRequest request)
@@ -211,6 +211,11 @@ public sealed partial class NetworkService
         }
 
         player.Map.Move(player, request.Direction, request.Movement);
+    }
+
+    private static void HandleMoveMap(Player player, MoveMapRequest request)
+    {
+        player.Map.MoveMap(player, request.Direction);
     }
 
     private static void HandleAttack(Player player, AttackRequest request)

@@ -8,9 +8,9 @@ public sealed class AdminCommand() : Command(ChatCommandNames.Admin, AccessLevel
 {
     public override void Execute(Player player, ReadOnlySpan<char> args)
     {
-        player.Tell("Social Commands:", ColorCode.HelpColor);
-        player.Tell($"/{ChatCommandNames.GlobalMessage} msghere = Global Admin Message", ColorCode.HelpColor);
-        player.Tell($"/{ChatCommandNames.AdminMessage} msghere = Private Admin Message", ColorCode.HelpColor);
+        player.Tell("Social Commands:", ColorCodes.HelpColor);
+        player.Tell($"/{ChatCommandNames.GlobalMessage} msghere = Global Admin Message", ColorCodes.HelpColor);
+        player.Tell($"/{ChatCommandNames.AdminMessage} msghere = Private Admin Message", ColorCodes.HelpColor);
 
         player.Tell("Available Commands: " +
                     $"/{ChatCommandNames.Admin}, " +
@@ -23,6 +23,6 @@ public sealed class AdminCommand() : Command(ChatCommandNames.Admin, AccessLevel
                     $"/{ChatCommandNames.Ban}, " +
                     $"/{ChatCommandNames.SetMotd}, " +
                     $"/{ChatCommandNames.Ban}",
-            ColorCode.HelpColor);
+            ColorCodes.HelpColor);
     }
 }

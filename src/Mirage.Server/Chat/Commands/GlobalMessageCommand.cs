@@ -11,7 +11,7 @@ public sealed class GlobalMessageCommand(IPlayerService players) : Command(ChatC
     {
         if (!args.IsEmpty)
         {
-            players.Send(new ChatCommand($"(global) {player.Character.Name}: {args}", ColorCode.GlobalColor));
+            players.Send(new ChatCommand($"(global) {player.Character.Name}: {args}", ColorCodes.GlobalColor));
         }
     }
 }

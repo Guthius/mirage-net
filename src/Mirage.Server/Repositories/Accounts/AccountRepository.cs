@@ -1,10 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Mirage.Server.Repositories.Characters;
+using Mirage.Server.Services;
 using MongoDB.Driver;
 
 namespace Mirage.Server.Repositories.Accounts;
 
-public sealed class AccountRepository(ILogger<AccountRepository> logger, ICharacterRepository characterRepository) : IAccountRepository
+public sealed class AccountRepository(ILogger<AccountRepository> logger, IOptions<GameOptions> options, ICharacterRepository characterRepository) : IAccountRepository
 {
     private static IMongoCollection<AccountInfo> GetCollection()
     {
@@ -23,7 +25,8 @@ public sealed class AccountRepository(ILogger<AccountRepository> logger, ICharac
         var account = new AccountInfo
         {
             Name = accountName,
-            Password = BCrypt.Net.BCrypt.HashPassword(password)
+            Password = BCrypt.Net.BCrypt.HashPassword(password),
+            MaxCharacters = options.Value.MaxCharactersPerAccount
         };
 
         GetCollection().InsertOne(account);

@@ -18,23 +18,23 @@ public sealed class KickCommand(ILogger<KickCommand> logger, IPlayerService play
         var targetPlayer = players.Find(args);
         if (targetPlayer is null)
         {
-            player.Tell("Player is not online.", ColorCode.White);
+            player.Tell("Player is not online.", ColorCodes.White);
             return;
         }
 
         if (targetPlayer == player)
         {
-            player.Tell("You cannot kick yourself!", ColorCode.White);
+            player.Tell("You cannot kick yourself!", ColorCodes.White);
             return;
         }
 
         if (targetPlayer.Character.AccessLevel > player.Character.AccessLevel)
         {
-            player.Tell("That is a higher access admin then you!", ColorCode.White);
+            player.Tell("That is a higher access admin then you!", ColorCodes.White);
             return;
         }
 
-        players.Send(new ChatCommand($"{targetPlayer.Character.Name} has been kicked by {player.Character.Name}!", ColorCode.White));
+        players.Send(new ChatCommand($"{targetPlayer.Character.Name} has been kicked by {player.Character.Name}!", ColorCodes.White));
 
         logger.LogInformation("{CharacterName} has kicked {TargetCharacterName}.", player.Character.Name, targetPlayer.Character.Name);
 

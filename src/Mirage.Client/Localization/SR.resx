@@ -27,4 +27,73 @@
     <data name="AccountDeleted" xml:space="preserve">
         <value>Your account has been deleted!</value>
     </data>
+    <data name="Cancel" xml:space="preserve">
+        <value>Cancel</value>
+    </data>
+    <data name="CharacterSelect" xml:space="preserve">
+        <value>Character Select</value>
+    </data>
+    <data name="Confirm" xml:space="preserve">
+        <value>Confirm</value>
+    </data>
+    <data name="CreateAccount" xml:space="preserve">
+        <value>Create Account</value>
+    </data>
+    <data name="Create" xml:space="preserve">
+        <value>Create</value>
+    </data>
+    <data name="AccountName" xml:space="preserve">
+        <value>Account Name</value>
+    </data>
+    <data name="Password" xml:space="preserve">
+        <value>Password</value>
+    </data>
+    <data name="CreateCharacter" xml:space="preserve">
+        <value>Create Character</value>
+    </data>
+    <data name="Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Job" xml:space="preserve">
+        <value>Job</value>
+    </data>
+    <data name="Male" xml:space="preserve">
+        <value>Male</value>
+    </data>
+    <data name="Female" xml:space="preserve">
+        <value>Female</value>
+    </data>
+    <data name="Gender" xml:space="preserve">
+        <value>Gender</value>
+    </data>
+    <data name="DeleteAccount" xml:space="preserve">
+        <value>Delete Account</value>
+    </data>
+    <data name="Delete" xml:space="preserve">
+        <value>Delete</value>
+    </data>
+    <data name="Login" xml:space="preserve">
+        <value>Login</value>
+    </data>
+    <data name="RememberMe" xml:space="preserve">
+        <value>Remember Me</value>
+    </data>
+    <data name="GameName" xml:space="preserve">
+        <value>Mirage.NET</value>
+    </data>
+    <data name="Quit" xml:space="preserve">
+        <value>Quit</value>
+    </data>
+    <data name="NewAccount" xml:space="preserve">
+        <value>New Account</value>
+    </data>
+    <data name="DeleteAccountInstruction" xml:space="preserve">
+        <value>Enter the account name and password
+of the account you wish to delete.</value>
+    </data>
+    <data name="CreateAccountInstruction" xml:space="preserve">
+        <value>Enter an account name and password.
+You can name yourself whatever you want,
+we have no restrictions on names.</value>
+    </data>
 </root>

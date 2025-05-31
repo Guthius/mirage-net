@@ -55,6 +55,6 @@ public sealed class ChatService : IChatService
             return;
         }
 
-        player.Map.SendMessage($"{player.Character.Name} says '{message}'", ColorCode.SayColor);
+        player.Map.SendMessage($"{player.Character.Name} says '{message}'", ColorCodes.SayColor);
     }
 }

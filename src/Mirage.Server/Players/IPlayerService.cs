@@ -1,5 +1,5 @@
 ﻿using Mirage.Server.Net;
-using Mirage.Shared.Data;
+using Mirage.Server.Repositories.Characters.Data;
 
 namespace Mirage.Server.Players;
 

@@ -11,6 +11,6 @@ public sealed class DestroyBanListCommand(IBanRepository banRepository) : Comman
     {
         banRepository.ClearAll();
 
-        player.Tell("Ban list destroyed.", ColorCode.White);
+        player.Tell("Ban list destroyed.", ColorCodes.White);
     }
 }

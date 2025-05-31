@@ -8,18 +8,21 @@ public static class DependencyInjection
 {
     public static void AddChatCommands(this IServiceCollection services)
     {
-        var serviceType = typeof(Command);
+        var commandType = typeof(Command);
         var commandTypes = new List<Type>();
 
-        foreach (var type in serviceType.Assembly.GetTypes())
+        foreach (var type in commandType.Assembly.GetTypes())
         {
-            if (type is {IsClass: true, IsAbstract: false, IsPublic: true} && type.IsAssignableTo(serviceType))
+            if (type is {IsClass: true, IsAbstract: false, IsPublic: true} && type.IsAssignableTo(commandType))
             {
                 commandTypes.Add(type);
             }
         }
 
-        services.TryAddEnumerable(commandTypes.Select(implementationType =>
-            new ServiceDescriptor(serviceType, implementationType, ServiceLifetime.Transient)));
+        var serviceDescriptors = commandTypes
+            .Select(implementationType => new ServiceDescriptor(
+                commandType, implementationType, ServiceLifetime.Transient));
+
+        services.TryAddEnumerable(serviceDescriptors);
     }
 }

@@ -10,5 +10,38 @@
     "properties": [
     ],
     "propertyTypes": [
+        {
+            "color": "#ff55aa00",
+            "drawFill": true,
+            "id": 1,
+            "members": [
+            ],
+            "name": "spawn_area",
+            "type": "class",
+            "useAs": [
+                "property",
+                "object",
+                "project"
+            ]
+        },
+        {
+            "color": "#ff0055ff",
+            "drawFill": true,
+            "id": 2,
+            "members": [
+                {
+                    "name": "shop_id",
+                    "type": "string",
+                    "value": ""
+                }
+            ],
+            "name": "shop",
+            "type": "class",
+            "useAs": [
+                "property",
+                "object",
+                "project"
+            ]
+        }
     ]
 }

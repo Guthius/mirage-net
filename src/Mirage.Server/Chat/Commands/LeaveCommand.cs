@@ -10,19 +10,19 @@ public sealed class LeaveCommand() : Command(ChatCommandNames.Leave, AccessLevel
     {
         if (player.PartyMember is null)
         {
-            player.Tell("You are not in a party!", ColorCode.Pink);
+            player.Tell("You are not in a party!", ColorCodes.Pink);
             return;
         }
 
         if (player.InParty)
         {
-            player.Tell("You have left the party.", ColorCode.Pink);
-            player.PartyMember.Tell($"{player.Character.Name} has left the party.", ColorCode.Pink);
+            player.Tell("You have left the party.", ColorCodes.Pink);
+            player.PartyMember.Tell($"{player.Character.Name} has left the party.", ColorCodes.Pink);
         }
         else
         {
-            player.Tell("Declined party request.", ColorCode.Pink);
-            player.PartyMember.Tell($"{player.Character.Name} declined your request.", ColorCode.Pink);
+            player.Tell("Declined party request.", ColorCodes.Pink);
+            player.PartyMember.Tell($"{player.Character.Name} declined your request.", ColorCodes.Pink);
         }
 
         player.PartyMember.PartyMember = null;

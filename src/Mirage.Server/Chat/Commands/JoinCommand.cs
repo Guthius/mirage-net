@@ -10,20 +10,20 @@ public sealed class JoinCommand() : Command(ChatCommandNames.Join, AccessLevel.N
     {
         if (player.PartyMember is null || player.IsPartyStarter)
         {
-            player.Tell("You have not been invited into a party!", ColorCode.Pink);
+            player.Tell("You have not been invited into a party!", ColorCodes.Pink);
             return;
         }
 
         if (player.PartyMember.PartyMember != player)
         {
-            player.Tell("Party failed.", ColorCode.Pink);
+            player.Tell("Party failed.", ColorCodes.Pink);
             return;
         }
 
         player.InParty = true;
-        player.Tell($"You have joined {player.PartyMember.Character.Name}'s party!", ColorCode.Pink);
+        player.Tell($"You have joined {player.PartyMember.Character.Name}'s party!", ColorCodes.Pink);
 
         player.PartyMember.InParty = true;
-        player.PartyMember.Tell($"{player.Character.Name} has joined your party!", ColorCode.Pink);
+        player.PartyMember.Tell($"{player.Character.Name} has joined your party!", ColorCodes.Pink);
     }
 }

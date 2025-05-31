@@ -11,17 +11,15 @@
 
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0"/>
-        <PackageReference Include="Jarodwr.MonoGameImGuiNet" Version="1.0.0"/>
         <PackageReference Include="MessagePack" Version="3.1.1"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5"/>
-        <PackageReference Include="System.Resources.Extensions" Version="9.0.0"/>
-        <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.1.303"/>
-        <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303"/>
+        <PackageReference Include="SFML.Net" Version="2.6.1"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Mirage.Net.Protocol\Mirage.Net.Protocol.csproj"/>
         <ProjectReference Include="..\Mirage.Net\Mirage.Net.csproj"/>
+        <ProjectReference Include="..\Mirage.Engine.UI\Mirage.Engine.UI.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -48,9 +46,9 @@
         </Compile>
     </ItemGroup>
 
-    <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
-        <Message Text="Restoring dotnet tools" Importance="High"/>
-        <Exec Command="dotnet tool restore"/>
-    </Target>
+    <ItemGroup>
+      <Folder Include="Content\Skins\Blue\" />
+      <Folder Include="Scenes\MapEditor\" />
+    </ItemGroup>
 
 </Project>

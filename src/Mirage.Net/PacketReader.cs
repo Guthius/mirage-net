@@ -43,6 +43,11 @@ public sealed class PacketReader(ReadOnlyMemory<byte> data)
     {
         return Convert.FromBase64String(ReadString());
     }
+
+    public byte ReadByte()
+    {
+        return (byte) ReadInt32();
+    }
     
     public int ReadInt32()
     {

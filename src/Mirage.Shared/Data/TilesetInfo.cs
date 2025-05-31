@@ -6,4 +6,6 @@ public sealed record TilesetInfo
     public int FirstGid { get; set; }
     public int TileWidth { get; set; }
     public int TileHeight { get; set; }
+    public int ImageWidth { get; set; }
+    public int ImageHeight { get; set; }
 }

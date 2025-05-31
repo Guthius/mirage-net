@@ -9,7 +9,7 @@ public sealed class PacketParser(Action<int, string>? reportBadPacket = null)
     /// </summary>
     /// <param name="handler">The handler.</param>
     /// <typeparam name="TPacket">The packet type.</typeparam>
-    public void Register<TPacket>(ClientPacketHandler<TPacket> handler) where TPacket : IPacket<TPacket>
+    public void Register<TPacket>(Action<TPacket> handler) where TPacket : IPacket<TPacket>
     {
         _handlers[TPacket.PacketId] = (_, packetReader) =>
         {

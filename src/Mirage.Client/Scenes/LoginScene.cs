@@ -1,88 +1,71 @@
-﻿using ImGuiNET;
-using Microsoft.Xna.Framework;
-using Mirage.Client.Net;
+﻿using Mirage.Client.Net;
+using Mirage.Client.UI;
+using Mirage.Engine.UI.Controls;
 using Mirage.Net.Protocol.FromClient;
-using ImGuiVec2 = System.Numerics.Vector2;
+using SFML.Graphics;
+using SFML.System;
 
 namespace Mirage.Client.Scenes;
 
-public sealed class LoginScene(ISceneManager sceneManager, Game gameState) : Scene
+public sealed class LoginScene : Scene
 {
-    private bool _disabled;
-    private string _accountName = string.Empty;
-    private string _password = string.Empty;
+    private readonly LoginWindow _loginWindow = new(true);
 
-    protected override void OnShow()
+    private readonly Label _statusLabel = new(TempStyle.Style)
     {
-        Network.Disconnect();
-        
-        _accountName = string.Empty;
-        _password = string.Empty;
+        Position = new Vector2f(10, 572),
+        Width = 200,
+        Height = 25,
+        TextColor = Color.White
+    };
 
-        gameState.ClearStatus();
+    public LoginScene(ISceneManager sceneManager)
+    {
+        UI.Add(new PictureBox {Image = "Content/Title.png"});
+        UI.Add(_statusLabel);
+        UI.Add(_loginWindow);
+
+        _loginWindow.Login += Login;
+        _loginWindow.Cancel += sceneManager.SwitchTo<MainMenuScene>;
+        _loginWindow.MoveToCenter();
     }
 
-    public override void DrawUI(GameTime gameTime)
+    protected override void OnAlert(string alertMessage)
     {
-        var center = ImGui.GetMainViewport().GetCenter();
-
-        ImGui.BeginDisabled(_disabled);
-        ImGui.SetNextWindowPos(center, ImGuiCond.Appearing, new ImGuiVec2(0.5f, 0.5f));
-        ImGui.Begin("Login", ImGuiWindowFlags.AlwaysAutoResize);
-        ImGui.Spacing();
-        
-        ImGui.Text("Enter your account name and password.");
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Spacing();
-        
-        ImGui.SetItemDefaultFocus();
-        ImGui.InputText("Account Name", ref _accountName, 16);
-        ImGui.Spacing();
-        ImGui.Spacing();
-        
-        ImGui.InputText("Password", ref _password, 32, ImGuiInputTextFlags.Password);
-        ImGui.Spacing();
-        ImGui.Spacing();
-
-        if (ImGui.Button("Connect", new ImGuiVec2(70, 26)))
-        {
-            Task.Run(Login);
-        }
-
-        ImGui.SameLine();
-
-        if (ImGui.Button("Cancel", new ImGuiVec2(70, 26)))
-        {
-            sceneManager.SwitchTo<MainMenuScene>();
-        }
-
-        ImGui.End();
-        ImGui.EndDisabled();
+        _statusLabel.Text = alertMessage;
     }
 
-    private async Task Login()
+    private async void Login(LoginEventArgs e)
     {
-        _disabled = true;
         try
         {
-            gameState.SetStatus("Connecting to server...");
-            
+            Network.Disconnect();
+
+            _loginWindow.Enabled = false;
+
+            _statusLabel.Text = "Connecting to server...";
+            _statusLabel.TextColor = Color.White;
+
             if (!await Network.ConnectAsync())
             {
-                gameState.ClearStatus();
-                gameState.ShowAlert("Failed to connect to server.");
+                _statusLabel.Text = "Failed to connect to server.";
+                _statusLabel.TextColor = Color.Red;
 
                 return;
             }
 
-            gameState.SetStatus("Connected, sending login information...");
+            _statusLabel.Text = "Connected, sending login information...";
 
-            Network.Send(new AuthRequest(1, _accountName, _password));
+            Network.Send(new AuthRequest(1, e.AccountName, e.Password));
+        }
+        catch (Exception ex)
+        {
+            _statusLabel.Text = ex.Message;
+            _statusLabel.TextColor = Color.Red;
         }
         finally
         {
-            _disabled = false;
+            _loginWindow.Enabled = true;
         }
     }
 }

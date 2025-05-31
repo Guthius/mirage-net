@@ -1,117 +1,59 @@
-﻿using ImGuiNET;
-using Microsoft.Xna.Framework;
-using Mirage.Client.Net;
+﻿using Mirage.Client.Net;
+using Mirage.Client.UI;
+using Mirage.Engine.UI.Controls;
 using Mirage.Net.Protocol.FromClient;
-using ImGuiVec2 = System.Numerics.Vector2;
 
 namespace Mirage.Client.Scenes;
 
-public sealed class CharacterSelectScene(ISceneManager sceneManager, Game gameState) : Scene
+public sealed class CharacterSelectScene : Scene
 {
-    private bool _disabled;
+    private readonly ISceneManager _sceneManager;
+    private readonly Game _game;
+
+    public CharacterSelectScene(ISceneManager sceneManager, Game game)
+    {
+        _sceneManager = sceneManager;
+        _game = game;
+
+        var window = new CharacterSelectWindow(game.Characters, game.MaxCharacters);
+
+        UI.Add(new PictureBox {Image = "Content/Title.png"});
+        UI.Add(window);
+
+        window.Cancel += sceneManager.SwitchTo<MainMenuScene>;
+        window.SelectCharacter += SelectCharacter;
+        window.DeleteCharacter += DeleteCharacter;
+        window.CreateNewCharacter += sceneManager.SwitchTo<CreateCharacterScene>;
+        window.MoveToCenter();
+    }
 
     protected override void OnShow()
     {
-        _disabled = false;
-
-        gameState.ClearStatus();
+        if (_game.Characters.Count == 0)
+        {
+            _sceneManager.SwitchTo<CreateCharacterScene>();
+        }
     }
 
-    public override void DrawUI(GameTime gameTime)
+    private static void SelectCharacter(CharacterEventArgs e)
     {
-        var center = ImGui.GetMainViewport().GetCenter();
+        Network.Send(new SelectCharacterRequest(e.CharacterId));
+    }
 
-        ImGui.BeginDisabled(_disabled);
-        ImGui.SetNextWindowPos(center, ImGuiCond.Appearing, new ImGuiVec2(0.5f, 0.5f));
-        ImGui.Begin("Character Select", ImGuiWindowFlags.AlwaysAutoResize);
-        ImGui.BeginChild("##Characters", new ImGuiVec2(276, 150), ImGuiChildFlags.FrameStyle);
+    private void DeleteCharacter(CharacterEventArgs e)
+    {
+        var window = new ConfirmWindow("Are you sure you want to delete this character?");
 
-        foreach (var slotInfo in gameState.Characters)
+        UI.Add(window);
+
+        window.Confirm += confirmed =>
         {
-            if (ImGui.Button($"{slotInfo.Name} a level {slotInfo.Level} {slotInfo.JobName}", new ImGuiVec2(200, 40)))
+            UI.Remove(window);
+
+            if (confirmed)
             {
-                _disabled = true;
-
-                Network.Send(new SelectCharacterRequest(slotInfo.CharacterId));
+                Network.Send(new DeleteCharacterRequest(e.CharacterId));
             }
-
-            if (ImGui.IsItemHovered())
-            {
-                ImGui.SetTooltip("Click to select this character and start playing.");
-            }
-
-            ImGui.SameLine();
-            if (ImGui.Button($"Delete##{slotInfo.CharacterId}", new ImGuiVec2(60, 40)))
-            {
-                ImGui.OpenPopup($"Confirm Delete##{slotInfo.CharacterId}");
-            }
-
-            if (ImGui.IsItemHovered())
-            {
-                ImGui.SetTooltip("Click to delete this character.");
-            }
-
-            ImGui.Spacing();
-        }
-
-        foreach (var slotInfo in gameState.Characters)
-        {
-            ImGui.SetNextWindowSize(new ImGuiVec2(380, 120), ImGuiCond.Always);
-            ImGui.SetNextWindowPos(new ImGuiVec2(center.X - 190, center.Y - 60), ImGuiCond.Appearing);
-
-            if (!ImGui.BeginPopupModal($"Confirm Delete##{slotInfo.CharacterId}"))
-            {
-                continue;
-            }
-
-            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new ImGuiVec2(10, 10));
-            ImGui.Spacing();
-            ImGui.TextWrapped($"Are you sure you want to delete {slotInfo.Name}?");
-            ImGui.SetCursorPosY(70);
-            ImGui.Separator();
-
-            var buttonsWidth = 70 * 2 + ImGui.GetStyle().ItemSpacing.X;
-
-            ImGui.SetCursorPosX((ImGui.GetWindowSize().X - buttonsWidth) * 0.5f);
-
-            if (ImGui.Button("Yes", new ImGuiVec2(70, 26)))
-            {
-                ImGui.CloseCurrentPopup();
-                gameState.SetStatus("Deleting character...");
-                Network.Send(new DeleteCharacterRequest(slotInfo.CharacterId));
-            }
-
-            ImGui.SameLine();
-            ImGui.SetItemDefaultFocus();
-
-            if (ImGui.Button("No", new ImGuiVec2(70, 26)))
-            {
-                ImGui.CloseCurrentPopup();
-            }
-
-            ImGui.PopStyleVar();
-            ImGui.EndPopup();
-        }
-
-        ImGui.EndChild();
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.BeginDisabled(gameState.MaxCharacters - gameState.Characters.Count == 0);
-        if (ImGui.Button("Create", new ImGuiVec2(276, 30)))
-        {
-            sceneManager.SwitchTo<CreateCharacterScene>();
-        }
-
-        ImGui.EndDisabled();
-        ImGui.Spacing();
-        ImGui.Spacing();
-
-        if (ImGui.Button("Back", new ImGuiVec2(70, 26)))
-        {
-            sceneManager.SwitchTo<LoginScene>();
-        }
-
-        ImGui.End();
-        ImGui.EndDisabled();
+        };
     }
 }

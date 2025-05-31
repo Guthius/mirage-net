@@ -1,5 +1,6 @@
 ﻿using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Repositories;
+using Mirage.Server.Repositories.Characters.Data;
 using Mirage.Shared.Constants;
 using Mirage.Shared.Data;
 
@@ -26,7 +27,7 @@ public sealed class PlayerEquipment
         Shield = BuildSlot(player.Character.Inventory.Equipment.Shield);
     }
 
-    private PlayerEquipmentSlot? BuildSlot(EquipmentSlotInfo? slotInfo)
+    private PlayerEquipmentSlot? BuildSlot(CharacterEquipmentSlotInfo? slotInfo)
     {
         if (slotInfo is null)
         {
@@ -85,12 +86,12 @@ public sealed class PlayerEquipment
         switch (equipmentSlot.Durability)
         {
             case <= 0:
-                _player.Tell($"Your {equipmentSlot.Item.Name} has broken!", ColorCode.Red);
+                _player.Tell($"Your {equipmentSlot.Item.Name} has broken!", ColorCodes.Red);
                 ClearSlot(equipmentType);
                 return;
 
             case <= 5:
-                _player.Tell($"Your {equipmentSlot.Item.Name} is about to break!", ColorCode.Yellow);
+                _player.Tell($"Your {equipmentSlot.Item.Name} is about to break!", ColorCodes.Yellow);
                 break;
         }
     }

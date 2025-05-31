@@ -35,4 +35,9 @@ public sealed record JobInfo
 
     [BsonIgnore]
     public int MaxSP => (1 + Speed / 2 + Speed) * 2;
+
+    public override string ToString()
+    {
+        return Name;
+    }
 }

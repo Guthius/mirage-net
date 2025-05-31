@@ -10,7 +10,7 @@ public sealed class EmoteCommand() : Command(ChatCommandNames.Emote, AccessLevel
     {
         if (!args.IsEmpty)
         {
-            player.Map.SendMessage($"{player.Character.Name} {args}", ColorCode.EmoteColor);
+            player.Map.SendMessage($"{player.Character.Name} {args}", ColorCodes.EmoteColor);
         }
     }
 }

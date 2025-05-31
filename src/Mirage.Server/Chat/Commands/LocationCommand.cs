@@ -8,6 +8,6 @@ public sealed class LocationCommand() : Command(ChatCommandNames.Location, Acces
 {
     public override void Execute(Player player, ReadOnlySpan<char> args)
     {
-        player.Tell($"Map: {player.Character.Map}, X: {player.Character.X}, Y: {player.Character.Y}", ColorCode.Pink);
+        player.Tell($"Map: {player.Character.Map}, X: {player.Character.X}, Y: {player.Character.Y}", ColorCodes.Pink);
     }
 }

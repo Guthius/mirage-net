@@ -19,7 +19,7 @@ public sealed class BanListCommand(IBanRepository banRepository) : Command(ChatC
 
         foreach (var banInfo in banInfos)
         {
-            player.Tell($"{lineNumber}: Banned IP {banInfo.Ip} by {banInfo.BannedBy}", ColorCode.White);
+            player.Tell($"{lineNumber}: Banned IP {banInfo.Ip} by {banInfo.BannedBy}", ColorCodes.White);
 
             lineNumber++;
         }

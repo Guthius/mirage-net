@@ -1,12 +1,15 @@
-﻿using Mirage.Net.Protocol.FromServer;
+﻿using Microsoft.Extensions.Options;
+using Mirage.Net.Protocol.FromServer;
+using Mirage.Server.Repositories.Accounts;
+using Mirage.Server.Repositories.Characters.Data;
 using Mirage.Server.Repositories.Jobs;
-using Mirage.Shared.Constants;
+using Mirage.Server.Services;
 using Mirage.Shared.Data;
 using MongoDB.Driver;
 
 namespace Mirage.Server.Repositories.Characters;
 
-public sealed class CharacterRepository(IJobRepository jobRepository) : ICharacterRepository
+public sealed class CharacterRepository(IOptions<GameOptions> options, IJobRepository jobRepository) : ICharacterRepository
 {
     private static IMongoCollection<CharacterInfo> GetCollection()
     {
@@ -50,6 +53,19 @@ public sealed class CharacterRepository(IJobRepository jobRepository) : ICharact
 
     public CreateCharacterResult Create(string accountId, string characterName, Gender gender, string jobId)
     {
+        var count = GetCollection().CountDocuments(x => x.AccountId == accountId);
+
+        var characterLimit = Database
+            .GetCollection<AccountInfo>("accounts")
+            .Find(x => x.Id == accountId)
+            .Project(x => x.MaxCharacters)
+            .FirstOrDefault();
+
+        if (count >= characterLimit)
+        {
+            return CreateCharacterResult.CharacterLimitReached;
+        }
+
         if (characterName.Length < 3)
         {
             return CreateCharacterResult.CharacterNameTooShort;
@@ -93,9 +109,9 @@ public sealed class CharacterRepository(IJobRepository jobRepository) : ICharact
             BaseDefense = jobInfo.Defense,
             BaseSpeed = jobInfo.Speed,
             BaseIntelligence = jobInfo.Intelligence,
-            Map = Options.StartMapName,
-            X = Options.StartX,
-            Y = Options.StartY,
+            Map = options.Value.StartMap,
+            X = options.Value.StartX,
+            Y = options.Value.StartY,
             Direction = Direction.Down
         };
 

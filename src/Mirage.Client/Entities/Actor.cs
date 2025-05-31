@@ -1,11 +1,11 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Mirage.Client.Maps;
+﻿using Mirage.Client.Maps;
 using Mirage.Shared.Data;
+using SFML.Graphics;
+using SFML.System;
 
 namespace Mirage.Client.Entities;
 
-public sealed class Actor(Game game, int id, int x, int y)
+public sealed class Actor(Game game, int id, int x, int y) : Drawable
 {
     private const int TileWidth = 32;
     private const int TileHeight = 32;
@@ -20,18 +20,23 @@ public sealed class Actor(Game game, int id, int x, int y)
         public static readonly AttackAction Instance = new();
     }
 
+    private static readonly Texture Texture = new("Content/Sprites.png");
+
     private readonly Queue<object> _actionBuffer = [];
     private bool _moving;
     private double _moveDuration;
     private double _moveTimer;
-    private Vector2 _moveFrom;
-    private Vector2 _moveTo;
+    private Vector2f _moveFrom;
+    private Vector2f _moveTo;
     private bool _attacking;
     private double _attackDuration;
     private double _attackTimer;
+    private readonly Sprite _sprite = new(Texture);
 
     public bool IsLocalPlayer { get; } = game.LocalPlayerId == id;
     public required string Name { get; set; }
+    public bool DisplayName { get; set; }
+    public int Level { get; set; }
     public required int Sprite { get; set; }
     public required bool IsPlayerKiller { get; set; }
     public required AccessLevel AccessLevel { get; set; }
@@ -49,22 +54,20 @@ public sealed class Actor(Game game, int id, int x, int y)
     public required int Stamina { get; set; }
     public bool Busy => _moving || _attacking;
 
-    public void Update(GameTime gameTime)
+    public void Update(float dt)
     {
-        var deltaTime = gameTime.ElapsedGameTime.TotalSeconds;
-
-        UpdateMovement(deltaTime);
-        UpdateAttack(deltaTime);
+        UpdateMovement(dt);
+        UpdateAttack(dt);
     }
 
-    public void UpdateMovement(double deltaTime)
+    public void UpdateMovement(double dt)
     {
         if (!_moving)
         {
             return;
         }
 
-        _moveTimer += deltaTime;
+        _moveTimer += dt;
         if (_moveTimer >= _moveDuration)
         {
             X = (int) _moveTo.X;
@@ -76,10 +79,17 @@ public sealed class Actor(Game game, int id, int x, int y)
         }
 
         var moveFactor = (float) (_moveTimer / _moveDuration);
-        var movePosition = Vector2.LerpPrecise(_moveFrom, _moveTo, moveFactor);
+        var movePosition = new Vector2f(
+            LerpPrecise(_moveFrom.X, _moveTo.X, moveFactor),
+            LerpPrecise(_moveFrom.Y, _moveTo.Y, moveFactor));
 
         X = (int) movePosition.X;
         Y = (int) movePosition.Y;
+    }
+
+    public static float LerpPrecise(float value1, float value2, float amount)
+    {
+        return (1 - amount) * value1 + value2 * amount;
     }
 
     private void UpdateAttack(double deltaTime)
@@ -100,7 +110,7 @@ public sealed class Actor(Game game, int id, int x, int y)
         StartNextQueuedAction();
     }
 
-    public void Draw(SpriteBatch spriteBatch)
+    public void Draw(RenderTarget target, RenderStates states)
     {
         var anim = 0;
 
@@ -132,36 +142,50 @@ public sealed class Actor(Game game, int id, int x, int y)
         var srcX = ((int) Direction * 3 + anim) * TileWidth;
         var srcY = Sprite * TileHeight;
 
-        spriteBatch.Draw(Textures.Sprites,
-            new Vector2(destX, destY),
-            new Rectangle(srcX, srcY, TileWidth, TileHeight),
-            Color.White);
+        _sprite.Texture = Texture;
+        _sprite.TextureRect = new IntRect(srcX, srcY, TileWidth, TileHeight);
+        _sprite.Position = new Vector2f(destX, destY);
+
+        target.Draw(_sprite, states);
     }
 
-    public void DrawName(SpriteBatch spriteBatch)
+    public void DrawName(RenderTarget target, RenderStates states)
     {
-        var color = GetNameColor(IsPlayerKiller, AccessLevel);
-        var width = (int) Textures.Font.MeasureString(Name).X;
-        var dx = X + 16 - width / 2;
-        var dy = Y - 24;
+        if (!DisplayName)
+        {
+            return;
+        }
+        
+        var text = new Text();
 
-        spriteBatch.DrawString(Textures.Font, Name, new Vector2(dx, dy), color);
+        text.DisplayedString = Name;
+        text.FillColor = GetNameColor(IsPlayerKiller, AccessLevel);
+        text.Font = Game.Font;
+        text.CharacterSize = 14;
+
+        var size = text.GetLocalBounds();
+        var x = X + 16 - (int) size.Width / 2;
+        var y = Y - 24;
+
+        text.Position = new Vector2f(x, y);
+
+        target.Draw(text, states);
     }
 
     private static Color GetNameColor(bool playerKiller, AccessLevel accessLevel)
     {
         if (playerKiller)
         {
-            return Color.OrangeRed;
+            return Color.Red;
         }
 
         return accessLevel switch
         {
             AccessLevel.None => Color.White,
-            AccessLevel.Moderator => Color.DimGray,
+            AccessLevel.Moderator => Color.Cyan,
             AccessLevel.Mapper => Color.Cyan,
             AccessLevel.Developer => Color.Blue,
-            AccessLevel.Administrator => Color.HotPink,
+            AccessLevel.Administrator => new Color(255, 105, 180),
             _ => Color.White
         };
     }
@@ -193,12 +217,29 @@ public sealed class Actor(Game game, int id, int x, int y)
         TileX = targetX;
         TileY = targetY;
 
-        _moveTo = new Vector2(targetX * TileWidth, targetY * TileHeight);
-        _moveFrom = new Vector2(X, Y);
+        _moveTo = new Vector2f(targetX * TileWidth, targetY * TileHeight);
+        _moveFrom = new Vector2f(X, Y);
         _moveDuration = GetMoveSpeed(movementType);
         _moveTimer = 0;
 
         return true;
+    }
+
+    public bool TryMoveMap(Direction direction)
+    {
+        var (moveX, moveY) = GetDirectionVector(direction);
+
+        var targetX = TileX + (int) moveX;
+        var targetY = TileY + (int) moveY;
+
+        return direction switch
+        {
+            Direction.Up => targetY == -1,
+            Direction.Down => targetY == Map.HeightInTiles,
+            Direction.Left => targetX == -1,
+            Direction.Right => targetX == Map.WidthInTiles,
+            _ => false
+        };
     }
 
     public bool TryAttack()
@@ -256,7 +297,7 @@ public sealed class Actor(Game game, int id, int x, int y)
     {
         Direction = direction;
     }
-    
+
     public void QueueAttack()
     {
         if (IsLocalPlayer)
@@ -293,8 +334,8 @@ public sealed class Actor(Game game, int id, int x, int y)
                 TileY += (int) directionVector.Y;
 
                 _moving = true;
-                _moveTo = new Vector2(TileX * TileWidth, TileY * TileHeight);
-                _moveFrom = new Vector2(X, Y);
+                _moveTo = new Vector2f(TileX * TileWidth, TileY * TileHeight);
+                _moveFrom = new Vector2f(X, Y);
                 _moveDuration = move.Duration;
                 _moveTimer = 0;
                 return;
@@ -317,15 +358,15 @@ public sealed class Actor(Game game, int id, int x, int y)
         };
     }
 
-    private static Vector2 GetDirectionVector(Direction direction)
+    private static Vector2f GetDirectionVector(Direction direction)
     {
         return direction switch
         {
-            Direction.Up => -Vector2.UnitY,
-            Direction.Down => Vector2.UnitY,
-            Direction.Left => -Vector2.UnitX,
-            Direction.Right => Vector2.UnitX,
-            _ => Vector2.Zero
+            Direction.Up => new Vector2f(0, -1),
+            Direction.Down => new Vector2f(0, 1),
+            Direction.Left => new Vector2f(-1, 0),
+            Direction.Right => new Vector2f(1, 0),
+            _ => new Vector2f(0, 0)
         };
     }
 }

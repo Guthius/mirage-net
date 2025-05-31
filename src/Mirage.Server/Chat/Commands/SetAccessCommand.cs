@@ -30,13 +30,13 @@ public sealed class SetAccessCommand(ILogger<SetAccessCommand> logger, IPlayerSe
         var targetPlayer = players.Find(targetName);
         if (targetPlayer is null)
         {
-            player.Tell("Player is not online.", ColorCode.White);
+            player.Tell("Player is not online.", ColorCodes.White);
             return;
         }
 
         if (targetPlayer.Character.AccessLevel <= AccessLevel.None)
         {
-            players.Send(new ChatCommand($"{targetPlayer.Character.Name} has been blessed with administrative access.", ColorCode.BrightBlue));
+            players.Send(new ChatCommand($"{targetPlayer.Character.Name} has been blessed with administrative access.", ColorCodes.Blue));
         }
 
         targetPlayer.Character.AccessLevel = (AccessLevel)accessLevel;

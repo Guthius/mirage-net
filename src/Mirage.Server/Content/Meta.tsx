@@ -6,4 +6,9 @@
    <property name="type" value="wall"/>
   </properties>
  </tile>
+ <tile id="1">
+  <properties>
+   <property name="type" value="block_npc"/>
+  </properties>
+ </tile>
 </tileset>

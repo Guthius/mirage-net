@@ -22,6 +22,14 @@ try
 {
     var builder = Host.CreateApplicationBuilder(args);
 
+    builder.Services.Configure<GameOptions>(options =>
+    {
+        options.StartMap = builder.Configuration.GetValue("Game:Start:Map", "Default.tmx");
+        options.StartX = builder.Configuration.GetValue("Game:Start:X", 0);
+        options.StartY = builder.Configuration.GetValue("Game:Start:Y", 0);
+        options.MaxCharactersPerAccount = builder.Configuration.GetValue("Game:MaxCharactersPerAccount", 3);
+    });
+
     builder.Services.Configure<NetworkOptions>(options =>
     {
         options.Port = builder.Configuration.GetValue("Network:Port", 4000);

@@ -1,88 +1,71 @@
-﻿using ImGuiNET;
-using Microsoft.Xna.Framework;
-using Mirage.Client.Net;
+﻿using Mirage.Client.Net;
+using Mirage.Client.UI;
+using Mirage.Engine.UI.Controls;
 using Mirage.Net.Protocol.FromClient;
-using ImGuiVec2 = System.Numerics.Vector2;
+using SFML.Graphics;
+using SFML.System;
 
 namespace Mirage.Client.Scenes;
 
-public sealed class DeleteAccountScene(ISceneManager sceneManager, Game gameState) : Scene
+public sealed class DeleteAccountScene : Scene
 {
-    private bool _disabled;
-    private string _accountName = string.Empty;
-    private string _password = string.Empty;
+    private readonly DeleteAccountWindow _deleteAccountWindow = new();
 
-    protected override void OnShow()
+    private readonly Label _statusLabel = new(TempStyle.Style)
     {
-        Network.Disconnect();
+        Position = new Vector2f(10, 572),
+        Width = 200,
+        Height = 25,
+        TextColor = Color.White
+    };
 
-        _accountName = string.Empty;
-        _password = string.Empty;
+    public DeleteAccountScene(ISceneManager sceneManager)
+    {
+        UI.Add(new PictureBox {Image = "Content/Title.png"});
+        UI.Add(_statusLabel);
+        UI.Add(_deleteAccountWindow);
 
-        gameState.ClearStatus();
+        _deleteAccountWindow.DeleteAccount += DeleteAccount;
+        _deleteAccountWindow.Cancel += sceneManager.SwitchTo<MainMenuScene>;
+        _deleteAccountWindow.MoveToCenter();
     }
 
-    public override void DrawUI(GameTime gameTime)
+    protected override void OnAlert(string alertMessage)
     {
-        var center = ImGui.GetMainViewport().GetCenter();
-
-        ImGui.BeginDisabled(_disabled);
-        ImGui.SetNextWindowPos(center, ImGuiCond.Appearing, new ImGuiVec2(0.5f, 0.5f));
-        ImGui.Begin("Delete Account", ImGuiWindowFlags.AlwaysAutoResize);
-        ImGui.Spacing();
-
-        ImGui.Text("Enter a account name and password");
-        ImGui.Text("of the account you wish to delete.");
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Spacing();
-
-        ImGui.SetItemDefaultFocus();
-        ImGui.InputText("Account Name", ref _accountName, 16);
-        ImGui.Spacing();
-        ImGui.Spacing();
-
-        ImGui.InputText("Password", ref _password, 32, ImGuiInputTextFlags.Password);
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        if (ImGui.Button("Delete", new ImGuiVec2(70, 26)))
-        {
-            Task.Run(DeleteAccount);
-        }
-
-        ImGui.SameLine();
-
-        if (ImGui.Button("Cancel", new ImGuiVec2(70, 26)))
-        {
-            sceneManager.SwitchTo<MainMenuScene>();
-        }
-
-        ImGui.End();
-        ImGui.EndDisabled();
+        _statusLabel.Text = alertMessage;
     }
 
-    private async Task DeleteAccount()
+    private async void DeleteAccount(DeleteAccountEventArgs e)
     {
-        _disabled = true;
         try
         {
+            Network.Disconnect();
+
+            _deleteAccountWindow.Enabled = false;
+
+            _statusLabel.Text = "Connecting to server...";
+            _statusLabel.TextColor = Color.White;
+
             if (!await Network.ConnectAsync())
             {
-                gameState.ShowAlert("Failed to connect to server.");
+                _statusLabel.Text = "Failed to connect to server.";
+                _statusLabel.TextColor = Color.Red;
 
                 return;
             }
 
-            gameState.SetStatus("Connected, sending account deletion request...");
+            _statusLabel.Text = "Connected, sending account deletion request...";
 
-            sceneManager.SwitchTo<LoadingScene>();
-
-            Network.Send(new DeleteAccountRequest(_accountName, _password));
+            Network.Send(new DeleteAccountRequest(e.AccountName, e.Password));
+        }
+        catch (Exception ex)
+        {
+            _statusLabel.Text = ex.Message;
+            _statusLabel.TextColor = Color.Red;
         }
         finally
         {
-            _disabled = false;
+            _deleteAccountWindow.Enabled = true;
         }
     }
 }

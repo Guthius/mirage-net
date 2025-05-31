@@ -8,6 +8,8 @@ public abstract class AssetManager<TAsset>(TAsset placeholder)
     {
         if (_assets.TryGetValue(assetId, out var asset))
         {
+            afterLoad?.Invoke(asset.Instance);
+            
             return asset;
         }
 

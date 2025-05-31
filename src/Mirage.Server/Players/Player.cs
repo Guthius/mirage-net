@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Maps;
@@ -8,8 +9,11 @@ using Mirage.Server.Net;
 using Mirage.Server.Npcs;
 using Mirage.Server.Repositories;
 using Mirage.Server.Repositories.Characters;
+using Mirage.Server.Repositories.Characters.Data;
+using Mirage.Server.Services;
 using Mirage.Shared.Constants;
 using Mirage.Shared.Data;
+using Options = Mirage.Shared.Constants.Options;
 
 namespace Mirage.Server.Players;
 
@@ -22,6 +26,7 @@ public sealed class Player
     private readonly IPlayerService _players;
     private readonly IMapService _mapService;
     private readonly ICharacterRepository _characterRepository;
+    private readonly IOptions<GameOptions> _options;
     private float _regenTimer;
 
     public int Id { get; }
@@ -44,21 +49,22 @@ public sealed class Player
         _players = services.GetRequiredService<IPlayerService>();
         _mapService = services.GetRequiredService<IMapService>();
         _characterRepository = services.GetRequiredService<ICharacterRepository>();
+        _options = services.GetRequiredService<IOptions<GameOptions>>();
 
         Id = connection.Id;
         Address = connection.Address;
         Character = character;
         Inventory = new PlayerInventory(this, services.GetRequiredService<IRepository<ItemInfo>>());
 
-        Tell($"Welcome to {Options.GameName}!", ColorCode.BrightBlue);
-        Tell("Type /help for help on commands. Use arrow keys to move, hold down shift to run, and use ctrl to attack.", ColorCode.Cyan);
+        Tell($"Welcome to {Options.GameName}!", ColorCodes.Blue);
+        Tell("Type /help for help on commands. Use arrow keys to move, hold down shift to run, and use ctrl to attack.", ColorCodes.Cyan);
 
         if (File.Exists("Motd.txt"))
         {
             var motd = File.ReadAllText("Motd.txt");
             if (!string.IsNullOrWhiteSpace(motd))
             {
-                Tell("MOTD: " + motd.Trim(), ColorCode.BrightCyan);
+                Tell("MOTD: " + motd.Trim(), ColorCodes.Cyan);
             }
         }
 
@@ -71,7 +77,7 @@ public sealed class Player
 
         Send<EnterGameCommand>();
 
-        var color = Character.AccessLevel <= AccessLevel.Moderator ? ColorCode.JoinLeftColor : ColorCode.White;
+        var color = Character.AccessLevel <= AccessLevel.Moderator ? ColorCodes.JoinLeftColor : ColorCodes.White;
 
         _players.Send(new ChatCommand($"{Character.Name} has joined the game!", color));
     }
@@ -115,7 +121,7 @@ public sealed class Player
         {
             InParty = false;
 
-            PartyMember.Tell($"{Character.Name} has left, disbanning party.", ColorCode.Pink);
+            PartyMember.Tell($"{Character.Name} has left, disbanning party.", ColorCodes.Pink);
             PartyMember = null;
         }
 
@@ -123,7 +129,7 @@ public sealed class Player
 
         _characterRepository.Save(Character);
 
-        var color = Character.AccessLevel <= AccessLevel.Moderator ? ColorCode.JoinLeftColor : ColorCode.White;
+        var color = Character.AccessLevel <= AccessLevel.Moderator ? ColorCodes.JoinLeftColor : ColorCodes.White;
 
         _players.Send(new ChatCommand($"{Character.Name} has left!", color));
 
@@ -134,16 +140,15 @@ public sealed class Player
 
     public void WarpTo(Map map, int x, int y)
     {
+        Character.Map = map.FileName;
+        Character.X = x;
+        Character.Y = y;
+
         if (Map == map)
         {
-            Character.X = x;
-            Character.Y = y;
-
             Map.Send(new SetActorPositionCommand(Id, Character.Direction, x, y));
             return;
         }
-
-        Character.Map = Map.FileName;
 
         // var shopInfo = ShopRepository.Get(oldShopId);
         // if (shopInfo is not null && !string.IsNullOrWhiteSpace(shopInfo.LeaveSay))
@@ -181,9 +186,9 @@ public sealed class Player
             Character.Exp -= Character.RequiredExp;
         }
 
-        _players.Send(new ChatCommand($"{Character.Name} has reached level {Character.Level}!", ColorCode.Brown));
+        _players.Send(new ChatCommand($"{Character.Name} has reached level {Character.Level}!", ColorCodes.Brown));
 
-        Tell($"You have gained a level! You now have {Character.StatPoints} stat points to distribute.", ColorCode.BrightBlue);
+        Tell($"You have gained a level! You now have {Character.StatPoints} stat points to distribute.", ColorCodes.Blue);
     }
 
     public int CalculateDamage()
@@ -288,7 +293,7 @@ public sealed class Player
         {
             Character.Exp += experience;
 
-            Tell($"You have gained {experience} experience points.", ColorCode.BrightBlue);
+            Tell($"You have gained {experience} experience points.", ColorCodes.Blue);
         }
         else
         {
@@ -296,12 +301,12 @@ public sealed class Player
 
             Character.Exp += experience;
 
-            Tell($"You have gained {experience} party experience points.", ColorCode.BrightBlue);
+            Tell($"You have gained {experience} party experience points.", ColorCodes.Blue);
 
             if (partyMember is not null)
             {
                 partyMember.Character.Exp += experience;
-                partyMember.Tell($"You have gained {experience} party experience points.", ColorCode.BrightBlue);
+                partyMember.Tell($"You have gained {experience} party experience points.", ColorCodes.Blue);
             }
         }
 
@@ -313,7 +318,7 @@ public sealed class Player
         }
     }
 
-    public void Tell(string message, int color)
+    public void Tell(string message, ColorCode color)
     {
         Send(new ChatCommand(message, color));
     }
@@ -343,24 +348,24 @@ public sealed class Player
 
         if (experienceLost == 0)
         {
-            Tell("You lost no experience points.", ColorCode.BrightRed);
+            Tell("You lost no experience points.", ColorCodes.Red);
         }
         else
         {
             Character.Exp -= experienceLost;
 
-            Tell($"You lost {experienceLost} experience points.", ColorCode.BrightRed);
+            Tell($"You lost {experienceLost} experience points.", ColorCodes.Red);
         }
 
         Map.Remove(this);
 
-        var map = _mapService.GetByName(Options.StartMapName);
+        var map = _mapService.GetByName(_options.Value.StartMap);
         if (map is null)
         {
             return;
         }
 
-        WarpTo(map, Options.StartX, Options.StartY);
+        WarpTo(map, _options.Value.StartX, _options.Value.StartY);
 
         Character.Health = Character.MaxHealth;
         Character.Mana = Character.MaxMana;
@@ -404,7 +409,7 @@ public sealed class Player
             ? "There are no other players online."
             : $"There are {playerNames.Count} other players online: {message}";
 
-        Tell(message, ColorCode.WhoColor);
+        Tell(message, ColorCodes.WhoColor);
     }
 
     public void Disconnect(string message)

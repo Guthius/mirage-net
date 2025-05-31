@@ -13,7 +13,7 @@ public sealed class AdminMessageCommand(IPlayerService players) : Command(ChatCo
         {
             players
                 .Where(x => x.Character.AccessLevel > AccessLevel.None)
-                .Send(new ChatCommand($"(admin {player.Character.Name}) {args}", ColorCode.AdminColor));
+                .Send(new ChatCommand($"(admin {player.Character.Name}) {args}", ColorCodes.AdminColor));
         }
     }
 }

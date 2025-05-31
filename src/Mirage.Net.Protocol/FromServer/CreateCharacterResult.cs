@@ -7,6 +7,8 @@ public enum CreateCharacterResult
     CharacterNameInvalid,
     CharacterNameTooShort,
     CharacterNameInUse,
+    
+    CharacterLimitReached,
 
     InvalidJob
 }

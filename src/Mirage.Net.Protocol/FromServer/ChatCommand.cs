@@ -1,19 +1,28 @@
-﻿namespace Mirage.Net.Protocol.FromServer;
+﻿using Mirage.Shared.Data;
 
-public sealed record ChatCommand(string Message, int Color) : IPacket<ChatCommand>
+namespace Mirage.Net.Protocol.FromServer;
+
+public sealed record ChatCommand(string Message, ColorCode Color) : IPacket<ChatCommand>
 {
-    public static string PacketId => "playermsg";
+    public static string PacketId => nameof(ChatCommand);
 
     public static ChatCommand ReadFrom(PacketReader reader)
     {
         return new ChatCommand(
             Message: reader.ReadString(),
-            Color: reader.ReadInt32());
+            Color: new ColorCode(
+                reader.ReadByte(),
+                reader.ReadByte(),
+                reader.ReadByte(),
+                reader.ReadByte()));
     }
 
     public void WriteTo(PacketWriter writer)
     {
         writer.WriteString(Message);
-        writer.WriteInt32(Color);
+        writer.WriteByte(Color.R);
+        writer.WriteByte(Color.G);
+        writer.WriteByte(Color.B);
+        writer.WriteByte(Color.A);
     }
 }

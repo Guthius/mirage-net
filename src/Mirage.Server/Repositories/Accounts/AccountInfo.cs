@@ -14,4 +14,7 @@ public sealed record AccountInfo
 
     [BsonElement("password"), BsonRepresentation(BsonType.String)]
     public string Password { get; set; } = string.Empty;
+
+    [BsonElement("max_chars"), BsonRepresentation(BsonType.Int32)]
+    public int MaxCharacters { get; set; } = 3;
 }

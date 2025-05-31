@@ -4,40 +4,38 @@ using Mirage.Client.Inventory;
 using Mirage.Client.Localization;
 using Mirage.Client.Scenes;
 using Mirage.Net.Protocol.FromServer;
-using Mirage.Shared.Data;
+using SFML.Graphics;
 
 namespace Mirage.Client.Net;
 
 public static class NetworkHandlers
 {
-    private static readonly Game GameState = Ioc.Default.GetRequiredService<Game>();
+    private static readonly Game Game = Ioc.Default.GetRequiredService<Game>();
     private static readonly ISceneManager SceneManager = Ioc.Default.GetRequiredService<ISceneManager>();
 
     public static void HandleCreateAccount(CreateAccountResponse response)
     {
-        GameState.ClearStatus();
-
         switch (response.Result)
         {
             case CreateAccountResult.Ok:
-                GameState.ShowAlert(SR.AccountCreated);
+                Game.ShowAlert(SR.AccountCreated);
                 SceneManager.SwitchTo<CharacterSelectScene>();
                 break;
 
             case CreateAccountResult.AccountNameInvalid:
-                GameState.ShowAlert("Invalid name, only letters, numbers, spaces, and _ allowed in names.");
+                Game.ShowAlert("Invalid name, only letters, numbers, spaces, and _ allowed in names.");
                 break;
 
             case CreateAccountResult.AccountNameOrPasswordTooShort:
-                GameState.ShowAlert("Invalid account name, only letters, numbers, spaces, and _ allowed in names.");
+                Game.ShowAlert("Invalid account name, only letters, numbers, spaces, and _ allowed in names.");
                 break;
 
             case CreateAccountResult.AccountNameTaken:
-                GameState.ShowAlert("This account name is already taken. Please choose a different name.");
+                Game.ShowAlert("This account name is already taken. Please choose a different name.");
                 break;
 
             default:
-                GameState.ShowAlert(SR.UnknownError);
+                Game.ShowAlert(SR.UnknownError);
                 break;
         }
     }
@@ -47,19 +45,19 @@ public static class NetworkHandlers
         switch (response.Result)
         {
             case DeleteAccountResult.Ok:
-                GameState.ShowAlert(SR.AccountDeleted);
+                Game.ShowAlert(SR.AccountDeleted);
                 break;
 
             case DeleteAccountResult.InvalidAccountNameOrPassword:
-                GameState.ShowAlert("Invalid account name or password.");
+                Game.ShowAlert("Invalid account name or password.");
                 break;
 
             case DeleteAccountResult.AccountNameOrPasswordTooShort:
-                GameState.ShowAlert("Account name and password must each contain at least 3 characters");
+                Game.ShowAlert("Account name and password must each contain at least 3 characters");
                 break;
 
             default:
-                GameState.ShowAlert(SR.UnknownError);
+                Game.ShowAlert(SR.UnknownError);
                 break;
         }
 
@@ -68,48 +66,44 @@ public static class NetworkHandlers
 
     public static void HandleAuth(AuthResponse response)
     {
-        GameState.ClearStatus();
-
         switch (response.Result)
         {
             case AuthResult.Ok:
                 break;
 
             case AuthResult.InvalidAccountNameOrPassword:
-                GameState.ShowAlert("Incorrect account name or password.");
+                Game.ShowAlert("Incorrect account name or password.");
                 break;
 
             case AuthResult.InvalidProtocolVersion:
-                GameState.ShowAlert("Your client is out of date. Please update your client and try again.");
+                Game.ShowAlert("Your client is out of date. Please update your client and try again.");
                 break;
 
             case AuthResult.AlreadyLoggedIn:
-                GameState.ShowAlert("Account is already logged in.");
+                Game.ShowAlert("Account is already logged in.");
                 break;
 
             default:
-                GameState.ShowAlert(SR.UnknownError);
+                Game.ShowAlert(SR.UnknownError);
                 break;
         }
     }
 
     public static void HandleUpdateJobList(UpdateJobListCommand command)
     {
-        GameState.Jobs = command.Jobs;
+        Game.Jobs = command.Jobs;
     }
 
     public static void HandleUpdateCharacterList(UpdateCharacterListCommand command)
     {
-        GameState.MaxCharacters = command.MaxCharacters;
-        GameState.Characters = command.Characters;
+        Game.MaxCharacters = command.MaxCharacters;
+        Game.Characters = command.Characters;
 
         SceneManager.SwitchTo<CharacterSelectScene>();
     }
 
     public static void HandleCreateCharacter(CreateCharacterResponse response)
     {
-        GameState.ClearStatus();
-
         switch (response.Result)
         {
             case CreateCharacterResult.Ok:
@@ -117,60 +111,61 @@ public static class NetworkHandlers
                 break;
 
             case CreateCharacterResult.CharacterNameInvalid:
-                GameState.ShowAlert("Invalid name, only letters, numbers, spaces, and _ allowed in names.");
+                Game.ShowAlert("Invalid name, only letters, numbers, spaces, and _ allowed in names.");
                 break;
 
             case CreateCharacterResult.CharacterNameTooShort:
-                GameState.ShowAlert("Character name must be at least three characters in length.");
+                Game.ShowAlert("Character name must be at least three characters in length.");
                 break;
 
             case CreateCharacterResult.CharacterNameInUse:
-                GameState.ShowAlert("Sorry, but that name is in use!");
+                Game.ShowAlert("Sorry, but that name is in use!");
+                break;
+
+            case CreateCharacterResult.CharacterLimitReached:
+                Game.ShowAlert("You have reached the maximum number of characters.");
                 break;
 
             case CreateCharacterResult.InvalidJob:
-                GameState.ShowAlert("Invalid character job.");
+                Game.ShowAlert("Invalid character job.");
                 break;
 
             default:
-                GameState.ShowAlert(SR.UnknownError);
+                Game.ShowAlert(SR.UnknownError);
                 break;
         }
     }
 
     public static void HandleSelectCharacter(SelectCharacterResponse response)
     {
-        GameState.ClearStatus();
-
         switch (response.Result)
         {
             case SelectCharacterResult.Ok:
-                GameState.SetStatus("Entering game...");
-                GameState.LocalPlayerId = response.PlayerId;
+                Game.LocalPlayerId = response.PlayerId;
                 SceneManager.SwitchTo<LoadingScene>();
                 return;
 
             case SelectCharacterResult.InvalidCharacter:
-                GameState.ShowAlert("Invalid character.");
+                Game.ShowAlert("Invalid character.");
                 return;
 
             default:
-                GameState.ShowAlert(SR.UnknownError);
+                Game.ShowAlert(SR.UnknownError);
                 return;
         }
     }
 
     public static void HandleClearInventorySlot(ClearInventorySlotCommand command)
     {
-        GameState.Inventory.Clear(command.Slot);
+        Game.Inventory.Clear(command.Slot);
     }
 
     public static void HandleUpdateEquipment(UpdateEquipmentCommand command)
     {
-        GameState.Inventory.Weapon = ToSlot(command.Weapon);
-        GameState.Inventory.Armor = ToSlot(command.Armor);
-        GameState.Inventory.Helmet = ToSlot(command.Helmet);
-        GameState.Inventory.Shield = ToSlot(command.Shield);
+        Game.Inventory.Weapon = ToSlot(command.Weapon);
+        Game.Inventory.Armor = ToSlot(command.Armor);
+        Game.Inventory.Helmet = ToSlot(command.Helmet);
+        Game.Inventory.Shield = ToSlot(command.Shield);
 
         static EquipmentSlot? ToSlot(UpdateEquipmentCommand.Slot? slot)
         {
@@ -189,12 +184,12 @@ public static class NetworkHandlers
 
     public static void HandleUpdateInventory(UpdateInventoryCommand command)
     {
-        GameState.Inventory.Size = command.InventorySize;
+        Game.Inventory.Size = command.InventorySize;
     }
 
     public static void HandleUpdateInventorySlot(UpdateInventorySlotCommand command)
     {
-        GameState.Inventory.Update(
+        Game.Inventory.Update(
             command.SlotIndex,
             command.Type,
             command.Sprite,
@@ -204,14 +199,14 @@ public static class NetworkHandlers
 
     public static void HandleUpdateInventorySlotQuantity(UpdateInventorySlotQuantityCommand command)
     {
-        GameState.Inventory.UpdateQuantity(
+        Game.Inventory.UpdateQuantity(
             command.SlotIndex,
             command.Quantity);
     }
 
     public static void HandleLoadMap(LoadMapCommand command)
     {
-        GameState.Map.Load(command.MapId);
+        Game.Map.Load(command.MapId);
     }
 
     public static void HandleEnterGame(EnterGameCommand command)
@@ -219,9 +214,17 @@ public static class NetworkHandlers
         SceneManager.SwitchTo<GameScene>();
     }
 
+    public static void HandleMoveMap(MoveMapResponse response)
+    {
+        if (response.Result == MoveMapResult.Failed)
+        {
+            Game.GettingMap = false;
+        }
+    }
+
     public static void HandleCreateActor(CreateActorCommand command)
     {
-        var player = GameState.Map.CreateActor(
+        var player = Game.Map.CreateActor(
             command.ActorId,
             command.Name,
             command.Sprite,
@@ -239,18 +242,18 @@ public static class NetworkHandlers
 
         if (player.IsLocalPlayer)
         {
-            GameState.LocalPlayer = player;
+            Game.LocalPlayer = player;
         }
     }
 
     public static void HandleDestroyActor(DestroyActorCommand command)
     {
-        GameState.Map.DestroyActor(command.ActorId);
+        Game.Map.DestroyActor(command.ActorId);
     }
 
     public static void HandleUpdateActorVitals(UpdateActorVitalsCommand command)
     {
-        var actor = GameState.Map.GetActor(command.ActorId);
+        var actor = Game.Map.GetActor(command.ActorId);
         if (actor is null)
         {
             return;
@@ -266,21 +269,21 @@ public static class NetworkHandlers
 
     public static void HandleActorMove(ActorMoveCommand command)
     {
-        var actor = GameState.Map.GetActor(command.ActorId);
+        var actor = Game.Map.GetActor(command.ActorId);
 
         actor?.QueueMove(command.Direction, command.MovementType);
     }
 
     public static void HandleActorAttack(ActorAttackCommand command)
     {
-        var actor = GameState.Map.GetActor(command.ActorId);
+        var actor = Game.Map.GetActor(command.ActorId);
 
         actor?.QueueAttack();
     }
 
     public static void HandleSetActorAccessLevel(SetActorAccessLevelCommand command)
     {
-        var actor = GameState.Map.GetActor(command.ActorId);
+        var actor = Game.Map.GetActor(command.ActorId);
         if (actor is null)
         {
             return;
@@ -291,14 +294,14 @@ public static class NetworkHandlers
 
     public static void HandleSetActorDirection(SetActorDirectionCommand command)
     {
-        var actor = GameState.Map.GetActor(command.ActorId);
+        var actor = Game.Map.GetActor(command.ActorId);
 
         actor?.SetDirection(command.Direction);
     }
 
     public static void HandleSetActorPlayerKiller(SetActorPlayerKillerCommand command)
     {
-        var actor = GameState.Map.GetActor(command.ActorId);
+        var actor = Game.Map.GetActor(command.ActorId);
         if (actor is null)
         {
             return;
@@ -309,7 +312,7 @@ public static class NetworkHandlers
 
     public static void HandleSetActorPosition(SetActorPositionCommand command)
     {
-        var actor = GameState.Map.GetActor(command.ActorId);
+        var actor = Game.Map.GetActor(command.ActorId);
 
         actor?.SetPosition(
             command.Direction,
@@ -319,7 +322,7 @@ public static class NetworkHandlers
 
     public static void HandleSetActorSprite(SetActorSpriteCommand command)
     {
-        var actor = GameState.Map.GetActor(command.ActorId);
+        var actor = Game.Map.GetActor(command.ActorId);
         if (actor is null)
         {
             return;
@@ -330,7 +333,7 @@ public static class NetworkHandlers
 
     public static void HandleCreateItem(CreateItemCommand command)
     {
-        GameState.Map.CreateItem(
+        Game.Map.CreateItem(
             command.Id,
             command.Sprite,
             command.X,
@@ -339,12 +342,25 @@ public static class NetworkHandlers
 
     public static void HandleDestroyItem(DestroyItemCommand command)
     {
-        GameState.Map.DestroyItem(command.Id);
+        Game.Map.DestroyItem(command.Id);
     }
 
     public static void HandleChat(ChatCommand command)
     {
-        GameState.AddChat(new ChatInfo(command.Message, command.Color));
+        if (SceneManager.Current is not GameScene gameScene)
+        {
+            return;
+        }
+
+        var chatMessage = command.Message;
+        var chatMessageColor = new Color(
+            command.Color.R,
+            command.Color.G,
+            command.Color.B,
+            command.Color.A);
+
+
+        gameScene.AddChatMessage(chatMessage, chatMessageColor);
     }
 
     public static void HandleDownloadAssetChunk(DownloadAssetChunkCommand command)
@@ -361,8 +377,7 @@ public static class NetworkHandlers
     {
         Network.Disconnect();
 
-        GameState.ShowAlert(command.Message);
-        GameState.ClearStatus();
+        Game.ShowAlert(command.Message);
 
         SceneManager.SwitchTo<MainMenuScene>();
     }

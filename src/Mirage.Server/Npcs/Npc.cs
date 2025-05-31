@@ -74,11 +74,11 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
             return false;
         }
 
-        if (targetX < 0 || targetX > 30 || targetY < 0 || targetY > 30)
+        if (!Map.InBounds(targetX, targetY))
         {
             return false;
         }
-
+        
         return NavigateTo(targetX, targetY, movementType);
     }
 
@@ -118,14 +118,14 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
         {
             Health -= damage;
 
-            attacker.Tell($"You hit a {Info.Name} for {damage} hit points.", ColorCode.White);
+            attacker.Tell($"You hit a {Info.Name} for {damage} hit points.", ColorCodes.White);
 
             if (_state is not Idle)
             {
                 return;
             }
 
-            attacker.Tell($"A {Info.Name} says, '{Info.AttackSay}' to you.", ColorCode.SayColor);
+            attacker.Tell($"A {Info.Name} says, '{Info.AttackSay}' to you.", ColorCodes.SayColor);
 
             _state = new Hunt(attacker);
             return;
@@ -133,7 +133,7 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
 
         var experience = Math.Min(1, Info.Strength * Info.Defense * 2);
 
-        attacker.Tell($"You hit a {Info.Name} for {damage} hit points, killing it.", ColorCode.BrightRed);
+        attacker.Tell($"You hit a {Info.Name} for {damage} hit points, killing it.", ColorCodes.Red);
         attacker.GrantExperience(experience);
 
         Kill();
@@ -143,18 +143,18 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
     {
         if (target.TryBlockHit(out var shield))
         {
-            target.Tell($"Your {shield.Item.Name} blocks the {Info.Name}'s hit!", ColorCode.BrightCyan);
+            target.Tell($"Your {shield.Item.Name} blocks the {Info.Name}'s hit!", ColorCodes.Cyan);
             return false;
         }
 
         var damage = Info.Strength - target.CalculateProtection();
         if (damage <= 0)
         {
-            target.Tell($"The {Info.Name}'s hit didn't even phase you!", ColorCode.BrightBlue);
+            target.Tell($"The {Info.Name}'s hit didn't even phase you!", ColorCodes.Blue);
             return false;
         }
 
-        target.Tell($"A {Info.Name} hit you for {damage} hit points.", ColorCode.BrightRed);
+        target.Tell($"A {Info.Name} hit you for {damage} hit points.", ColorCodes.Red);
 
         if (damage < target.Character.Health)
         {
@@ -163,7 +163,7 @@ public sealed class Npc(Map map, NpcInfo info, ITileNavigator navigator)
             return false;
         }
 
-        Map.Send(new ChatCommand($"{target.Character.Name} has been killed by a {Info.Name}.", ColorCode.BrightRed));
+        Map.Send(new ChatCommand($"{target.Character.Name} has been killed by a {Info.Name}.", ColorCodes.Red));
 
         target.Kill(Math.Max(0, target.Character.Exp / 10));
 

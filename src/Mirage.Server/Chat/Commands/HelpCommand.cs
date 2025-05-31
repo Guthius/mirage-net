@@ -8,10 +8,10 @@ public sealed class HelpCommand() : Command(ChatCommandNames.Help, AccessLevel.N
 {
     public override void Execute(Player player, ReadOnlySpan<char> args)
     {
-        player.Tell("Social commands:", ColorCode.HelpColor);
-        player.Tell($"/{ChatCommandNames.Broadcast} msghere = Broadcast Message", ColorCode.HelpColor);
-        player.Tell($"/{ChatCommandNames.Emote} msghere = Emote Message", ColorCode.HelpColor);
-        player.Tell($"/{ChatCommandNames.Whisper} namehere msghere = Player Message", ColorCode.HelpColor);
+        player.Tell("Social commands:", ColorCodes.HelpColor);
+        player.Tell($"/{ChatCommandNames.Broadcast} msghere = Broadcast Message", ColorCodes.HelpColor);
+        player.Tell($"/{ChatCommandNames.Emote} msghere = Emote Message", ColorCodes.HelpColor);
+        player.Tell($"/{ChatCommandNames.Whisper} namehere msghere = Player Message", ColorCodes.HelpColor);
 
         player.Tell("Available Commands: " +
                     $"/{ChatCommandNames.Help}, " +
@@ -23,6 +23,6 @@ public sealed class HelpCommand() : Command(ChatCommandNames.Help, AccessLevel.N
                     $"/{ChatCommandNames.Party}, " +
                     $"/{ChatCommandNames.Join}, " +
                     $"/{ChatCommandNames.Leave}",
-            ColorCode.HelpColor);
+            ColorCodes.HelpColor);
     }
 }

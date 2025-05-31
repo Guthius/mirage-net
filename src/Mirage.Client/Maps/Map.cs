@@ -1,21 +1,27 @@
 ﻿using System.Collections.Concurrent;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Mirage.Client.Assets;
 using Mirage.Client.Entities;
 using Mirage.Shared.Data;
+using SFML.Graphics;
+using SFML.System;
 
 namespace Mirage.Client.Maps;
 
-public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
+public sealed class Map(Game game) : Drawable
 {
-    private readonly TextureManager _textureManager = new(graphicsDevice);
+    private static readonly Texture Items = new("Content/Items.png");
+
     private readonly MapManager _mapManager = new();
     private readonly ConcurrentDictionary<int, Actor> _actors = new();
     private readonly ConcurrentDictionary<int, Item> _items = [];
-    private readonly Dictionary<int, Asset<Texture2D>> _tilesets = [];
+    private readonly MapRenderer _renderer = new();
     private MapInfo? _info;
 
+    public int WidthInPixels { get; private set; }
+    public int WidthInTiles => _info?.Width ?? 0;
+    public int HeightInPixels { get; private set; }
+    public int HeightInTiles => _info?.Height ?? 0;
+    public MapInfo? Info => _info;
+    
     public void Load(string mapId)
     {
         Clear();
@@ -24,9 +30,14 @@ public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
         {
             _mapManager.Get(mapId, info =>
             {
+                _renderer.Update(info);
+
+                game.GettingMap = false;
+
                 _info = info;
 
-                LoadTilesets(_info);
+                WidthInPixels = _info.Width * _info.TileWidth;
+                HeightInPixels = _info.Height * _info.TileHeight;
             });
         }
         catch (Exception ex)
@@ -35,162 +46,73 @@ public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
         }
     }
 
-    private void LoadTilesets(MapInfo map)
-    {
-        _tilesets.Clear();
-
-        foreach (var tileset in map.Tilesets)
-        {
-            _tilesets[tileset.FirstGid] = _textureManager.Get(tileset.Id);
-        }
-    }
-
     private void Clear()
     {
         _actors.Clear();
     }
 
-    public void Update(GameTime gameTime)
+    public void Update(float dt)
     {
         foreach (var gameObject in _actors.Values)
         {
-            gameObject.Update(gameTime);
+            gameObject.Update(dt);
         }
     }
 
-    public void Draw(SpriteBatch spriteBatch)
+    public void Draw(RenderTarget target, RenderStates states)
     {
-        DrawGroundLayers(spriteBatch);
-        DrawActors(spriteBatch);
-        DrawSkyLayers(spriteBatch);
-        DrawActorNames(spriteBatch);
-    }
-
-    public void DrawUI(SpriteBatch spriteBatch)
-    {
-        DrawMapName(spriteBatch);
-    }
-
-    private void DrawLayer(SpriteBatch spriteBatch, MapInfo mapInfo, MapLayerInfo layerInfo)
-    {
-        for (var y = 0; y < mapInfo.Height; y++)
-        {
-            for (var x = 0; x < mapInfo.Width; x++)
-            {
-                var tile = layerInfo.Tiles[y * mapInfo.Width + x];
-                if (tile == 0)
-                {
-                    continue;
-                }
-
-                // Find the right tileset for this gid
-                var tilesetGid = mapInfo.Tilesets.Where(t => t.FirstGid <= tile).Max(t => t.FirstGid);
-                var tileset = mapInfo.Tilesets.First(t => t.FirstGid == tilesetGid);
-                var tilesetTexture = _tilesets[tilesetGid].Instance;
-
-                // Get the source rectangle from the tileset
-                var tileId = tile - tileset.FirstGid;
-                var tilesetWidth = tilesetTexture.Width / tileset.TileWidth;
-                var tilesetX = tileId % tilesetWidth * tileset.TileWidth;
-                var tilesetY = tileId / tilesetWidth * tileset.TileHeight;
-
-                var sourceRectangle = new Rectangle(
-                    tilesetX,
-                    tilesetY,
-                    tileset.TileWidth,
-                    tileset.TileHeight);
-
-                var destinationRectangle = new Rectangle(
-                    x * tileset.TileWidth,
-                    y * tileset.TileHeight,
-                    tileset.TileWidth,
-                    tileset.TileHeight);
-
-                spriteBatch.Draw(
-                    tilesetTexture,
-                    destinationRectangle,
-                    sourceRectangle,
-                    Color.White);
-            }
-        }
-    }
-
-    private void DrawGroundLayers(SpriteBatch spriteBatch)
-    {
-        if (_info is null)
+        var mapInfo = _info;
+        if (mapInfo is null)
         {
             return;
         }
 
-        foreach (var layerInfo in _info.Layers.Where(x => !x.DrawOverActors))
-        {
-            DrawLayer(spriteBatch, _info, layerInfo);
-        }
+        _renderer.DrawGround(target, states);
+
+        DrawActors(target, states);
+
+        _renderer.DrawSky(target, states);
+
+        DrawActorNames(target, states);
     }
 
-    private void DrawSkyLayers(SpriteBatch spriteBatch)
-    {
-        if (_info is null)
-        {
-            return;
-        }
-
-        foreach (var layerInfo in _info.Layers.Where(x => x.DrawOverActors))
-        {
-            DrawLayer(spriteBatch, _info, layerInfo);
-        }
-    }
-
-    private void DrawActors(SpriteBatch spriteBatch)
+    private void DrawActors(RenderTarget target, RenderStates states)
     {
         var tileWidth = _info?.TileWidth ?? 32;
         var tileHeight = _info?.TileHeight ?? 32;
 
         foreach (var item in _items.Values)
         {
-            DrawItem(spriteBatch, item, tileWidth, tileHeight);
+            DrawItem(target, states, item, tileWidth, tileHeight);
         }
 
         foreach (var actor in _actors.Values)
         {
-            actor.Draw(spriteBatch);
+            target.Draw(actor, states);
         }
     }
 
-    private static void DrawItem(SpriteBatch spriteBatch, Item item, int tileWidth, int tileHeight)
+    private static void DrawItem(RenderTarget target, RenderStates states, Item item, int tileWidth, int tileHeight)
     {
         var y = item.Sprite * 32;
 
-        spriteBatch.Draw(
-            Textures.Items,
-            new Vector2(
-                item.X * tileWidth,
-                item.Y * tileHeight),
-            new Rectangle(0, y, 32, 32),
-            Color.White);
+        var sprite = new Sprite();
+
+        sprite.Position = new Vector2f(item.X * tileWidth, item.Y * tileHeight);
+        sprite.Texture = Items;
+        sprite.TextureRect = new IntRect(0, y, 32, 32);
+
+        target.Draw(sprite, states);
     }
 
-    private void DrawActorNames(SpriteBatch spriteBatch)
+    private void DrawActorNames(RenderTarget target, RenderStates states)
     {
         foreach (var actor in _actors.Values)
         {
-            actor.DrawName(spriteBatch);
+            actor.DrawName(target, states);
         }
     }
-
-    private void DrawMapName(SpriteBatch spriteBatch)
-    {
-        if (_info is null || string.IsNullOrEmpty(_info.Name))
-        {
-            return;
-        }
-
-        var color = _info.PvpEnabled ? Color.Red : Color.White;
-        var x = graphicsDevice.Viewport.Width + (int) Textures.Font.MeasureString(_info.Name).X;
-
-        spriteBatch.DrawString(Textures.Font, _info.Name, new Vector2((int) (x * 0.5f), 10), color);
-    }
-
+    
     public Actor? GetActor(int actorId)
     {
         return _actors.GetValueOrDefault(actorId);
@@ -198,7 +120,7 @@ public sealed class Map(Game gameState, GraphicsDevice graphicsDevice)
 
     public Actor CreateActor(int actorId, string name, int sprite, bool isPlayerKiller, AccessLevel accessLevel, int x, int y, Direction direction, int maxHealth, int health, int maxMana, int mana, int maxStamina, int stamina)
     {
-        var actor = new Actor(gameState, actorId, x, y)
+        var actor = new Actor(game, actorId, x, y)
         {
             Name = name,
             Sprite = sprite,

@@ -17,13 +17,13 @@ public sealed class WarpMeToCommand(ILogger<WarpMeToCommand> logger, IPlayerServ
         var targetPlayer = players.Find(args);
         if (targetPlayer is null)
         {
-            player.Tell("Player is not online.", ColorCode.White);
+            player.Tell("Player is not online.", ColorCodes.White);
             return;
         }
 
         if (targetPlayer == player)
         {
-            player.Tell("You cannot warp to yourself!", ColorCode.White);
+            player.Tell("You cannot warp to yourself!", ColorCodes.White);
             return;
         }
 
@@ -34,8 +34,8 @@ public sealed class WarpMeToCommand(ILogger<WarpMeToCommand> logger, IPlayerServ
             targetPlayer.Character.Name,
             targetPlayer.Character.Map);
 
-        targetPlayer.Tell($"{player.Character.Name} has warped to you.", ColorCode.BrightBlue);
+        targetPlayer.Tell($"{player.Character.Name} has warped to you.", ColorCodes.Blue);
 
-        player.Tell($"You have been warped to {targetPlayer.Character.Name}.", ColorCode.BrightBlue);
+        player.Tell($"You have been warped to {targetPlayer.Character.Name}.", ColorCodes.Blue);
     }
 }

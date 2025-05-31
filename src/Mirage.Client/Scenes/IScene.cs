@@ -1,12 +1,22 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Mirage.Engine.UI.Controls;
+using SFML.Graphics;
+using SFML.Window;
 
 namespace Mirage.Client.Scenes;
 
-public interface IScene
+public interface IScene : Drawable, IDisposable
 {
-    void Update(GameTime gameTime);
+    Control UI { get; }
+    
+    void Update(float dt);
     void Show();
     void Hide();
-    void Draw(GameTime gameTime);
-    void DrawUI(GameTime gameTime);
+    void ShowAlert(string alertMessage);
+    
+    void HandleMouseButtonPressed(MouseButtonEventArgs e);
+    void HandleMouseButtonReleased(MouseButtonEventArgs e);
+    void HandleMouseMoved(MouseMoveEventArgs e);
+    void HandleTextEntered(TextEventArgs e);
+    void HandleKeyPressed(KeyEventArgs e);
+    void HandleKeyReleased(KeyEventArgs e);
 }

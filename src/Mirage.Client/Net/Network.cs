@@ -4,7 +4,6 @@ using System.Threading.Channels;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Mirage.Net;
 using Mirage.Net.Protocol.FromServer;
-using Mirage.Shared.Constants;
 
 namespace Mirage.Client.Net;
 
@@ -40,6 +39,7 @@ public static class Network
         // Map Management
         Parser.Register<LoadMapCommand>(NetworkHandlers.HandleLoadMap);
         Parser.Register<EnterGameCommand>(NetworkHandlers.HandleEnterGame);
+        Parser.Register<MoveMapResponse>(NetworkHandlers.HandleMoveMap);
 
         // Actors
         Parser.Register<CreateActorCommand>(NetworkHandlers.HandleCreateActor);
@@ -72,7 +72,7 @@ public static class Network
         {
             _tcpClient = new TcpClient();
 
-            await _tcpClient.ConnectAsync("127.0.0.1", Options.GamePort);
+            await _tcpClient.ConnectAsync("127.0.0.1", 4000);
 
             _writeChannel = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions
             {

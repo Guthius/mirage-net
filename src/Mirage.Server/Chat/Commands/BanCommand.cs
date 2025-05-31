@@ -19,25 +19,25 @@ public sealed class BanCommand(ILogger<BanCommand> logger, IPlayerService player
         var targetPlayer = players.Find(args);
         if (targetPlayer is null)
         {
-            player.Tell("Player is not online.", ColorCode.White);
+            player.Tell("Player is not online.", ColorCodes.White);
             return;
         }
 
         if (targetPlayer == player)
         {
-            player.Tell("You cannot ban yourself!", ColorCode.White);
+            player.Tell("You cannot ban yourself!", ColorCodes.White);
             return;
         }
 
         if (targetPlayer.Character.AccessLevel > player.Character.AccessLevel)
         {
-            player.Tell("That is a higher access admin then you!", ColorCode.White);
+            player.Tell("That is a higher access admin then you!", ColorCodes.White);
             return;
         }
 
         banRepository.AddBan(targetPlayer.Address, player.Character.Name);
 
-        players.Send(new ChatCommand($"{targetPlayer.Character.Name} has been banned by {player.Character.Name}!", ColorCode.White));
+        players.Send(new ChatCommand($"{targetPlayer.Character.Name} has been banned by {player.Character.Name}!", ColorCodes.White));
 
         logger.LogInformation("{CharacterName} has banned {BannedCharacterName}",
             targetPlayer.Character.Name, player.Character);

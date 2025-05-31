@@ -16,21 +16,21 @@ public sealed class InfoCommand(IPlayerService players) : Command(ChatCommandNam
         var targetPlayer = players.Find(args);
         if (targetPlayer is null)
         {
-            player.Tell("Player is not online.", ColorCode.White);
+            player.Tell("Player is not online.", ColorCodes.White);
             return;
         }
 
-        player.Tell($"Name: {targetPlayer.Character.Name}", ColorCode.BrightGreen);
+        player.Tell($"Name: {targetPlayer.Character.Name}", ColorCodes.Green);
         if (player.Character.AccessLevel <= AccessLevel.Moderator)
         {
             return;
         }
 
-        player.Tell($"-=- Stats for {targetPlayer.Character.Name} -=-", ColorCode.BrightGreen);
-        player.Tell($"Level: {targetPlayer.Character.Level}  Exp: {targetPlayer.Character.Exp}/{targetPlayer.Character.RequiredExp}", ColorCode.BrightGreen);
-        player.Tell($"HP: {targetPlayer.Character.Health}/{targetPlayer.Character.MaxHealth}  MP: {targetPlayer.Character.Mana}/{targetPlayer.Character.MaxMana}  SP: {targetPlayer.Character.Stamina}/{targetPlayer.Character.MaxStamina}", ColorCode.BrightGreen);
-        player.Tell($"STR: {targetPlayer.Character.Strength}  DEF: {targetPlayer.Character.Defense}  MAGI: {targetPlayer.Character.Intelligence}  SPEED: {targetPlayer.Character.Speed}", ColorCode.BrightGreen);
+        player.Tell($"-=- Stats for {targetPlayer.Character.Name} -=-", ColorCodes.Green);
+        player.Tell($"Level: {targetPlayer.Character.Level}  Exp: {targetPlayer.Character.Exp}/{targetPlayer.Character.RequiredExp}", ColorCodes.Green);
+        player.Tell($"HP: {targetPlayer.Character.Health}/{targetPlayer.Character.MaxHealth}  MP: {targetPlayer.Character.Mana}/{targetPlayer.Character.MaxMana}  SP: {targetPlayer.Character.Stamina}/{targetPlayer.Character.MaxStamina}", ColorCodes.Green);
+        player.Tell($"STR: {targetPlayer.Character.Strength}  DEF: {targetPlayer.Character.Defense}  MAGI: {targetPlayer.Character.Intelligence}  SPEED: {targetPlayer.Character.Speed}", ColorCodes.Green);
 
-        player.Tell($"Critical Hit Chance: {targetPlayer.Character.CriticalHitRate}%, Block Chance: {targetPlayer.Character.BlockRate}%", ColorCode.BrightGreen);
+        player.Tell($"Critical Hit Chance: {targetPlayer.Character.CriticalHitRate}%, Block Chance: {targetPlayer.Character.BlockRate}%", ColorCodes.Green);
     }
 }

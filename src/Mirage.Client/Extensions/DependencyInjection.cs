@@ -16,7 +16,7 @@ public static class DependencyInjection
         {
             if (type is {IsClass: true, IsAbstract: false, IsPublic: true} && type.IsAssignableTo(typeof(IScene)))
             {
-                services.AddSingleton(type);
+                services.AddTransient(type);
             }
         }
     }

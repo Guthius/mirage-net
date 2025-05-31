@@ -12,6 +12,10 @@ public sealed class MapRepository(ILogger<MapRepository> logger) : IMapRepositor
     {
         public const string Name = "name";
         public const string PvpEnabled = "pvp_enabled";
+        public const string Up = "up";
+        public const string Down = "down";
+        public const string Left = "left";
+        public const string Right = "right";
     }
 
     public IEnumerable<KeyValuePair<string, MapInfo>> Load()
@@ -54,14 +58,21 @@ public sealed class MapRepository(ILogger<MapRepository> logger) : IMapRepositor
             {
                 Id = AssetManager.ComputeHash(path),
                 Name = map.Properties.GetValueOrDefault(Properties.Name, string.Empty),
-                PvpEnabled = map.Properties.GetValueOrDefault(Properties.PvpEnabled) == "true",
+                PvpEnabled = map.Properties.GetValueOrDefault(Properties.PvpEnabled)?.ToLowerInvariant() == "true",
                 TileWidth = map.TileWidth,
                 TileHeight = map.TileHeight,
                 Width = map.Width,
                 Height = map.Height,
                 Tilesets = LoadTilesets(map).ToList(),
                 Layers = LoadLayers(map).ToList(),
-                Tiles = LoadTiles(map)
+                Tiles = LoadTiles(map),
+                Links = new MapLinksInfo
+                {
+                    Up = map.Properties.GetValueOrDefault(Properties.Up, string.Empty),
+                    Down = map.Properties.GetValueOrDefault(Properties.Down, string.Empty),
+                    Left = map.Properties.GetValueOrDefault(Properties.Left, string.Empty),
+                    Right = map.Properties.GetValueOrDefault(Properties.Right, string.Empty)
+                }
             };
 
             return mapInfo;
@@ -98,7 +109,9 @@ public sealed class MapRepository(ILogger<MapRepository> logger) : IMapRepositor
                     Id = asset.Id,
                     FirstGid = tileset.FirstGid,
                     TileWidth = tileset.TileWidth,
-                    TileHeight = tileset.TileHeight
+                    TileHeight = tileset.TileHeight,
+                    ImageWidth = tileset.Image.Width ?? 0,
+                    ImageHeight = tileset.Image.Height ?? 0
                 };
             }
         }

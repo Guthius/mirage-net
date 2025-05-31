@@ -1,5 +1,6 @@
 ﻿using Mirage.Net.Protocol.FromServer;
 using Mirage.Server.Repositories;
+using Mirage.Server.Repositories.Characters.Data;
 using Mirage.Shared.Constants;
 using Mirage.Shared.Data;
 
@@ -201,7 +202,7 @@ public sealed class PlayerInventory
                 Clear(slotIndex);
             }
 
-            _player.Map.SendMessage($"{_player.Character.Name} drops {quantity} {slot.Item.Name}.", ColorCode.Yellow);
+            _player.Map.SendMessage($"{_player.Character.Name} drops {quantity} {slot.Item.Name}.", ColorCodes.Yellow);
             return;
         }
 
@@ -214,7 +215,7 @@ public sealed class PlayerInventory
         _player.Map.SendMessage(slot.Item.IsEquipment
                 ? $"{_player.Character.Name} drops a {slot.Item.Name} {slot.Durability}/{slot.Item.Durability}."
                 : $"{_player.Character.Name} drops a {slot.Item.Name}.",
-            ColorCode.Yellow);
+            ColorCodes.Yellow);
     }
 
     public bool Contains(string itemId, int quantity = 1)
@@ -268,7 +269,7 @@ public sealed class PlayerInventory
                 {
                     _player.Tell(
                         $"Your defense is to low to wear this armor! Required DEF ({slot.Item.RequiredDefense})",
-                        ColorCode.BrightRed);
+                        ColorCodes.Red);
 
                     return;
                 }
@@ -281,7 +282,7 @@ public sealed class PlayerInventory
                 {
                     _player.Tell(
                         $"Your strength is to low to wear this armor! Required STR ({slot.Item.RequiredStrength})",
-                        ColorCode.BrightRed);
+                        ColorCodes.Red);
 
                     return;
                 }
@@ -294,7 +295,7 @@ public sealed class PlayerInventory
                 {
                     _player.Tell(
                         $"Your speed coordination is to low to wear this helmet! Required SPEED ({slot.Item.RequiredSpeed})",
-                        ColorCode.BrightRed);
+                        ColorCodes.Red);
 
                     return;
                 }
@@ -419,7 +420,7 @@ public sealed class PlayerInventory
 
         foreach (var (slotIndex, slot) in _slots)
         {
-            _player.Character.Inventory.Slots.Add(slotIndex, new InventorySlotInfo
+            _player.Character.Inventory.Slots.Add(slotIndex, new CharacterInventorySlotInfo
             {
                 ItemId = slot.Item.Id,
                 Quantity = slot.Quantity,
@@ -432,14 +433,14 @@ public sealed class PlayerInventory
         _player.Character.Inventory.Equipment.Helmet = MapEquipment(Equipment.Helmet);
         _player.Character.Inventory.Equipment.Shield = MapEquipment(Equipment.Shield);
 
-        static EquipmentSlotInfo? MapEquipment(PlayerEquipmentSlot? slot)
+        static CharacterEquipmentSlotInfo? MapEquipment(PlayerEquipmentSlot? slot)
         {
             if (slot is null)
             {
                 return null;
             }
 
-            return new EquipmentSlotInfo
+            return new CharacterEquipmentSlotInfo
             {
                 ItemId = slot.Item.Id,
                 Durability = slot.Durability

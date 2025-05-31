@@ -20,28 +20,28 @@ public sealed class WhisperCommand(ILogger<WhisperCommand> logger, IPlayerServic
 
         if (targetName.IsEmpty || chatMesage.IsEmpty)
         {
-            player.Tell("Usage: !playername msghere", ColorCode.AlertColor);
+            player.Tell("Usage: !playername msghere", ColorCodes.AlertColor);
             return;
         }
 
         var targetPlayer = players.Find(targetName);
         if (targetPlayer is null)
         {
-            player.Tell("Player is not online.", ColorCode.White);
+            player.Tell("Player is not online.", ColorCodes.White);
             return;
         }
 
         if (targetPlayer == player)
         {
-            player.Map.SendMessage($"{player.Character.Name} begins to mumble to himself, what a wierdo...", ColorCode.Green);
+            player.Map.SendMessage($"{player.Character.Name} begins to mumble to himself, what a wierdo...", ColorCodes.Green);
 
             return;
         }
 
         logger.LogInformation("{FromCharacterName} tells {ToCharacterName}, '{Message}'", player.Character.Name, targetPlayer.Character.Name, new string(chatMesage));
 
-        targetPlayer.Tell($"{player.Character.Name} tells you, '{chatMesage}'", ColorCode.TellColor);
+        targetPlayer.Tell($"{player.Character.Name} tells you, '{chatMesage}'", ColorCodes.TellColor);
 
-        player.Tell($"You tell {targetPlayer.Character.Name}, '{chatMesage}'", ColorCode.TellColor);
+        player.Tell($"You tell {targetPlayer.Character.Name}, '{chatMesage}'", ColorCodes.TellColor);
     }
 }
