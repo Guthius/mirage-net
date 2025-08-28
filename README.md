@@ -5,8 +5,8 @@
 ![C#](https://img.shields.io/badge/C%23-13.0-239120?style=flat-square&logo=c-sharp)
 ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/guthius/mirage-net)
 ![GitHub License](https://img.shields.io/github/license/guthius/mirage-net)
-![GitHub contributors](https://img.shields.io/github/contributors/guthius/XtremeWorlds2?style=flat-square)
-![GitHub downloads](https://img.shields.io/github/downloads/guthius/XtremeWorlds2/total?style=flat-square)
+![GitHub contributors](https://img.shields.io/github/contributors/guthius/mirage-net?style=flat-square)
+![GitHub downloads](https://img.shields.io/github/downloads/guthius/mirage-net/total?style=flat-square)
 
 This is a full conversion of the Mirage 3.0.3 game engine from VB6 to C#.
 
