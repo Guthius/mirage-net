@@ -7,14 +7,15 @@ namespace Mirage.Engine.UI.Controls;
 
 public class Window(Style style) : Control
 {
-    private readonly StylePart? _stylePartFrame = style.GetPart("Window.Frame");
-    private readonly StylePart? _stylePartFrameNoTitleBar = style.GetPart("Window.FrameNoTitleBar");
+    private readonly IStylePart? _stylePartFrame = style.GetPart("Window.Frame");
+    private readonly IStylePart? _stylePartFrameNoTitleBar = style.GetPart("Window.FrameNoTitleBar");
     private readonly Text _text = new();
     private bool _dragging;
     private Vector2f _dragPos;
 
     public string Text { get; set; } = string.Empty;
     public bool CanDrag { get; set; } = true;
+    public bool ShowTitleBar { get; set; } = true;
 
     public override void Draw(RenderTarget target, RenderStates states)
     {
@@ -28,12 +29,14 @@ public class Window(Style style) : Control
 
     private void DrawFrame(RenderTarget target, RenderStates states)
     {
-        if (_stylePartFrame is not null)
-        {
-            target.Draw(_stylePartFrame, states);
-        }
+        GetActiveStylePart()?.Draw(target, states, Size);
 
         target.Draw(_text, states);
+    }
+
+    private IStylePart? GetActiveStylePart()
+    {
+        return ShowTitleBar ? _stylePartFrame : _stylePartFrameNoTitleBar;
     }
 
     private void UpdateText()
@@ -46,15 +49,10 @@ public class Window(Style style) : Control
         _text.OutlineThickness = 1;
 
         var size = _text.GetLocalBounds();
-        var x = (Width - size.Width) / 2;
+        var x = (Size.X - size.Width) / 2;
         var y = (26 - _text.CharacterSize) / 2 - 2;
 
         _text.Position = new Vector2f((int) x, (int) y);
-    }
-
-    protected override void OnSizeChanged()
-    {
-        _stylePartFrame?.Size = new Vector2f(Width, Height);
     }
 
     protected override void OnMouseMove(int x, int y)
@@ -74,7 +72,7 @@ public class Window(Style style) : Control
             return;
         }
 
-        if (CanDrag && x >= 0 && y >= 0 && x < Width && y < 22)
+        if (CanDrag && x >= 0 && y >= 0 && x < Size.X && y < 22)
         {
             BeginDrag(x, y);
         }
@@ -112,8 +110,8 @@ public class Window(Style style) : Control
             return;
         }
 
-        var x = (Parent.Width - Width) / 2;
-        var y = (Parent.Height - Height) / 2;
+        var x = (Parent.Size.X - Size.X) / 2;
+        var y = (Parent.Size.Y - Size.Y) / 2;
 
         Position = new Vector2f(x, y);
     }

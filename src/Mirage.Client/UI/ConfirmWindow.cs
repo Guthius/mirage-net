@@ -11,31 +11,27 @@ public sealed class ConfirmWindow : Frame
 
     public ConfirmWindow(string message)
     {
-        Width = 800;
-        Height = 600;
+        Size = new Vector2i(800, 600);
         BackColor = new Color(0, 0, 0, 128);
 
         var window = new Window(TempStyle.Style)
         {
-            Width = 340,
-            Height = 120,
+            Size = new Vector2i(340, 120),
             Text = SR.Confirm
         };
 
         window.Add(new Label(TempStyle.Style)
         {
             Position = new Vector2f(15, 35),
-            Width = 310,
-            Height = 50,
+            Size = new Vector2i(310, 50),
             Text = message,
             HorizontalAlignment = HorizontalAlignment.Center
         });
 
         var confirmButton = new Button(TempStyle.Style)
         {
-            Position = new Vector2f(155, window.Height - 40),
-            Width = 80,
-            Height = 25,
+            Position = new Vector2f(155, window.Size.Y - 40),
+            Size = new Vector2i(80, 25),
             Text = SR.Confirm
         };
 
@@ -45,9 +41,8 @@ public sealed class ConfirmWindow : Frame
 
         var cancelButton = new Button(TempStyle.Style)
         {
-            Position = new Vector2f(245, window.Height - 40),
-            Width = 80,
-            Height = 25,
+            Position = new Vector2f(245, window.Size.Y - 40),
+            Size = new Vector2i(80, 25),
             Text = SR.Cancel
         };
 

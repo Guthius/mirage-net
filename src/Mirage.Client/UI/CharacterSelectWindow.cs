@@ -15,14 +15,13 @@ public sealed class CharacterSelectWindow : Window
 
     public CharacterSelectWindow(List<CharacterSlotInfo> characterSlotInfos, int maxCharacters) : base(TempStyle.Style)
     {
-        Width = 300;
-        Height = CreateSlots(characterSlotInfos) + 60;
+        Size = new Vector2i(300, CreateSlots(characterSlotInfos) + 60);
         Text = SR.CharacterSelect;
 
         var newCharacterButton = new Button(TempStyle.Style)
         {
-            Position = new Vector2f(15, Height - 40),
-            Width = 140, Height = 25,
+            Position = new Vector2f(15, Size.Y - 40),
+            Size = new Vector2i(140, 25),
             Enabled = characterSlotInfos.Count < maxCharacters,
             Text = "+ New Character"
         };
@@ -31,8 +30,8 @@ public sealed class CharacterSelectWindow : Window
 
         var cancelButton = new Button(TempStyle.Style)
         {
-            Position = new Vector2f(205, Height - 40),
-            Width = 80, Height = 25,
+            Position = new Vector2f(205, Size.Y - 40),
+            Size = new Vector2i(80, 25),
             Text = SR.Cancel
         };
 
@@ -56,14 +55,13 @@ public sealed class CharacterSelectWindow : Window
             var selectButton = new Button(TempStyle.Style)
             {
                 Position = new Vector2f(15, y),
-                Width = 225,
-                Height = height
+                Size = new Vector2i(225, height),
             };
 
             selectButton.Add(new Label(TempStyle.Style)
             {
                 Position = new Vector2f(10, 5),
-                Height = 20,
+                Size = new Vector2i(225, 20),
                 Text = slotInfo.Name,
                 TextColor = Color.White
             });
@@ -71,7 +69,7 @@ public sealed class CharacterSelectWindow : Window
             selectButton.Add(new Label(TempStyle.Style)
             {
                 Position = new Vector2f(10, 25),
-                Height = 20,
+                Size = new Vector2i(225, 20),
                 Text = $"a level {slotInfo.Level} {slotInfo.JobName}"
             });
 
@@ -82,8 +80,7 @@ public sealed class CharacterSelectWindow : Window
             var deleteButton = new Button(TempStyle.Style)
             {
                 Position = new Vector2f(245, y),
-                Width = 40,
-                Height = height,
+                Size = new Vector2i(40, height),
                 Text = "x"
             };
 

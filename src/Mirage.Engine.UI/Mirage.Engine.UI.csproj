@@ -28,6 +28,9 @@
         <None Update="Content\UI\Fonts\Coolvetica Rg It.otf">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <None Update="Content\UI\Skins\Default\Skin.xml">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
 </Project>

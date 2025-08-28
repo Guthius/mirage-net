@@ -1,20 +1,19 @@
-﻿using Mirage.Engine.UI.Controls.Utils;
+﻿using Mirage.Engine.UI.Styles;
 using SFML.Graphics;
-using SFML.System;
 using SFML.Window;
 
 namespace Mirage.Engine.UI.Controls;
 
-public class HScroll : Control
+public class HScroll(Style style) : Control
 {
     private const int MinimumThumbSize = 20;
 
-    private readonly Texture _textureNormal = new("Content/Blue_HScroll_Normal.png");
-    private readonly Texture _textureHot = new("Content/Blue_HScroll_Hot.png");
-    private readonly Texture _textureDisabled = new("Content/Blue_HScroll_Disabled.png");
-    private readonly NineSlice _bar = new(4, 2, 4, 2, new IntRect(18, 0, 6, 14));
-    private readonly NineSlice _thumb = new(5, 2, 5, 2, new IntRect(0, 0, 18, 14));
-    private FloatRect _thumbRect;
+    private readonly IStylePart? _stylePartBarNormal = style.GetPart("HScroll.BarNormal");
+    private readonly IStylePart? _stylePartBarHot = style.GetPart("HScroll.BarHot");
+    private readonly IStylePart? _stylePartBarDisabled = style.GetPart("HScroll.BarDisabled");
+    private readonly IStylePart? _stylePartTrack = style.GetPart("HScroll.Track");
+    private readonly IStylePart? _stylePartTrackDisabled = style.GetPart("HScroll.TrackDisabled");
+    private IntRect _thumbRect;
     private bool _dragging;
     private bool _hot;
 
@@ -27,52 +26,44 @@ public class HScroll : Control
     public override void Draw(RenderTarget target, RenderStates states)
     {
         UpdateBar();
-        
-        states.Texture = GetTexture();
+
         states.Transform *= Transform;
-        
-        target.Draw(_bar, states);
 
-        DrawThumb(target, states);
+        GetActiveTrackStylePart()?.Draw(target, states, Size);
+
+        states.Transform.Translate(_thumbRect.Position.X, _thumbRect.Position.Y);
+
+        GetActiveThumbStylePart()?.Draw(target, states, _thumbRect.Size);
     }
 
-    private void DrawThumb(RenderTarget target, RenderStates states)
+    private IStylePart? GetActiveTrackStylePart()
     {
-        states.Transform.Translate(
-            _thumbRect.Position.X,
-            _thumbRect.Position.Y);
-
-        target.Draw(_thumb, states);
+        return Enabled ? _stylePartTrack : _stylePartTrackDisabled;
     }
 
-    private Texture GetTexture()
+    private IStylePart? GetActiveThumbStylePart()
     {
         if (!Enabled)
         {
-            return _textureDisabled;
+            return _stylePartBarDisabled;
         }
 
         if (_hot || _dragging)
         {
-            return _textureHot;
+            return _stylePartBarHot;
         }
 
-        return _textureNormal;
+        return _stylePartBarNormal;
     }
 
     private void UpdateBar()
     {
         var range = MaxValue - MinValue;
-        var thumbWidth = Math.Max(Width / (range + 1), MinimumThumbSize);
-        var availableWidth = Width - thumbWidth;
+        var thumbWidth = Math.Max(Size.X / (range + 1), MinimumThumbSize);
+        var availableWidth = Size.X - thumbWidth;
         var normalizedValue = (float) (Value - MinValue) / range;
 
-        _thumbRect = new FloatRect(normalizedValue * availableWidth, 0, thumbWidth, Height);
-        _thumb.Size = new Vector2i(
-            (int) _thumbRect.Size.X,
-            (int) _thumbRect.Size.Y);
-
-        _bar.Size = new Vector2i(Width, Height);
+        _thumbRect = new IntRect((int) (normalizedValue * availableWidth), 0, thumbWidth, Size.Y);
     }
 
     protected override void OnMouseEnter()
@@ -129,12 +120,12 @@ public class HScroll : Control
         }
 
         var thumbWidth = _thumbRect.Size.X;
-        var availableWidth = Width - thumbWidth;
+        var availableWidth = Size.X - thumbWidth;
         var clampedX = Math.Clamp(x - thumbWidth / 2, 0, availableWidth);
         var percentage = clampedX / availableWidth;
         var range = MaxValue - MinValue;
 
-        var newValue = MinValue + (int) Math.Round(percentage * range);
+        var newValue = MinValue + percentage * range;
         if (newValue == Value)
         {
             return;

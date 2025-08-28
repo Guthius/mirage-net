@@ -11,17 +11,16 @@ public sealed class DeleteAccountWindow : Window
 
     public DeleteAccountWindow() : base(TempStyle.Style)
     {
-        Width = 300;
-        Height = 200;
+        Size = new Vector2i(300, 200);
         Text = SR.DeleteAccount;
 
-        var accountNameTextBox = new TextBox(TempStyle.Style) {Position = new Vector2f(125, 85), Width = 160, Height = 25};
-        var passwordTextBox = new TextBox(TempStyle.Style) {Position = new Vector2f(125, 115), Width = 160, Height = 25, IsPassword = true};
+        var accountNameTextBox = new TextBox(TempStyle.Style) {Position = new Vector2f(125, 85), Size = new Vector2i(160, 25)};
+        var passwordTextBox = new TextBox(TempStyle.Style) {Position = new Vector2f(125, 115), Size = new Vector2i(160, 25), IsPassword = true};
 
         var loginButton = new Button(TempStyle.Style)
         {
             Position = new Vector2f(115, 160),
-            Width = 80, Height = 25,
+            Size = new Vector2i(80, 25),
             Text = SR.Delete
         };
 
@@ -33,7 +32,7 @@ public sealed class DeleteAccountWindow : Window
         var cancelButton = new Button(TempStyle.Style)
         {
             Position = new Vector2f(205, 160),
-            Width = 80, Height = 25,
+            Size = new Vector2i(80, 25),
             Text = SR.Cancel
         };
 
@@ -42,14 +41,14 @@ public sealed class DeleteAccountWindow : Window
         Add(new Label(TempStyle.Style)
         {
             Position = new Vector2f(10, 32),
-            Width = 280, Height = 46,
+            Size = new Vector2i(280, 46),
             Text = SR.DeleteAccountInstruction,
             HorizontalAlignment = HorizontalAlignment.Center
         });
 
-        Add(new Label(TempStyle.Style) {Position = new Vector2f(20, 85), Width = 95, Height = 25, Text = SR.AccountName, HorizontalAlignment = HorizontalAlignment.Right});
+        Add(new Label(TempStyle.Style) {Position = new Vector2f(20, 85), Size = new Vector2i(95, 25), Text = SR.AccountName, HorizontalAlignment = HorizontalAlignment.Right});
         Add(accountNameTextBox);
-        Add(new Label(TempStyle.Style) {Position = new Vector2f(20, 115), Width = 95, Height = 25, Text = SR.Password, HorizontalAlignment = HorizontalAlignment.Right});
+        Add(new Label(TempStyle.Style) {Position = new Vector2f(20, 115), Size = new Vector2i(95, 25), Text = SR.Password, HorizontalAlignment = HorizontalAlignment.Right});
         Add(passwordTextBox);
         Add(loginButton);
         Add(cancelButton);

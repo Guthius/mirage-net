@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Skin Name="Default">
+    <Fonts>
+        <Font Name="Coolvetica" Path="Pixelbasel.ttf"/>
+    </Fonts>
+
+    <Properties>
+        <Property Key="DefaultFont" Value="Coolvetica"/>
+        <Property Key="DefaultFontSize" Value="18"/>
+        <Property Key="DefaultStyle" Value="Blue"/>
+    </Properties>
+</Skin>

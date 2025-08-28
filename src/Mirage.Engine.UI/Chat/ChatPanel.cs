@@ -1,4 +1,5 @@
 ﻿using Mirage.Engine.UI.Controls;
+using Mirage.Engine.UI.Styles;
 using SFML.Graphics;
 using SFML.System;
 
@@ -18,21 +19,20 @@ public sealed class ChatPanel : Control
 
     public ChatPanel()
     {
-        _scrollBar = new VScroll();
+        _scrollBar = new VScroll(Style.Empty);
 
         Add(_scrollBar);
     }
 
     protected override void OnLayout()
     {
-        _scrollBar.Position = new Vector2f(Width - ScrollbarWidth, 0);
-        _scrollBar.Width = ScrollbarWidth;
-        _scrollBar.Height = Height;
+        _scrollBar.Position = new Vector2f(Size.X - ScrollbarWidth, 0);
+        _scrollBar.Size = new Vector2i(ScrollbarWidth, Size.Y);
     }
 
     public override void Draw(RenderTarget target, RenderStates states)
     {
-        _scrollBar.MaxValue = _messageHeight - Height;
+        _scrollBar.MaxValue = _messageHeight - Size.Y;
         _scrollBar.Enabled = _scrollBar.MaxValue > 0;
 
         DrawMessagesToTexture();
@@ -49,7 +49,7 @@ public sealed class ChatPanel : Control
 
     private void DrawMessagesToTexture()
     {
-        _messageTexture ??= new RenderTexture((uint) (Width - ScrollbarWidth), (uint) Height);
+        _messageTexture ??= new RenderTexture((uint) (Size.X - ScrollbarWidth), (uint) Size.Y);
         _messageTexture.Clear(Color.Transparent);
 
         var states = RenderStates.Default;

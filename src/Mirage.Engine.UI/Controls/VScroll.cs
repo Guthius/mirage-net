@@ -1,20 +1,19 @@
-﻿using Mirage.Engine.UI.Controls.Utils;
+﻿using Mirage.Engine.UI.Styles;
 using SFML.Graphics;
-using SFML.System;
 using SFML.Window;
 
 namespace Mirage.Engine.UI.Controls;
 
-public class VScroll : Control
+public class VScroll(Style style) : Control
 {
     private const int MinimumThumbSize = 20;
 
-    private readonly Texture _textureNormal = new("Content/Blue_VScroll_Normal.png");
-    private readonly Texture _textureHot = new("Content/Blue_VScroll_Hot.png");
-    private readonly Texture _textureDisabled = new("Content/Blue_VScroll_Disabled.png");
-    private readonly NineSlice _bar = new(2, 4, 2, 4, new IntRect(0, 18, 14, 6));
-    private readonly NineSlice _thumb = new(2, 5, 2, 5, new IntRect(0, 0, 14, 18));
-    private FloatRect _thumbRect;
+    private readonly IStylePart? _stylePartBarNormal = style.GetPart("VScroll.BarNormal");
+    private readonly IStylePart? _stylePartBarHot = style.GetPart("VScroll.BarHot");
+    private readonly IStylePart? _stylePartBarDisabled = style.GetPart("VScroll.BarDisabled");
+    private readonly IStylePart? _stylePartTrack = style.GetPart("VScroll.Track");
+    private readonly IStylePart? _stylePartTrackDisabled = style.GetPart("VScroll.TrackDisabled");
+    private IntRect _thumbRect;
     private bool _dragging;
     private bool _hot;
 
@@ -27,52 +26,44 @@ public class VScroll : Control
     public override void Draw(RenderTarget target, RenderStates states)
     {
         UpdateBar();
-        
-        states.Texture = GetTexture();
+
         states.Transform *= Transform;
-        
-        target.Draw(_bar, states);
 
-        DrawThumb(target, states);
+        GetActiveTrackStylePart()?.Draw(target, states, Size);
+
+        states.Transform.Translate(_thumbRect.Position.X, _thumbRect.Position.Y);
+
+        GetActiveThumbStylePart()?.Draw(target, states, _thumbRect.Size);
     }
 
-    private void DrawThumb(RenderTarget target, RenderStates states)
+    private IStylePart? GetActiveTrackStylePart()
     {
-        states.Transform.Translate(
-            _thumbRect.Position.X,
-            _thumbRect.Position.Y);
-
-        target.Draw(_thumb, states);
+        return Enabled ? _stylePartTrack : _stylePartTrackDisabled;
     }
 
-    private Texture GetTexture()
+    private IStylePart? GetActiveThumbStylePart()
     {
         if (!Enabled)
         {
-            return _textureDisabled;
+            return _stylePartBarDisabled;
         }
 
         if (_hot || _dragging)
         {
-            return _textureHot;
+            return _stylePartBarHot;
         }
 
-        return _textureNormal;
+        return _stylePartBarNormal;
     }
 
     private void UpdateBar()
     {
         var range = MaxValue - MinValue;
-        var thumbHeight = Math.Max(Height / (range + 1), MinimumThumbSize);
-        var availableHeight = Height - thumbHeight;
-        var normalizedValue = (float)(Value - MinValue) / range;
+        var thumbHeight = Math.Max(Size.Y / (range + 1), MinimumThumbSize);
+        var availableHeight = Size.Y - thumbHeight;
+        var normalizedValue = (float) (Value - MinValue) / range;
 
-        _thumbRect = new FloatRect(0, normalizedValue * availableHeight, Width, thumbHeight);
-        _thumb.Size = new Vector2i(
-            (int)_thumbRect.Size.X,
-            (int)_thumbRect.Size.Y);
-
-        _bar.Size = new Vector2i(Width, Height);
+        _thumbRect = new IntRect(0, (int) (normalizedValue * availableHeight), Size.X, thumbHeight);
     }
 
     protected override void OnMouseEnter()
@@ -129,12 +120,12 @@ public class VScroll : Control
         }
 
         var thumbHeight = _thumbRect.Size.Y;
-        var availableHeight = Height - thumbHeight;
+        var availableHeight = Size.Y - thumbHeight;
         var clampedY = Math.Clamp(y - thumbHeight / 2, 0, availableHeight);
         var percentage = clampedY / availableHeight;
         var range = MaxValue - MinValue;
 
-        var newValue = MinValue + (int)Math.Round(percentage * range);
+        var newValue = MinValue + percentage * range;
         if (newValue == Value)
         {
             return;

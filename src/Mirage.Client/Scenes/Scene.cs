@@ -1,5 +1,6 @@
 ﻿using Mirage.Engine.UI.Controls;
 using SFML.Graphics;
+using SFML.System;
 using SFML.Window;
 
 namespace Mirage.Client.Scenes;
@@ -8,7 +9,10 @@ public abstract class Scene : IScene
 {
     private bool _disposed;
 
-    public Control UI { get; } = new() {Width = 800, Height = 600};
+    public Control UI { get; } = new()
+    {
+        Size = new Vector2i(800, 600)
+    };
 
     public void Show()
     {

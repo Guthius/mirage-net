@@ -11,9 +11,11 @@ public class Control : Transformable, Drawable
     private Control? _activeControl;
     private bool _hot;
 
-    public int Width
+    public string Name { get; set; } = string.Empty;
+
+    public Vector2i Size
     {
-        get;
+        get => field;
         set
         {
             if (field == value)
@@ -22,36 +24,18 @@ public class Control : Transformable, Drawable
             }
 
             field = value;
-
+            
             OnSizeChanged();
         }
     }
-
-    public int Height
-    {
-        get;
-        set
-        {
-            if (field == value)
-            {
-                return;
-            }
-
-            field = value;
-
-            OnSizeChanged();
-        }
-    }
-
+    
     public bool Enabled { get; set; } = true;
     public Control? Parent { get; private set; }
     public Control? ActiveControl => Parent?.ActiveControl ?? _activeControl;
     public bool HasFocus => ActiveControl == this;
     public bool HasKeyboardFocus => ActiveControl is not null;
     public bool Visible { get; set; } = true;
-
-
-    public Font? Font { get; set; } = new("Content/Fonts/Coolvetica Rg.otf");
+    public Font? Font { get; set; }
     public int FontSize { get; set; } = 14;
 
     public TControl? Get<TControl>() where TControl : Control
@@ -155,7 +139,7 @@ public class Control : Transformable, Drawable
 
     protected bool Contains(int x, int y)
     {
-        return x >= Position.X && x < Position.X + Width && y >= Position.Y && y < Position.Y + Height;
+        return x >= Position.X && x < Position.X + Size.X && y >= Position.Y && y < Position.Y + Size.Y;
     }
 
     protected Vector2f GetGlobalPosition()

@@ -2,17 +2,26 @@
 using System.Xml;
 using Mirage.Engine.UI.Skins;
 using Mirage.Engine.UI.Styles;
+using SFML.Graphics;
 
 namespace Mirage.Engine.UI.Controls;
 
-internal abstract class ControlFactory<TControl>(ISkin skin) where TControl : Control
+internal abstract class ControlFactory<TControl>(ISkin skin) : IControlFactory<TControl> where TControl : Control
 {
     protected const string DefaultFontName = "Coolvetica";
     protected const int DefaultFontSize = 14;
 
-    protected sealed record ControlProperties(string Name, string Text, int X, int Y, int Width, int Height, bool Enabled, bool Visible);
-
-    protected sealed record FontProperties(string FontName, int Size);
+    protected sealed record ControlProperties(
+        string Name,
+        string Text,
+        float X,
+        float Y,
+        int Width,
+        int Height,
+        bool Enabled,
+        bool Visible,
+        Font? Font,
+        int FontSize);
 
     public abstract TControl Create(XmlReader xmlReader, Window? parent);
 
@@ -86,14 +95,6 @@ internal abstract class ControlFactory<TControl>(ISkin skin) where TControl : Co
         return new Vector2(x, y);
     }
 
-    protected static FontProperties ReadFont(XmlReader xmlReader, string defaultFontName = DefaultFontName, int defaultFontSize = DefaultFontSize)
-    {
-        var fontName = ReadString(xmlReader, "Font", defaultFontName);
-        var fontSize = ReadInt32(xmlReader, "FontSize", defaultFontSize);
-
-        return new FontProperties(fontName, fontSize);
-    }
-
     protected Style ReadStyle(XmlReader xmlReader, string defaultStyleName)
     {
         var styleName = ReadString(xmlReader, "Style", defaultStyleName);
@@ -101,37 +102,29 @@ internal abstract class ControlFactory<TControl>(ISkin skin) where TControl : Co
         return skin.GetStyle(styleName);
     }
 
-    protected Style ReadStyle(XmlReader xmlReader, Style defaultStyle)
-    {
-        var styleName = ReadString(xmlReader, "Style");
-        if (string.IsNullOrEmpty(styleName))
-        {
-            return defaultStyle;
-        }
-
-        return skin.GetStyle(styleName);
-    }
-
-    protected static ControlProperties ReadControlProperties(XmlReader xmlReader, Window? parent)
+    protected ControlProperties ReadCoreProperties(XmlReader xmlReader, Window? parent)
     {
         var position = ReadVector(xmlReader, "Position", Vector2.Zero);
         var size = ReadVector(xmlReader, "Size", Vector2.Zero);
 
-        var x = (int) position.X;
-        var y = (int) position.Y;
+        var x = position.X;
+        var y = position.Y;
 
         if (parent is not null)
         {
             if (x < 0)
             {
-                x = parent.Width + x;
+                x = parent.Size.X + x;
             }
 
             if (y < 0)
             {
-                y = parent.Height + y;
+                y = parent.Size.Y + y;
             }
         }
+
+        var defaultFontName = skin.GetPropertyString("DefaultFont", DefaultFontName);
+        var fontName = ReadString(xmlReader, "Font", defaultFontName);
 
         return new ControlProperties(
             Name: ReadString(xmlReader, "Name"),
@@ -140,6 +133,8 @@ internal abstract class ControlFactory<TControl>(ISkin skin) where TControl : Co
             Width: (int) size.X,
             Height: (int) size.Y,
             Enabled: ReadBoolean(xmlReader, "Enabled", true),
-            Visible: ReadBoolean(xmlReader, "Visible", true));
+            Visible: ReadBoolean(xmlReader, "Visible", true),
+            Font: skin.GetFont(fontName),
+            FontSize: ReadInt32(xmlReader, "FontSize", skin.GetPropertyInt32("DefaultFontSize", DefaultFontSize)));
     }
 }

@@ -14,8 +14,7 @@ public sealed class CreateAccountScene : Scene
     private readonly Label _statusLabel = new(TempStyle.Style)
     {
         Position = new Vector2f(10, 572),
-        Width = 200,
-        Height = 25,
+        Size = new Vector2i(200, 25),
         TextColor = Color.White
     };
 

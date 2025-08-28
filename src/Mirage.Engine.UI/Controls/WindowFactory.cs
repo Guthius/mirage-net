@@ -10,21 +10,18 @@ internal sealed class WindowFactory(ISkin skin) : ControlFactory<Window>(skin)
 
     public override Window Create(XmlReader xmlReader, Window? parent)
     {
-        var control = ReadControlProperties(xmlReader, parent);
-   
+        var props = ReadCoreProperties(xmlReader, parent);
 
         var window = new Window(ReadStyle(xmlReader, _skin.DefaultStyleName))
         {
-            Position = new Vector2f(control.X, control.Y),
-            Width = control.Width,
-            Height = control.Height,
-            Visible = control.Visible,
+            Position = new Vector2f(props.X, props.Y),
+            Size = new Vector2i(props.Width, props.Height),
+            Visible = props.Visible,
             CanDrag = ReadBoolean(xmlReader, "CanDrag", true),
-            // CanFocus = ReadBoolean(xmlReader, "CanFocus", true),
-            // Font = ReadFont(xmlReader),
-            Text = control.Text,
-            // ShowTitleBar = ReadBoolean(xmlReader, "ShowTitlebar", true),
-            // Clickthrough = ReadBoolean(xmlReader, "Clickthrough", false),
+            Font = props.Font,
+            FontSize = props.FontSize,
+            Text = props.Text,
+            ShowTitleBar = ReadBoolean(xmlReader, "ShowTitlebar", true)
         };
 
         var startPosition = xmlReader.GetAttribute("StartPosition");

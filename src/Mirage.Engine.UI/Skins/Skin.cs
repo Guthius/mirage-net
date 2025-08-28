@@ -11,9 +11,10 @@ public sealed class Skin : ISkin
     private readonly Lock _textureLock = new();
     private readonly Dictionary<string, Texture> _textures = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Font> _fonts = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _properties = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Style> _styles = new(StringComparer.OrdinalIgnoreCase);
 
-    public string DefaultStyleName => "Blue";
+    public string DefaultStyleName => GetPropertyString("DefaultStyle", "Blue");
 
     public Skin(string basePath)
     {
@@ -43,8 +44,6 @@ public sealed class Skin : ISkin
             throw new XmlException("Skin file is missing root 'Skin' element.");
         }
 
-        // TODO: Read properties from Skin file...
-
         while (xmlReader.Read())
         {
             if (xmlReader.NodeType == XmlNodeType.Element)
@@ -53,6 +52,10 @@ public sealed class Skin : ISkin
                 {
                     case "Fonts":
                         ReadFonts(xmlReader);
+                        break;
+
+                    case "Properties":
+                        ReadProperties(xmlReader);
                         break;
                 }
 
@@ -116,6 +119,44 @@ public sealed class Skin : ISkin
         {
             // ignored
         }
+    }
+
+    private void ReadProperties(XmlReader xmlReader)
+    {
+        while (xmlReader.Read())
+        {
+            if (xmlReader.NodeType == XmlNodeType.Element)
+            {
+                switch (xmlReader.Name)
+                {
+                    case "Property":
+                        ReadProperty(xmlReader);
+                        break;
+                }
+
+                if (!xmlReader.IsEmptyElement)
+                {
+                    xmlReader.Skip();
+                }
+            }
+            else if (xmlReader.NodeType == XmlNodeType.EndElement)
+            {
+                break;
+            }
+        }
+    }
+
+    private void ReadProperty(XmlReader xmlReader)
+    {
+        var key = xmlReader.GetAttribute("Key");
+        if (string.IsNullOrEmpty(key))
+        {
+            return;
+        }
+
+        var value = xmlReader.GetAttribute("Value") ?? string.Empty;
+
+        _properties[key] = value;
     }
 
     public Texture GetTexture(string textureName)
@@ -190,7 +231,8 @@ public sealed class Skin : ISkin
 
         var texture = GetTexture(texturePath);
 
-        var parts = new Dictionary<string, StylePart>(StringComparer.OrdinalIgnoreCase);
+        var parts = new Dictionary<string, StylePartBuilder>(StringComparer.OrdinalIgnoreCase);
+        var sprites = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
         var properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         while (xmlReader.Read())
         {
@@ -199,7 +241,11 @@ public sealed class Skin : ISkin
                 switch (xmlReader.Name)
                 {
                     case "Part":
-                        ReadStylePart(xmlReader, texture, parts);
+                        ReadStylePartBuilder(xmlReader, texture, parts);
+                        break;
+
+                    case "Sprite":
+                        ReadSprite(xmlReader, texture, sprites);
                         break;
 
                     case "Property":
@@ -218,12 +264,12 @@ public sealed class Skin : ISkin
             }
         }
 
-        _styles[styleName] = style = new Style(parts, properties);
+        _styles[styleName] = style = new Style(parts, sprites, properties);
 
         return style;
     }
 
-    private void ReadStylePart(XmlReader xmlReader, Texture texture, Dictionary<string, StylePart> dictionary)
+    private static void ReadStylePartBuilder(XmlReader xmlReader, Texture texture, Dictionary<string, StylePartBuilder> dictionary)
     {
         var name = xmlReader.GetAttribute("Name");
         if (string.IsNullOrEmpty(name))
@@ -234,7 +280,20 @@ public sealed class Skin : ISkin
         var textureRect = ReadIntRect(xmlReader, "TextureRect") ?? new IntRect(0, 0, (int) texture.Size.X, (int) texture.Size.Y);
         var ninePatchRect = ReadIntRect(xmlReader, "NinePatchRect");
 
-        dictionary[name] = new StylePart(name, texture, textureRect, ninePatchRect);
+        dictionary[name] = new StylePartBuilder(texture, textureRect, ninePatchRect);
+    }
+
+    private static void ReadSprite(XmlReader xmlReader, Texture texture, Dictionary<string, Sprite> dictionary)
+    {
+        var name = xmlReader.GetAttribute("Name");
+        if (string.IsNullOrEmpty(name))
+        {
+            throw new XmlException("Style sprite is missing 'Name' attribute.");
+        }
+
+        var textureRect = ReadIntRect(xmlReader, "TextureRect") ?? new IntRect(0, 0, (int) texture.Size.X, (int) texture.Size.Y);
+
+        dictionary[name] = new Sprite(texture, textureRect);
     }
 
     private static void ReadProperty(XmlReader xmlReader, Dictionary<string, string> dictionary)
@@ -282,5 +341,15 @@ public sealed class Skin : ISkin
     public Font? GetFont(string fontName)
     {
         return _fonts.GetValueOrDefault(fontName);
+    }
+
+    public string GetPropertyString(string key, string defaultValue)
+    {
+        return _properties.GetValueOrDefault(key, defaultValue);
+    }
+
+    public int GetPropertyInt32(string key, int defaultValue)
+    {
+        return int.TryParse(GetPropertyString(key, defaultValue.ToString()), out var value) ? value : defaultValue;
     }
 }

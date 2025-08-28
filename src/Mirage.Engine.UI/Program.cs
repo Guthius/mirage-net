@@ -6,9 +6,9 @@ using SFML.Window;
 
 var renderWindow = new RenderWindow(new VideoMode(800, 600), "UI Test");
 
-var ui = new Control {Width = 800, Height = 600};
+var ui = new Control {Size = new Vector2i(800, 600)};
 
-var chatWindow = new ChatPanel {Position = new Vector2f(25, 25), Width = 400, Height = 200};
+var chatWindow = new ChatPanel {Position = new Vector2f(25, 25), Size = new Vector2i(400, 200)};
 for (var i = 0; i < 5; i++)
 {
     chatWindow.AddChatMessage($"Message {i + 1}", Color.White);

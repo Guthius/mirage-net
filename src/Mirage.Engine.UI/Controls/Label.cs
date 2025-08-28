@@ -54,7 +54,7 @@ public sealed class Label(Style style) : Control
         
         var y = 0f;
         
-        var height = Height / _lines.Length;
+        var height = Size.Y / _lines.Length;
         for (var i = 0; i < lines.Length; i++)
         {
             var text = _lines[i] = new Text();
@@ -79,8 +79,8 @@ public sealed class Label(Style style) : Control
         return (int) (HorizontalAlignment switch
         {
             HorizontalAlignment.Left => 0f,
-            HorizontalAlignment.Center => (Width - size.Width) / 2,
-            HorizontalAlignment.Right => Width - size.Width,
+            HorizontalAlignment.Center => (Size.X - size.Width) / 2,
+            HorizontalAlignment.Right => Size.X - size.Width,
             _ => 0f
         });
     }

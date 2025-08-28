@@ -18,7 +18,7 @@ public class Frame : Control
 
         var borderSize = BorderSize * 2;
 
-        rectangle.Size = new Vector2f(Width - borderSize, Height - borderSize);
+        rectangle.Size = new Vector2f(Size.X - borderSize, Size.Y - borderSize);
         rectangle.FillColor = BackColor;
         rectangle.OutlineColor = BorderColor;
         rectangle.OutlineThickness = BorderSize;

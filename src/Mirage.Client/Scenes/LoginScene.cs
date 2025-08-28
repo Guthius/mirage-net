@@ -14,8 +14,7 @@ public sealed class LoginScene : Scene
     private readonly Label _statusLabel = new(TempStyle.Style)
     {
         Position = new Vector2f(10, 572),
-        Width = 200,
-        Height = 25,
+        Size = new Vector2i(200, 25),
         TextColor = Color.White
     };
 
@@ -25,6 +24,11 @@ public sealed class LoginScene : Scene
         UI.Add(_statusLabel);
         UI.Add(_loginWindow);
 
+        var loader = new WindowLoader("Default");
+        var window = loader.Load("WinLogin");
+
+        UI.Add(window);
+        
         _loginWindow.Login += Login;
         _loginWindow.Cancel += sceneManager.SwitchTo<MainMenuScene>;
         _loginWindow.MoveToCenter();

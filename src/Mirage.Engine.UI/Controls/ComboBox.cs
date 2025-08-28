@@ -1,18 +1,15 @@
-﻿using Mirage.Engine.UI.Controls.Utils;
+﻿using Mirage.Engine.UI.Styles;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 
 namespace Mirage.Engine.UI.Controls;
 
-public sealed class ComboBox : Control
+public sealed class ComboBox(Style style) : Control
 {
-    private readonly Texture _texture = new("Content/Blue_TextBox.png");
-    private readonly Texture _textureDisabled = new("Content/Blue_TextBox_Disabled.png");
-    private readonly NineSlice _background = new(3, 3, 3, 3, new IntRect(0, 0, 12, 12));
-    private readonly Font _font = new("Content/Fonts/Coolvetica Rg.otf");
-    private readonly Texture _dropDownArrowTexture = new("Content/Blue_DropDown_Arrow.png");
-    private readonly Sprite _dropDownArrowSprite;
+    private readonly IStylePart? _stylePartNormal = style.GetPart("ComboBox.Normal");
+    private readonly IStylePart? _stylePartDisabled = style.GetPart("ComboBox.Disabled");
+    private readonly Sprite? _spriteArrow = style.GetSprite("ComboBox.Arrow");
     private readonly Text _text = new();
     private bool _update = true;
     private Panel? _popup;
@@ -21,25 +18,18 @@ public sealed class ComboBox : Control
     public List<object> Items { get; } = [];
     public object? SelectedItem { get; set; }
 
-    public ComboBox()
+    private IStylePart? GetActiveStylePart()
     {
-        _dropDownArrowSprite = new Sprite();
-        _dropDownArrowSprite.Texture = _dropDownArrowTexture;
+        return Enabled ? _stylePartNormal : _stylePartDisabled;
     }
 
     public override void Draw(RenderTarget target, RenderStates states)
     {
-        states.Texture = _texture;
         states.Transform *= Transform;
 
-        var arrowX = Width - _dropDownArrowTexture.Size.X - 4;
-        var arrowY = (Height - _dropDownArrowTexture.Size.Y) / 2;
+        GetActiveStylePart()?.Draw(target, states, Size);
 
-        _dropDownArrowSprite.Position = new Vector2f(arrowX, arrowY);
-
-        target.Draw(_background, states);
-        target.Draw(_dropDownArrowSprite, states);
-
+        DrawArrow(target, states);
         DrawSelectedItem(target, states);
 
         if (_popup is null)
@@ -48,6 +38,21 @@ public sealed class ComboBox : Control
         }
 
         target.Draw(_popup, states);
+    }
+
+    private void DrawArrow(RenderTarget target, RenderStates states)
+    {
+        if (_spriteArrow is null)
+        {
+            return;
+        }
+
+        var arrowX = Size.X - _spriteArrow.TextureRect.Width - 4;
+        var arrowY = (Size.Y - _spriteArrow.TextureRect.Height) / 2;
+
+        _spriteArrow.Position = new Vector2f(arrowX, arrowY);
+
+        target.Draw(_spriteArrow, states);
     }
 
     private void DrawSelectedItem(RenderTarget target, RenderStates states)
@@ -69,18 +74,13 @@ public sealed class ComboBox : Control
 
     private void UpdateText()
     {
-        _text.CharacterSize = 14;
+        _text.CharacterSize = (uint) FontSize;
         _text.DisplayedString = SelectedItem?.ToString();
-        _text.Font = _font;
+        _text.Font = Font;
 
-        var y = (Height - _text.CharacterSize) / 2;
+        var y = (Size.Y - _text.CharacterSize) / 2;
 
         _text.Position = new Vector2f(5, y);
-    }
-
-    protected override void OnSizeChanged()
-    {
-        _background.Size = new Vector2i(Width, Height);
     }
 
     protected override void OnMousePressed(int x, int y, Mouse.Button button)
@@ -123,11 +123,10 @@ public sealed class ComboBox : Control
     {
         const int padding = 3;
 
-        _popup = new Panel
+        _popup = new Panel(style)
         {
-            Position = new Vector2f(0, Height),
-            Width = Width,
-            Height = Items.Count * ItemHeight + padding * 2
+            Position = new Vector2f(0, Size.Y),
+            Size = new Vector2i(Size.X, Items.Count * ItemHeight + padding * 2)
         };
 
         var y = padding;
@@ -137,8 +136,7 @@ public sealed class ComboBox : Control
             {
                 Position = new Vector2f(padding, y),
                 Text = item.ToString() ?? string.Empty,
-                Width = _popup.Width - padding * 2,
-                Height = ItemHeight,
+                Size = new Vector2i(_popup.Size.X - padding * 2, ItemHeight)
             });
 
             y += ItemHeight;
@@ -177,7 +175,7 @@ public sealed class ComboBox : Control
 
             var rectangle = new RectangleShape
             {
-                Size = new Vector2f(Width, Height),
+                Size = new Vector2f(Size.X, Size.Y),
                 FillColor = GetBackColor()
             };
 
@@ -209,7 +207,7 @@ public sealed class ComboBox : Control
             _text.Font = _font;
             _text.DisplayedString = Text;
 
-            var y = (Height - _text.CharacterSize) / 2 - 2;
+            var y = (Size.Y - _text.CharacterSize) / 2 - 2;
 
             _text.Position = new Vector2f(5, (int) y);
         }

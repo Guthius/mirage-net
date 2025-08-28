@@ -5,12 +5,10 @@ namespace Mirage.Engine.UI.Controls;
 
 public sealed class WindowLoader
 {
-    public static WindowLoader Instance { get; } = new("Crystalshire");
-
     private readonly string _basePath;
     private readonly WindowFactory _windowFactory;
-    private readonly Dictionary<string, ControlFactory<Control>> _controlFactories;
-    
+    private readonly Dictionary<string, IControlFactory<Control>> _controlFactories;
+
     public WindowLoader(string skinName)
     {
         _basePath = Path.Combine("Content", "Skins", skinName);
@@ -18,21 +16,25 @@ public sealed class WindowLoader
         var skin = new Skin(_basePath);
 
         _windowFactory = new WindowFactory(skin);
-        _controlFactories = new Dictionary<string, ControlFactory<Control>>(StringComparer.OrdinalIgnoreCase)
+        _controlFactories = new Dictionary<string, IControlFactory<Control>>(StringComparer.OrdinalIgnoreCase)
         {
-            // {"Button", new ButtonFactory(skin)},
-            // {"CheckBox", new CheckBoxFactory(skin)},
-            // {"HScroll", new HScrollLoader(skin)},
-            // {"Label", new LabelFactory(skin)},
-            // {"PictureBox", new PictureBoxFactory(skin)},
-            // {"TextBox", new TextBoxFactory(skin)},
-            // {"VScroll", new VScrollLoader(skin)}
+            {"Button", new ButtonFactory(skin)},
+            {"CheckBox", new CheckBoxFactory(skin)},
+            {"ComboBox", new ComboBoxFactory(skin)},
+            {"Frame", new FrameFactory(skin)},
+            {"HScroll", new HScrollFactory(skin)},
+            {"Label", new LabelFactory(skin)},
+            {"Panel", new PanelFactory(skin)},
+            {"PictureBox", new PictureBoxFactory(skin)},
+            {"RadioButton", new RadioButtonFactory(skin)},
+            {"TextBox", new TextBoxFactory(skin)},
+            {"VScroll", new VScrollFactory(skin)}
         };
     }
 
     public Window Load(string windowName)
     {
-        var path = Path.Combine(_basePath, "Layouts", windowName + ".xml");
+        var path = Path.Combine(_basePath, "Windows", windowName + ".xml");
         if (!File.Exists(path))
         {
             throw new InvalidOperationException(
@@ -55,16 +57,12 @@ public sealed class WindowLoader
             throw new XmlException("Window layout file is missing root 'Window' element.");
         }
 
-        return ReadWindow(xmlReader, windowName);
+        return ReadWindow(xmlReader);
     }
 
-    private Window ReadWindow(XmlReader xmlReader, string windowName)
+    private Window ReadWindow(XmlReader xmlReader)
     {
         var window = _windowFactory.Create(xmlReader, null);
-
-        // window.Name = windowName;
-        //
-        // WindowManager.Add(window);
 
         while (xmlReader.Read())
         {
@@ -87,7 +85,7 @@ public sealed class WindowLoader
         {
             var control = factory.Create(xmlReader, window);
 
-            // window.Controls.Add(control);
+            window.Add(control);
         }
 
         if (!xmlReader.IsEmptyElement)

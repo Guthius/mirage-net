@@ -17,8 +17,7 @@ public sealed class GameScene : Scene
     private readonly ChatPanel _chatPanel = new()
     {
         Position = new Vector2f(2, 474),
-        Height = 122,
-        Width = 600
+        Size = new Vector2i(122, 600)
     };
 
     public GameScene(Game game)
@@ -28,8 +27,7 @@ public sealed class GameScene : Scene
         _chatInput = new TextBox(TempStyle.Style)
         {
             Position = new Vector2f(0, 600 - 28),
-            Width = 800,
-            Height = 28
+            Size = new Vector2i(800, 28)
         };
 
         _chatInput.Submit += () =>

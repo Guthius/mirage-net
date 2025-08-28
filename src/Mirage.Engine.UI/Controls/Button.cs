@@ -7,10 +7,10 @@ namespace Mirage.Engine.UI.Controls;
 
 public sealed class Button : Control
 {
-    private readonly StylePart? _stylePartNormal;
-    private readonly StylePart? _stylePartHot;
-    private readonly StylePart? _stylePartPressed;
-    private readonly StylePart? _stylePartDisabled;
+    private readonly IStylePart? _stylePartNormal;
+    private readonly IStylePart? _stylePartHot;
+    private readonly IStylePart? _stylePartPressed;
+    private readonly IStylePart? _stylePartDisabled;
     private readonly Text _text = new();
     private bool _mousePressed;
     private bool _mouseOver;
@@ -29,7 +29,7 @@ public sealed class Button : Control
         TabStop = true;
     }
 
-    private StylePart? GetActiveStylePart()
+    private IStylePart? GetActiveStylePart()
     {
         if (!Enabled || (Parent is not null && !Parent.Enabled))
         {
@@ -55,11 +55,7 @@ public sealed class Button : Control
 
         states.Transform *= Transform;
 
-        var stylePart = GetActiveStylePart();
-        if (stylePart is not null)
-        {
-            target.Draw(stylePart, states);
-        }
+        GetActiveStylePart()?.Draw(target, states, Size);
 
         DrawText(target, states);
         DrawChildren(target, states);
@@ -83,18 +79,10 @@ public sealed class Button : Control
         _text.DisplayedString = Text;
 
         var size = _text.GetLocalBounds();
-        var x = (Width - size.Width) / 2;
-        var y = (Height - _text.CharacterSize) / 2 - 2;
+        var x = (Size.X - size.Width) / 2;
+        var y = (Size.Y - _text.CharacterSize) / 2 - 2;
 
         _text.Position = new Vector2f((int) x, (int) y);
-    }
-
-    protected override void OnSizeChanged()
-    {
-        _stylePartNormal?.Size = new Vector2f(Width, Height);
-        _stylePartHot?.Size = new Vector2f(Width, Height);
-        _stylePartPressed?.Size = new Vector2f(Width, Height);
-        _stylePartDisabled?.Size = new Vector2f(Width, Height);
     }
 
     protected override void OnMouseEnter()
@@ -122,7 +110,7 @@ public sealed class Button : Control
     {
         ReleaseMouse();
 
-        if (x >= 0 && x < Width && y >= 0 && y < Height)
+        if (x >= 0 && x < Size.X && y >= 0 && y < Size.Y)
         {
             OnClick();
         }

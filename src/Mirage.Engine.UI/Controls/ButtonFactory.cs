@@ -1,0 +1,27 @@
+﻿using System.Xml;
+using Mirage.Engine.UI.Skins;
+using SFML.System;
+
+namespace Mirage.Engine.UI.Controls;
+
+internal sealed class ButtonFactory(ISkin skin) : ControlFactory<Button>(skin)
+{
+    private readonly ISkin _skin = skin;
+
+    public override Button Create(XmlReader xmlReader, Window? parent)
+    {
+        var props = ReadCoreProperties(xmlReader, parent);
+
+        return new Button(ReadStyle(xmlReader, _skin.DefaultStyleName))
+        {
+            Name = props.Name,
+            Position = new Vector2f(props.X, props.Y),
+            Size = new Vector2i(props.Width, props.Height),
+            Visible = props.Visible,
+            Text = props.Text,
+            Enabled = props.Enabled,
+            Font = props.Font,
+            FontSize = props.FontSize
+        };
+    }
+}

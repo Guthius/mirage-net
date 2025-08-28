@@ -14,8 +14,8 @@ public sealed class MainMenuWindow : Window
     public MainMenuWindow() : base(TempStyle.Style)
     {
         Text = SR.GameName;
-
-        Width = 190;
+        
+        Size = new Vector2i(190, 0);
 
         CreateButtons(
             (SR.Login, () => GoToLogin?.Invoke()),
@@ -37,8 +37,7 @@ public sealed class MainMenuWindow : Window
             var button = new Button(TempStyle.Style)
             {
                 Position = new Vector2f(padding, y),
-                Width = Width - padding * 2,
-                Height = buttonHeight,
+                Size = new Vector2i(Size.X - padding * 2, buttonHeight),
                 Text = text
             };
 
@@ -48,7 +47,7 @@ public sealed class MainMenuWindow : Window
 
             y += buttonHeight + spacing;
         }
-
-        Height = y + padding - spacing;
+        
+        Size = new Vector2i(Size.X, y + padding - spacing);
     }
 }

@@ -11,8 +11,8 @@ public sealed class TextBox : Control
     private const int CaretWidth = 2;
     private const int CaretHeight = 14;
 
-    private readonly StylePart? _stylePartNormal;
-    private readonly StylePart? _stylePartDisabled;
+    private readonly IStylePart? _stylePartNormal;
+    private readonly IStylePart? _stylePartDisabled;
     private readonly Text _text = new();
     private readonly Clock _clock = new();
     private bool _showCaret;
@@ -32,7 +32,7 @@ public sealed class TextBox : Control
         TabStop = true;
     }
 
-    private StylePart? GetActiveStylePart()
+    private IStylePart? GetActiveStylePart()
     {
         if (!Enabled || (Parent is not null && !Parent.Enabled))
         {
@@ -48,11 +48,7 @@ public sealed class TextBox : Control
 
         states.Transform *= Transform;
 
-        var part = GetActiveStylePart();
-        if (part is not null)
-        {
-            target.Draw(part, states);
-        }
+        GetActiveStylePart()?.Draw(target, states, Size);
 
         target.Draw(_text, states);
 
@@ -91,7 +87,7 @@ public sealed class TextBox : Control
 
         var size = _text.GetLocalBounds();
         var x = _text.Position.X + size.Width + 2;
-        var y = (Height - CaretHeight) / 2;
+        var y = (Size.Y - CaretHeight) / 2;
 
         var caret = new RectangleShape(new Vector2f(CaretWidth, CaretHeight));
 
@@ -111,12 +107,6 @@ public sealed class TextBox : Control
         var y = (26 - _text.CharacterSize) / 2 - 3;
 
         _text.Position = new Vector2f(4, (int) y);
-    }
-
-    protected override void OnSizeChanged()
-    {
-        _stylePartNormal?.Size = new Vector2f(Width, Height);
-        _stylePartDisabled?.Size = new Vector2f(Width, Height);
     }
 
     protected override void OnTextEntered(string character)
