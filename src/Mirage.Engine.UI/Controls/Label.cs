@@ -34,7 +34,7 @@ public sealed class Label(Style style) : Control
             _updateText = false;
         }
 
-        states.Transform *= Transform;
+        states.Transform.Translate(Position.X, Position.Y);
 
         foreach (var line in _lines)
         {

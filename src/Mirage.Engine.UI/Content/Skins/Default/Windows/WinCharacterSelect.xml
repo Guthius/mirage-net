@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window Size="320, 265" Text="Character Select" StartPosition="CenterScreen" Font="Bold" Visible="False">
+
+    <Panel Position="20, 40" Size="80, 100"/>
+    <Label Name="Slot1Name" Position="20, 40" Size="80, 100" Text="Empty" TextAlignment="Center"/>
+    <Button Name="Slot1Select" Position="20, 145" Size="80, 25" Text="Select"/>
+    <Button Name="Slot1Delete" Position="20, 175" Size="80, 25" Text="Delete"/>
+
+    <Panel Position="120, 40" Size="80, 100"/>
+    <Label Name="Slot2Name" Position="120, 40" Size="80, 100" Text="Empty" TextAlignment="Center"/>
+    <Button Name="Slot2Select" Position="120, 145" Size="80, 25" Text="Select"/>
+    <Button Name="Slot2Delete" Position="120, 175" Size="80, 25" Text="Delete"/>
+
+    <Panel Position="224, 40" Size="80, 100"/>
+    <Label Name="Slot3Name" Position="224, 40" Size="80, 100" Text="Empty" TextAlignment="Center"/>
+    <Button Name="Slot3Select" Position="224, 145" Size="80, 25" Text="Select"/>
+    <Button Name="Slot3Delete" Position="224, 175" Size="80, 25" Text="Delete"/>
+    
+    <Button Name="CreateButton" Position="20, 220" Size="125, 25" Text="Create Character"/>
+    <Button Name="CancelButton" Position="224, 220" Size="80, 25" Text="Cancel"/>
+
+</Window>

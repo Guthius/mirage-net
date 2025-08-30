@@ -3,5 +3,5 @@
 public interface ISceneManager
 {
     IScene? Current { get; }
-    void SwitchTo<TScene>() where TScene : class, IScene;
+    TScene SwitchTo<TScene>() where TScene : class, IScene;
 }

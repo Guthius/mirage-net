@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window Size="800, 600" BackColor="#00000088" ShowFrame="False" Visible="False">
+    <Window Name="ConfirmWindow" Size="340, 120" Text="Confirm" StartPosition="CenterScreen" Font="Bold">
+        <Label Name="ConfirmLabel" Position="15, 35" Size="310, 40" Text="Are you sure you want to delete this character?" TextAlignment="Center"/>
+        <Button Name="ConfirmButton" Position="155, 80" Size="80, 25" Text="Confirm"/>
+        <Button Name="CancelButton" Position="245, 80" Size="80, 25" Text="Cancel"/>
+    </Window>
+</Window>

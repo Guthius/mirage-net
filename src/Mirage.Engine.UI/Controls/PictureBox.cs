@@ -37,7 +37,7 @@ public sealed class PictureBox : Control
             return;
         }
         
-        states.Transform *= Transform;
+        states.Transform.Translate(Position.X, Position.Y);
         
         target.Draw(_sprite, states);
     }

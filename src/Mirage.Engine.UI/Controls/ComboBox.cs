@@ -25,7 +25,7 @@ public sealed class ComboBox(Style style) : Control
 
     public override void Draw(RenderTarget target, RenderStates states)
     {
-        states.Transform *= Transform;
+        states.Transform.Translate(Position.X, Position.Y);
 
         GetActiveStylePart()?.Draw(target, states, Size);
 
@@ -125,7 +125,7 @@ public sealed class ComboBox(Style style) : Control
 
         _popup = new Panel(style)
         {
-            Position = new Vector2f(0, Size.Y),
+            Position = new Vector2i(0, Size.Y),
             Size = new Vector2i(Size.X, Items.Count * ItemHeight + padding * 2)
         };
 
@@ -134,7 +134,7 @@ public sealed class ComboBox(Style style) : Control
         {
             _popup.Add(new ComboBoxItem(item)
             {
-                Position = new Vector2f(padding, y),
+                Position = new Vector2i(padding, y),
                 Text = item.ToString() ?? string.Empty,
                 Size = new Vector2i(_popup.Size.X - padding * 2, ItemHeight)
             });
@@ -171,7 +171,7 @@ public sealed class ComboBox(Style style) : Control
                 _update = false;
             }
 
-            states.Transform *= Transform;
+            states.Transform.Translate(Position.X, Position.Y);
 
             var rectangle = new RectangleShape
             {

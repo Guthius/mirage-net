@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window Size="300, 225" Text="Create Account" StartPosition="CenterScreen" Font="Bold" Visible="False">
+    <Label Text="Enter an account name and password.{br}You can name yourself whatever you want,{br}we have no restrictions on names."
+           Position="10, 32" Size="280, 69" TextAlignment="Center"/>
+    <Label Text="Account Name" Position="20, 110" Size="95, 25" TextAlignment="Right"/>
+    <TextBox Name="AccountNameTextBox" Position="125, 110" Size="160, 25"/>
+    <Label Text="Password" Position="20, 140" Size="95, 25" TextAlignment="Right"/>
+    <TextBox Name="PasswordTextBox" Position="125, 140" Size="160, 25" IsPassword="True"/>
+    <Button Name="CreateButton" Text="Create" Position="115, 185" Size="80, 25"/>
+    <Button Name="CancelButton" Text="Cancel" Position="205, 185" Size="80, 25"/>
+</Window>

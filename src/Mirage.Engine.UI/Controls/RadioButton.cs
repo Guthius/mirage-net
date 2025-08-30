@@ -37,7 +37,7 @@ public sealed class RadioButton : Control
     {
         UpdateText();
 
-        states.Transform *= Transform;
+        states.Transform.Translate(Position.X, Position.Y);
 
         DrawSprite(target, states);
 
@@ -131,7 +131,7 @@ public sealed class RadioButton : Control
         }
 
         var otherRadioButtonsInGroup = Parent
-            .Children<RadioButton>()
+            .GetChildrenOfType<RadioButton>()
             .Where(radioButton =>
                 radioButton != this &&
                 radioButton.Group == Group);

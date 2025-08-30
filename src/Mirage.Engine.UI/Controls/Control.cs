@@ -4,31 +4,16 @@ using SFML.Window;
 
 namespace Mirage.Engine.UI.Controls;
 
-public class Control : Transformable, Drawable
+public class Control : Drawable
 {
     private readonly List<Control> _children = [];
-    private Control? _mouseTarget;
     private Control? _activeControl;
-    private bool _hot;
+    private Control? _mouseTarget;
+    private bool _mouseOver;
 
     public string Name { get; set; } = string.Empty;
-
-    public Vector2i Size
-    {
-        get => field;
-        set
-        {
-            if (field == value)
-            {
-                return;
-            }
-
-            field = value;
-            
-            OnSizeChanged();
-        }
-    }
-    
+    public Vector2i Position { get; set; }
+    public Vector2i Size { get; set; }
     public bool Enabled { get; set; } = true;
     public Control? Parent { get; private set; }
     public Control? ActiveControl => Parent?.ActiveControl ?? _activeControl;
@@ -37,26 +22,7 @@ public class Control : Transformable, Drawable
     public bool Visible { get; set; } = true;
     public Font? Font { get; set; }
     public int FontSize { get; set; } = 14;
-
-    public TControl? Get<TControl>() where TControl : Control
-    {
-        var child = _children.OfType<TControl>().FirstOrDefault();
-        if (child is not null)
-        {
-            return child;
-        }
-
-        foreach (var control in _children)
-        {
-            var result = control.Get<TControl>();
-            if (result is not null)
-            {
-                return result;
-            }
-        }
-
-        return null;
-    }
+    public object? Tag { get; set; }
 
     protected bool TabStop { get; set; }
 
@@ -65,8 +31,6 @@ public class Control : Transformable, Drawable
         control.Parent = this;
 
         _children.Add(control);
-
-        control.OnLayout();
     }
 
     public void Remove(Control control)
@@ -77,14 +41,6 @@ public class Control : Transformable, Drawable
         }
     }
 
-    protected virtual void OnLayout()
-    {
-        foreach (var child in _children)
-        {
-            child.OnLayout();
-        }
-    }
-
     public virtual void Draw(RenderTarget target, RenderStates states)
     {
         if (!Visible)
@@ -92,7 +48,7 @@ public class Control : Transformable, Drawable
             return;
         }
 
-        states.Transform *= Transform;
+        states.Transform.Translate(Position.X, Position.Y);
 
         DrawChildren(target, states);
     }
@@ -105,14 +61,36 @@ public class Control : Transformable, Drawable
         }
     }
 
+    internal void MoveToFront(Control control)
+    {
+        if (_children.Count < 2)
+        {
+            return;
+        }
+
+        var index = _children.IndexOf(control);
+        if (index == -1)
+        {
+            return;
+        }
+
+        _children.RemoveAt(index);
+        _children.Add(control);
+    }
+
     public Control? GetChildAt(int x, int y)
     {
         return _children.FirstOrDefault(child => child.Contains(x, y));
     }
 
-    public IEnumerable<T> Children<T>() where T : Control
+    public IEnumerable<T> GetChildrenOfType<T>() where T : Control
     {
         return _children.OfType<T>();
+    }
+
+    public TControl Get<TControl>(string name) where TControl : Control
+    {
+        return _children.OfType<TControl>().First(control => control.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
     }
 
     protected void CaptureMouse()
@@ -142,9 +120,21 @@ public class Control : Transformable, Drawable
         return x >= Position.X && x < Position.X + Size.X && y >= Position.Y && y < Position.Y + Size.Y;
     }
 
-    protected Vector2f GetGlobalPosition()
+    public Vector2i PointToLocal(Vector2i pt)
     {
-        var pt = Position;
+        pt -= Position;
+
+        for (var parent = Parent; parent is not null; parent = parent.Parent)
+        {
+            pt -= parent.Position;
+        }
+
+        return pt;
+    }
+
+    public Vector2i PointToGlobal(Vector2i pt)
+    {
+        pt += Position;
 
         for (var parent = Parent; parent is not null; parent = parent.Parent)
         {
@@ -154,29 +144,28 @@ public class Control : Transformable, Drawable
         return pt;
     }
 
-    private void FindFocusTarget(int x, int y)
+    private void FindFocusTarget(Vector2i pt)
     {
         if (Parent is not null) // Focus is handled by the root control
         {
             return;
         }
 
-        var target = GetControlAt(this, x, y);
+        var target = GetControlAt(this, pt);
 
         Activate(target);
 
-        static Control? GetControlAt(Control parent, int x, int y)
+        static Control? GetControlAt(Control parent, Vector2i pt)
         {
-            var child = parent._children.FirstOrDefault(control => control.Contains(x, y));
+            var child = parent._children.Where(c => c.Visible).FirstOrDefault(x => x.Contains(pt.X, pt.Y));
             if (child is null || !child.Visible)
             {
                 return null;
             }
 
-            var lx = x - (int) child.Position.X;
-            var ly = y - (int) child.Position.Y;
+            pt -= child.Position;
 
-            return GetControlAt(child, lx, ly) ?? child;
+            return GetControlAt(child, pt) ?? child;
         }
     }
 
@@ -184,25 +173,28 @@ public class Control : Transformable, Drawable
     {
         if (_mouseTarget is not null)
         {
-            var pt = _mouseTarget.GetGlobalPosition();
+            var pt = new Vector2i(x, y);
 
-            _mouseTarget.OnMousePressed(x - (int) pt.X, y - (int) pt.Y, button);
+            pt = _mouseTarget.PointToLocal(pt);
+
+            _mouseTarget.OnMousePressed(pt.X, pt.Y, button);
             return;
         }
 
         if (button == Mouse.Button.Left)
         {
-            FindFocusTarget(x, y);
+            FindFocusTarget(new Vector2i(x, y));
         }
 
-        OnMousePressed(x - (int) Position.X, y - (int) Position.Y, button);
+        OnMousePressed(x - Position.X, y - Position.Y, button);
 
-        var lx = x - (int) Position.X;
-        var ly = y - (int) Position.Y;
+        var lx = x - Position.X;
+        var ly = y - Position.Y;
 
-        for (var i = _children.Count - 1; i >= 0; i--)
+        var children = _children.Where(c => c.Visible).ToArray();
+        for (var i = children.Length - 1; i >= 0; i--)
         {
-            var child = _children[i];
+            var child = children[i];
             if (!child.Contains(lx, ly))
             {
                 continue;
@@ -217,20 +209,23 @@ public class Control : Transformable, Drawable
     {
         if (_mouseTarget is not null)
         {
-            var pt = _mouseTarget.GetGlobalPosition();
+            var pt = new Vector2i(x, y);
 
-            _mouseTarget.OnMouseReleased(x - (int) pt.X, y - (int) pt.Y, button);
+            pt = _mouseTarget.PointToLocal(pt);
+
+            _mouseTarget.OnMouseReleased(pt.X, pt.Y, button);
             return;
         }
 
         OnMouseReleased(x, y, button);
 
-        var lx = x - (int) Position.X;
-        var ly = y - (int) Position.Y;
+        var lx = x - Position.X;
+        var ly = y - Position.Y;
 
-        for (var i = _children.Count - 1; i >= 0; i--)
+        var children = _children.Where(c => c.Visible).ToArray();
+        for (var i = children.Length - 1; i >= 0; i--)
         {
-            var child = _children[i];
+            var child = children[i];
             if (!child.Contains(lx, ly))
             {
                 continue;
@@ -245,14 +240,16 @@ public class Control : Transformable, Drawable
     {
         if (_mouseTarget is not null)
         {
-            var pt = _mouseTarget.GetGlobalPosition();
+            var pt = new Vector2i(x, y);
 
-            _mouseTarget.OnMouseMove(x - (int) pt.X, y - (int) pt.Y);
+            pt = _mouseTarget.PointToLocal(pt);
+
+            _mouseTarget.OnMouseMove(pt.X, pt.Y);
             return;
         }
 
         var hot = Contains(x, y);
-        if (hot != _hot)
+        if (hot != _mouseOver)
         {
             switch (hot)
             {
@@ -266,16 +263,16 @@ public class Control : Transformable, Drawable
             }
         }
 
-        _hot = hot;
-        if (_hot)
+        _mouseOver = hot;
+        if (_mouseOver)
         {
             OnMouseMove(x, y);
         }
 
-        var lx = x - (int) Position.X;
-        var ly = y - (int) Position.Y;
+        var lx = x - Position.X;
+        var ly = y - Position.Y;
 
-        foreach (var child in _children)
+        foreach (var child in _children.Where(c => c.Visible))
         {
             child.HandleMouseMoved(lx, ly);
         }
@@ -301,9 +298,8 @@ public class Control : Transformable, Drawable
     {
     }
 
-    protected virtual void OnSizeChanged()
+    protected virtual void OnPositionChanged()
     {
-        OnLayout();
     }
 
     private void Activate(Control? control)

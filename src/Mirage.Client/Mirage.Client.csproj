@@ -46,9 +46,4 @@
         </Compile>
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Content\Skins\Blue\" />
-      <Folder Include="Scenes\MapEditor\" />
-    </ItemGroup>
-
 </Project>

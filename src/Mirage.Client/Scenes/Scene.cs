@@ -1,4 +1,4 @@
-﻿using Mirage.Engine.UI.Controls;
+﻿using Mirage.Engine.UI;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
@@ -9,7 +9,7 @@ public abstract class Scene : IScene
 {
     private bool _disposed;
 
-    public Control UI { get; } = new()
+    public UserInterface UI { get; } = new("Default")
     {
         Size = new Vector2i(800, 600)
     };
@@ -29,15 +29,6 @@ public abstract class Scene : IScene
     }
 
     protected virtual void OnHide()
-    {
-    }
-
-    public void ShowAlert(string alertMessage)
-    {
-        OnAlert(alertMessage);
-    }
-
-    protected virtual void OnAlert(string alertMessage)
     {
     }
 

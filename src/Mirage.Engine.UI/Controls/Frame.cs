@@ -11,8 +11,7 @@ public class Frame : Control
 
     public override void Draw(RenderTarget target, RenderStates states)
     {
-        states.Transform *= Transform;
-        states.Transform.Translate(BorderSize, BorderSize);
+        states.Transform.Translate(Position.X + BorderSize, Position.Y + BorderSize);
 
         var rectangle = new RectangleShape();
 

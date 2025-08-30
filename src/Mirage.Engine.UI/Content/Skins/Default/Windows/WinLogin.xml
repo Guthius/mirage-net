@@ -1,15 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Window Size="300, 175" Text="Login">
-
+<Window Size="300, 175" Text="Login" StartPosition="CenterScreen" Font="Bold" Visible="False">
     <Label Text="Account Name" Position="20, 40" Size="95, 25" TextAlignment="Right"/>
-    <Label Text="Password" Position="20, 70" Size="95, 25" TextAlignment="Right"/>
-
     <TextBox Name="AccountNameTextBox" Position="125, 40" Size="160, 25"/>
+    <Label Text="Password" Position="20, 70" Size="95, 25" TextAlignment="Right"/>
     <TextBox Name="PasswordTextBox" Position="125, 70" Size="160, 25" IsPassword="True"/>
-
-    <CheckBox Name="RememberMeCheckBox" Text="Remember Me" Position="125, 98" Size="160, 25"/>
-
+    <CheckBox Name="RememberMeCheckBox" Text="Remember Me" Position="125, 98" Size="160, 25" IsChecked="True"/>
     <Button Name="LoginButton" Text="Login" Position="115, 135" Size="80, 25"/>
     <Button Name="CancelButton" Text="Cancel" Position="205, 135" Size="80, 25"/>
-    
 </Window>

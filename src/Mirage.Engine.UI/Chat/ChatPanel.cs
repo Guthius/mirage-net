@@ -24,12 +24,6 @@ public sealed class ChatPanel : Control
         Add(_scrollBar);
     }
 
-    protected override void OnLayout()
-    {
-        _scrollBar.Position = new Vector2f(Size.X - ScrollbarWidth, 0);
-        _scrollBar.Size = new Vector2i(ScrollbarWidth, Size.Y);
-    }
-
     public override void Draw(RenderTarget target, RenderStates states)
     {
         _scrollBar.MaxValue = _messageHeight - Size.Y;
@@ -40,7 +34,7 @@ public sealed class ChatPanel : Control
         target.Draw(
             new Sprite(_messageTexture!.Texture)
             {
-                Position = Position
+                Position = new Vector2f(Position.X, Position.Y)
             },
             states);
 

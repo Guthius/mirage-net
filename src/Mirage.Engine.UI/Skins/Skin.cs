@@ -6,7 +6,6 @@ namespace Mirage.Engine.UI.Skins;
 
 public sealed class Skin : ISkin
 {
-    private readonly string _basePath;
     private readonly Texture _emptyTexture = new(1, 1);
     private readonly Lock _textureLock = new();
     private readonly Dictionary<string, Texture> _textures = new(StringComparer.OrdinalIgnoreCase);
@@ -14,18 +13,19 @@ public sealed class Skin : ISkin
     private readonly Dictionary<string, string> _properties = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Style> _styles = new(StringComparer.OrdinalIgnoreCase);
 
+    public string Path { get; }
     public string DefaultStyleName => GetPropertyString("DefaultStyle", "Blue");
-
-    public Skin(string basePath)
+    
+    public Skin(string path)
     {
-        _basePath = basePath;
+        Path = path;
 
         Load();
     }
 
     private void Load()
     {
-        var path = Path.Combine(_basePath, "Skin.xml");
+        var path = System.IO.Path.Combine(Path, "Skin.xml");
         if (!File.Exists(path))
         {
             return;
@@ -57,11 +57,14 @@ public sealed class Skin : ISkin
                     case "Properties":
                         ReadProperties(xmlReader);
                         break;
-                }
 
-                if (!xmlReader.IsEmptyElement)
-                {
-                    xmlReader.Skip();
+                    default:
+                        if (!xmlReader.IsEmptyElement)
+                        {
+                            xmlReader.Skip();
+                        }
+
+                        break;
                 }
             }
             else if (xmlReader.NodeType == XmlNodeType.EndElement)
@@ -110,10 +113,18 @@ public sealed class Skin : ISkin
             return;
         }
 
-        path = Path.Combine(_basePath, "Fonts", path);
+        path = System.IO.Path.Combine(Path, "Fonts", path);
         try
         {
-            _fonts[fontName] = new Font(path);
+            var font = new Font(path);
+
+            var smoothAttr = xmlReader.GetAttribute("Smooth");
+            if (!string.IsNullOrEmpty(smoothAttr) && bool.TryParse(smoothAttr, out var smooth))
+            {
+                font.SetSmooth(smooth);
+            }
+
+            _fonts[fontName] = font;
         }
         catch
         {
@@ -161,7 +172,7 @@ public sealed class Skin : ISkin
 
     public Texture GetTexture(string textureName)
     {
-        var path = Path.Combine(_basePath, "Textures", textureName);
+        var path = System.IO.Path.Combine(Path, "Textures", textureName);
 
         if (!File.Exists(path))
         {
@@ -202,7 +213,7 @@ public sealed class Skin : ISkin
             return style;
         }
 
-        var path = Path.Combine(_basePath, "Styles", styleName + ".xml");
+        var path = System.IO.Path.Combine(Path, "Styles", styleName + ".xml");
         if (!File.Exists(path))
         {
             throw new XmlException(
@@ -350,6 +361,6 @@ public sealed class Skin : ISkin
 
     public int GetPropertyInt32(string key, int defaultValue)
     {
-        return int.TryParse(GetPropertyString(key, defaultValue.ToString()), out var value) ? value : defaultValue;
+        return int.TryParse(GetPropertyString(key, string.Empty), out var value) ? value : defaultValue;
     }
 }

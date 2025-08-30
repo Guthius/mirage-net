@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Window Size="190, 205" Text="Mirage.NET" StartPosition="CenterScreen" Font="Bold">
+    <Button Position="15, 35" Size="160, 35" Text="Login" Name="LoginButton"/>
+    <Button Position="15, 75" Size="160, 35" Text="New Account" Name="RegisterButton"/>
+    <Button Position="15, 115" Size="160, 35" Text="Delete Account" Name="DeleteButton"/>
+    <Button Position="15, 155" Size="160, 35" Text="Quit" Name="QuitButton"/>
+</Window>

@@ -1,8 +1,8 @@
-﻿using System.Numerics;
-using System.Xml;
+﻿using System.Xml;
 using Mirage.Engine.UI.Skins;
 using Mirage.Engine.UI.Styles;
 using SFML.Graphics;
+using SFML.System;
 
 namespace Mirage.Engine.UI.Controls;
 
@@ -14,8 +14,8 @@ internal abstract class ControlFactory<TControl>(ISkin skin) : IControlFactory<T
     protected sealed record ControlProperties(
         string Name,
         string Text,
-        float X,
-        float Y,
+        int X,
+        int Y,
         int Width,
         int Height,
         bool Enabled,
@@ -23,7 +23,7 @@ internal abstract class ControlFactory<TControl>(ISkin skin) : IControlFactory<T
         Font? Font,
         int FontSize);
 
-    public abstract TControl Create(XmlReader xmlReader, Window? parent);
+    public abstract TControl Create(XmlReader xmlReader, Control? parent);
 
     protected static string ReadString(XmlReader xmlReader, string attributeName, string defaultValue = "")
     {
@@ -78,7 +78,7 @@ internal abstract class ControlFactory<TControl>(ISkin skin) : IControlFactory<T
         return defaultValue;
     }
 
-    protected static Vector2 ReadVector(XmlReader xmlReader, string attributeName, Vector2 defaultValue)
+    protected static Vector2i ReadVector(XmlReader xmlReader, string attributeName, Vector2i defaultValue)
     {
         var value = xmlReader.GetAttribute(attributeName);
         if (string.IsNullOrEmpty(value))
@@ -92,7 +92,7 @@ internal abstract class ControlFactory<TControl>(ISkin skin) : IControlFactory<T
             return defaultValue;
         }
 
-        return new Vector2(x, y);
+        return new Vector2i(x, y);
     }
 
     protected Style ReadStyle(XmlReader xmlReader, string defaultStyleName)
@@ -102,10 +102,10 @@ internal abstract class ControlFactory<TControl>(ISkin skin) : IControlFactory<T
         return skin.GetStyle(styleName);
     }
 
-    protected ControlProperties ReadCoreProperties(XmlReader xmlReader, Window? parent)
+    protected ControlProperties ReadCoreProperties(XmlReader xmlReader, Control? parent)
     {
-        var position = ReadVector(xmlReader, "Position", Vector2.Zero);
-        var size = ReadVector(xmlReader, "Size", Vector2.Zero);
+        var position = ReadVector(xmlReader, "Position", new Vector2i(0, 0));
+        var size = ReadVector(xmlReader, "Size", new Vector2i(0, 0));
 
         var x = position.X;
         var y = position.Y;
@@ -130,8 +130,8 @@ internal abstract class ControlFactory<TControl>(ISkin skin) : IControlFactory<T
             Name: ReadString(xmlReader, "Name"),
             Text: ReadString(xmlReader, "Text"),
             X: x, Y: y,
-            Width: (int) size.X,
-            Height: (int) size.Y,
+            Width: size.X,
+            Height: size.Y,
             Enabled: ReadBoolean(xmlReader, "Enabled", true),
             Visible: ReadBoolean(xmlReader, "Visible", true),
             Font: skin.GetFont(fontName),

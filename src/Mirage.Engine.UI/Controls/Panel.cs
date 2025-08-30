@@ -9,7 +9,7 @@ public class Panel(Style style) : Control
 
     public override void Draw(RenderTarget target, RenderStates states)
     {
-        states.Transform *= Transform;
+        states.Transform.Translate(Position.X, Position.Y);
 
         _stylePartBackground?.Draw(target, states, Size);
 

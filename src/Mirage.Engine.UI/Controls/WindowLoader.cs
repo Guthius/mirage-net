@@ -3,38 +3,28 @@ using Mirage.Engine.UI.Skins;
 
 namespace Mirage.Engine.UI.Controls;
 
-public sealed class WindowLoader
+public sealed class WindowLoader(Skin skin)
 {
-    private readonly string _basePath;
-    private readonly WindowFactory _windowFactory;
-    private readonly Dictionary<string, IControlFactory<Control>> _controlFactories;
-
-    public WindowLoader(string skinName)
+    private readonly WindowFactory _windowFactory = new(skin);
+    private readonly Dictionary<string, IControlFactory<Control>> _controlFactories = new(StringComparer.OrdinalIgnoreCase)
     {
-        _basePath = Path.Combine("Content", "Skins", skinName);
+        {"Button", new ButtonFactory(skin)},
+        {"CheckBox", new CheckBoxFactory(skin)},
+        {"ComboBox", new ComboBoxFactory(skin)},
+        {"Frame", new FrameFactory(skin)},
+        {"HScroll", new HScrollFactory(skin)},
+        {"Label", new LabelFactory(skin)},
+        {"Panel", new PanelFactory(skin)},
+        {"PictureBox", new PictureBoxFactory(skin)},
+        {"RadioButton", new RadioButtonFactory(skin)},
+        {"TextBox", new TextBoxFactory(skin)},
+        {"VScroll", new VScrollFactory(skin)},
+        {"Window", new WindowFactory(skin)}
+    };
 
-        var skin = new Skin(_basePath);
-
-        _windowFactory = new WindowFactory(skin);
-        _controlFactories = new Dictionary<string, IControlFactory<Control>>(StringComparer.OrdinalIgnoreCase)
-        {
-            {"Button", new ButtonFactory(skin)},
-            {"CheckBox", new CheckBoxFactory(skin)},
-            {"ComboBox", new ComboBoxFactory(skin)},
-            {"Frame", new FrameFactory(skin)},
-            {"HScroll", new HScrollFactory(skin)},
-            {"Label", new LabelFactory(skin)},
-            {"Panel", new PanelFactory(skin)},
-            {"PictureBox", new PictureBoxFactory(skin)},
-            {"RadioButton", new RadioButtonFactory(skin)},
-            {"TextBox", new TextBoxFactory(skin)},
-            {"VScroll", new VScrollFactory(skin)}
-        };
-    }
-
-    public Window Load(string windowName)
+    public Window Load(string windowName, Control? parent = null)
     {
-        var path = Path.Combine(_basePath, "Windows", windowName + ".xml");
+        var path = Path.Combine(skin.Path, "Windows", windowName + ".xml");
         if (!File.Exists(path))
         {
             throw new InvalidOperationException(
@@ -57,40 +47,63 @@ public sealed class WindowLoader
             throw new XmlException("Window layout file is missing root 'Window' element.");
         }
 
-        return ReadWindow(xmlReader);
+        return ReadWindow(xmlReader, parent);
     }
 
-    private Window ReadWindow(XmlReader xmlReader)
+    private Window ReadWindow(XmlReader xmlReader, Control? parent)
     {
-        var window = _windowFactory.Create(xmlReader, null);
+        var window = _windowFactory.Create(xmlReader, parent);
+
+        parent?.Add(window);
+
+        ReadControls(xmlReader, window);
+
+        return window;
+    }
+
+    private void ReadControls(XmlReader xmlReader, Control parent)
+    {
+        if (xmlReader.IsEmptyElement)
+        {
+            xmlReader.Skip();
+
+            return;
+        }
 
         while (xmlReader.Read())
         {
             if (xmlReader.NodeType == XmlNodeType.Element)
             {
-                ReadControl(xmlReader, window);
+                ReadControl(xmlReader, parent);
             }
             else if (xmlReader.NodeType == XmlNodeType.EndElement)
             {
                 break;
             }
         }
-
-        return window;
     }
 
-    private void ReadControl(XmlReader xmlReader, Window window)
+    private void ReadControl(XmlReader xmlReader, Control parent)
     {
-        if (_controlFactories.TryGetValue(xmlReader.Name, out var factory))
+        if (!_controlFactories.TryGetValue(xmlReader.Name, out var factory))
         {
-            var control = factory.Create(xmlReader, window);
+            if (!xmlReader.IsEmptyElement)
+            {
+                xmlReader.Skip();
+            }
 
-            window.Add(control);
+            return;
         }
 
-        if (!xmlReader.IsEmptyElement)
+        var control = factory.Create(xmlReader, parent);
+
+        parent.Add(control);
+
+        if (xmlReader.IsEmptyElement)
         {
-            xmlReader.Skip();
+            return;
         }
+
+        ReadControls(xmlReader, control);
     }
 }

@@ -46,7 +46,7 @@ public sealed class TextBox : Control
     {
         UpdateText();
 
-        states.Transform *= Transform;
+        states.Transform.Translate(Position.X, Position.Y);
 
         GetActiveStylePart()?.Draw(target, states, Size);
 

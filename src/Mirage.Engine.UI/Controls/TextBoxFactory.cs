@@ -8,13 +8,14 @@ internal sealed class TextBoxFactory(ISkin skin) : ControlFactory<TextBox>(skin)
 {
     private readonly ISkin _skin = skin;
 
-    public override TextBox Create(XmlReader xmlReader, Window? parent)
+    public override TextBox Create(XmlReader xmlReader, Control? parent)
     {
         var props = ReadCoreProperties(xmlReader, parent);
 
         return new TextBox(ReadStyle(xmlReader, _skin.DefaultStyleName))
         {
-            Position = new Vector2f(props.X, props.Y),
+            Name = props.Name,
+            Position = new Vector2i(props.X, props.Y),
             Size = new Vector2i(props.Width, props.Height),
             Visible = props.Visible,
             Text = props.Text,

@@ -17,7 +17,7 @@ public sealed class Button : Control
 
     public string Text { get; set; } = string.Empty;
 
-    public event Action? Click;
+    public event EventHandler? Click;
 
     public Button(Style style)
     {
@@ -52,8 +52,8 @@ public sealed class Button : Control
     public override void Draw(RenderTarget target, RenderStates states)
     {
         UpdateText();
-
-        states.Transform *= Transform;
+        
+        states.Transform.Translate(Position.X, Position.Y);
 
         GetActiveStylePart()?.Draw(target, states, Size);
 
@@ -120,6 +120,6 @@ public sealed class Button : Control
 
     private void OnClick()
     {
-        Click?.Invoke();
+        Click?.Invoke(this, EventArgs.Empty);
     }
 }

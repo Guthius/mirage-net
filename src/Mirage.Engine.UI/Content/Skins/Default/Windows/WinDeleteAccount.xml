@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window Size="300, 200" Text="Delete Account" StartPosition="CenterScreen" Font="Bold" Visible="False">
+    <Label Text="Enter the account name and password{br}of the account you wish to delete."
+           Position="10, 32" Size="280, 46" TextAlignment="Center"/>
+    <Label Text="Account Name" Position="20, 85" Size="95, 25" TextAlignment="Right"/>
+    <TextBox Name="AccountNameTextBox" Position="125, 85" Size="160, 25"/>
+    <Label Text="Password" Position="20, 115" Size="95, 25" TextAlignment="Right"/>
+    <TextBox Name="PasswordTextBox" Position="125, 115" Size="160, 25" IsPassword="True"/>
+    <Button Name="DeleteButton" Text="Delete" Position="115, 160" Size="80, 25"/>
+    <Button Name="CancelButton" Text="Cancel" Position="205, 160" Size="80, 25"/>
+</Window>

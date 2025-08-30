@@ -6,13 +6,14 @@ namespace Mirage.Engine.UI.Controls;
 
 internal sealed class PictureBoxFactory(ISkin skin) : ControlFactory<PictureBox>(skin)
 {
-    public override PictureBox Create(XmlReader xmlReader, Window? parent)
+    public override PictureBox Create(XmlReader xmlReader, Control? parent)
     {
         var props = ReadCoreProperties(xmlReader, parent);
 
         return new PictureBox
         {
-            Position = new Vector2f(props.X, props.Y),
+            Name = props.Name,
+            Position = new Vector2i(props.X, props.Y),
             Size = new Vector2i(props.Width, props.Height),
             Visible = props.Visible,
             Enabled = props.Enabled,

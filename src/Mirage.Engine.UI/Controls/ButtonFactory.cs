@@ -8,14 +8,14 @@ internal sealed class ButtonFactory(ISkin skin) : ControlFactory<Button>(skin)
 {
     private readonly ISkin _skin = skin;
 
-    public override Button Create(XmlReader xmlReader, Window? parent)
+    public override Button Create(XmlReader xmlReader, Control? parent)
     {
         var props = ReadCoreProperties(xmlReader, parent);
 
         return new Button(ReadStyle(xmlReader, _skin.DefaultStyleName))
         {
             Name = props.Name,
-            Position = new Vector2f(props.X, props.Y),
+            Position = new Vector2i(props.X, props.Y),
             Size = new Vector2i(props.Width, props.Height),
             Visible = props.Visible,
             Text = props.Text,

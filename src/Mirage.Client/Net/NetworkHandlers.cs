@@ -3,8 +3,9 @@ using Mirage.Client.Assets;
 using Mirage.Client.Inventory;
 using Mirage.Client.Localization;
 using Mirage.Client.Scenes;
+using Mirage.Client.Scenes.Game;
+using Mirage.Client.Scenes.Menu;
 using Mirage.Net.Protocol.FromServer;
-using SFML.Graphics;
 
 namespace Mirage.Client.Net;
 
@@ -12,30 +13,35 @@ public static class NetworkHandlers
 {
     private static readonly Game Game = Ioc.Default.GetRequiredService<Game>();
     private static readonly ISceneManager SceneManager = Ioc.Default.GetRequiredService<ISceneManager>();
+    private static readonly IMenuScene MenuScene = Ioc.Default.GetRequiredService<IMenuScene>();
 
     public static void HandleCreateAccount(CreateAccountResponse response)
     {
         switch (response.Result)
         {
             case CreateAccountResult.Ok:
-                Game.ShowAlert(SR.AccountCreated);
-                SceneManager.SwitchTo<CharacterSelectScene>();
-                break;
+                MenuScene.ShowCharacterSelect();
+                MenuScene.ShowAlert(SR.AccountCreated);
+                return;
 
             case CreateAccountResult.AccountNameInvalid:
-                Game.ShowAlert("Invalid name, only letters, numbers, spaces, and _ allowed in names.");
+                MenuScene.ShowCreateAccount();
+                MenuScene.ShowAlert("Invalid name, only letters, numbers, spaces, and _ allowed in names.");
                 break;
 
             case CreateAccountResult.AccountNameOrPasswordTooShort:
-                Game.ShowAlert("Invalid account name, only letters, numbers, spaces, and _ allowed in names.");
+                MenuScene.ShowCreateAccount();
+                MenuScene.ShowAlert("Invalid account name, only letters, numbers, spaces, and _ allowed in names.");
                 break;
 
             case CreateAccountResult.AccountNameTaken:
-                Game.ShowAlert("This account name is already taken. Please choose a different name.");
+                MenuScene.ShowCreateAccount();
+                MenuScene.ShowAlert("This account name is already taken. Please choose a different name.");
                 break;
 
             default:
-                Game.ShowAlert(SR.UnknownError);
+                MenuScene.ShowCreateAccount();
+                MenuScene.ShowAlert(SR.UnknownError);
                 break;
         }
     }
@@ -45,23 +51,24 @@ public static class NetworkHandlers
         switch (response.Result)
         {
             case DeleteAccountResult.Ok:
-                Game.ShowAlert(SR.AccountDeleted);
+                MenuScene.ShowAlert(SR.AccountDeleted);
                 break;
 
             case DeleteAccountResult.InvalidAccountNameOrPassword:
-                Game.ShowAlert("Invalid account name or password.");
+                MenuScene.ShowMainMenu();
+                MenuScene.ShowAlert("Invalid account name or password.");
                 break;
 
             case DeleteAccountResult.AccountNameOrPasswordTooShort:
-                Game.ShowAlert("Account name and password must each contain at least 3 characters");
+                MenuScene.ShowMainMenu();
+                MenuScene.ShowAlert("Account name and password must each contain at least 3 characters");
                 break;
 
             default:
-                Game.ShowAlert(SR.UnknownError);
+                MenuScene.ShowMainMenu();
+                MenuScene.ShowAlert(SR.UnknownError);
                 break;
         }
-
-        SceneManager.SwitchTo<MainMenuScene>();
     }
 
     public static void HandleAuth(AuthResponse response)
@@ -69,22 +76,26 @@ public static class NetworkHandlers
         switch (response.Result)
         {
             case AuthResult.Ok:
-                break;
+                return;
 
             case AuthResult.InvalidAccountNameOrPassword:
-                Game.ShowAlert("Incorrect account name or password.");
+                MenuScene.ShowLogin();
+                MenuScene.ShowAlert("Incorrect account name or password.");
                 break;
 
             case AuthResult.InvalidProtocolVersion:
-                Game.ShowAlert("Your client is out of date. Please update your client and try again.");
+                MenuScene.ShowLogin();
+                MenuScene.ShowAlert("Your client is out of date. Please update your client and try again.");
                 break;
 
             case AuthResult.AlreadyLoggedIn:
-                Game.ShowAlert("Account is already logged in.");
+                MenuScene.ShowLogin();
+                MenuScene.ShowAlert("Account is already logged in.");
                 break;
 
             default:
-                Game.ShowAlert(SR.UnknownError);
+                MenuScene.ShowLogin();
+                MenuScene.ShowAlert(SR.UnknownError);
                 break;
         }
     }
@@ -99,7 +110,7 @@ public static class NetworkHandlers
         Game.MaxCharacters = command.MaxCharacters;
         Game.Characters = command.Characters;
 
-        SceneManager.SwitchTo<CharacterSelectScene>();
+        MenuScene.ShowCharacterSelect(Game.Characters, Game.MaxCharacters);
     }
 
     public static void HandleCreateCharacter(CreateCharacterResponse response)
@@ -107,31 +118,31 @@ public static class NetworkHandlers
         switch (response.Result)
         {
             case CreateCharacterResult.Ok:
-                SceneManager.SwitchTo<CharacterSelectScene>();
+                MenuScene.ShowCharacterSelect();
                 break;
 
             case CreateCharacterResult.CharacterNameInvalid:
-                Game.ShowAlert("Invalid name, only letters, numbers, spaces, and _ allowed in names.");
+                MenuScene.ShowAlert("Invalid name, only letters, numbers, spaces, and _ allowed in names.");
                 break;
 
             case CreateCharacterResult.CharacterNameTooShort:
-                Game.ShowAlert("Character name must be at least three characters in length.");
+                MenuScene.ShowAlert("Character name must be at least three characters in length.");
                 break;
 
             case CreateCharacterResult.CharacterNameInUse:
-                Game.ShowAlert("Sorry, but that name is in use!");
+                MenuScene.ShowAlert("Sorry, but that name is in use!");
                 break;
 
             case CreateCharacterResult.CharacterLimitReached:
-                Game.ShowAlert("You have reached the maximum number of characters.");
+                MenuScene.ShowAlert("You have reached the maximum number of characters.");
                 break;
 
             case CreateCharacterResult.InvalidJob:
-                Game.ShowAlert("Invalid character job.");
+                MenuScene.ShowAlert("Invalid character job.");
                 break;
 
             default:
-                Game.ShowAlert(SR.UnknownError);
+                MenuScene.ShowAlert(SR.UnknownError);
                 break;
         }
     }
@@ -142,15 +153,14 @@ public static class NetworkHandlers
         {
             case SelectCharacterResult.Ok:
                 Game.LocalPlayerId = response.PlayerId;
-                SceneManager.SwitchTo<LoadingScene>();
                 return;
 
             case SelectCharacterResult.InvalidCharacter:
-                Game.ShowAlert("Invalid character.");
+                MenuScene.ShowAlert("Invalid character.");
                 return;
 
             default:
-                Game.ShowAlert(SR.UnknownError);
+                MenuScene.ShowAlert(SR.UnknownError);
                 return;
         }
     }
@@ -211,7 +221,7 @@ public static class NetworkHandlers
 
     public static void HandleEnterGame(EnterGameCommand command)
     {
-        SceneManager.SwitchTo<GameScene>();
+        SceneManager.SwitchTo<IGameScene>();
     }
 
     public static void HandleMoveMap(MoveMapResponse response)
@@ -347,20 +357,20 @@ public static class NetworkHandlers
 
     public static void HandleChat(ChatCommand command)
     {
-        if (SceneManager.Current is not GameScene gameScene)
+        if (SceneManager.Current is not IGameScene gameScene)
         {
             return;
         }
 
-        var chatMessage = command.Message;
-        var chatMessageColor = new Color(
-            command.Color.R,
-            command.Color.G,
-            command.Color.B,
-            command.Color.A);
-
-
-        gameScene.AddChatMessage(chatMessage, chatMessageColor);
+        // var chatMessage = command.Message;
+        // var chatMessageColor = new Color(
+        //     command.Color.R,
+        //     command.Color.G,
+        //     command.Color.B,
+        //     command.Color.A);
+        //
+        //
+        // gameScene.AddChatMessage(chatMessage, chatMessageColor);
     }
 
     public static void HandleDownloadAssetChunk(DownloadAssetChunkCommand command)
@@ -377,8 +387,8 @@ public static class NetworkHandlers
     {
         Network.Disconnect();
 
-        Game.ShowAlert(command.Message);
+        var menu = SceneManager.SwitchTo<IMenuScene>();
 
-        SceneManager.SwitchTo<MainMenuScene>();
+        menu.ShowAlert(command.Message);
     }
 }

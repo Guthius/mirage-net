@@ -40,6 +40,8 @@ public sealed class PacketParser(Action<int, string>? reportBadPacket = null)
             var packetData = bytes[..end];
             var packetReader = new PacketReader(packetData);
             var packetId = packetReader.ReadString();
+            
+            Console.WriteLine("Received Packet: " + packetId + " from " + playerId);
 
             if (_handlers.TryGetValue(packetId, out var handler))
             {

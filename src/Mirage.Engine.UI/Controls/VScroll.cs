@@ -27,7 +27,7 @@ public class VScroll(Style style) : Control
     {
         UpdateBar();
 
-        states.Transform *= Transform;
+        states.Transform.Translate(Position.X, Position.Y);
 
         GetActiveTrackStylePart()?.Draw(target, states, Size);
 

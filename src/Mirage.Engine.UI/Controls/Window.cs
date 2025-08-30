@@ -7,28 +7,53 @@ namespace Mirage.Engine.UI.Controls;
 
 public class Window(Style style) : Control
 {
+    // TODO: The height of the title bar should be configured as part of the style.
+
     private readonly IStylePart? _stylePartFrame = style.GetPart("Window.Frame");
     private readonly IStylePart? _stylePartFrameNoTitleBar = style.GetPart("Window.FrameNoTitleBar");
     private readonly Text _text = new();
     private bool _dragging;
-    private Vector2f _dragPos;
+    private Vector2i _dragPos;
 
     public string Text { get; set; } = string.Empty;
     public bool CanDrag { get; set; } = true;
+    public Color? BackColor { get; set; }
+    public bool ShowFrame { get; set; } = true;
     public bool ShowTitleBar { get; set; } = true;
 
     public override void Draw(RenderTarget target, RenderStates states)
     {
         UpdateText();
 
-        states.Transform *= Transform;
+        states.Transform.Translate(Position.X, Position.Y);
 
+        DrawBackColor(target, states);
         DrawFrame(target, states);
         DrawChildren(target, states);
     }
 
+    private void DrawBackColor(RenderTarget target, RenderStates states)
+    {
+        if (BackColor is null)
+        {
+            return;
+        }
+
+        var rectangleShape = new RectangleShape();
+
+        rectangleShape.FillColor = BackColor.Value;
+        rectangleShape.Size = new Vector2f(Size.X, Size.Y);
+
+        target.Draw(rectangleShape, states);
+    }
+
     private void DrawFrame(RenderTarget target, RenderStates states)
     {
+        if (!ShowFrame)
+        {
+            return;
+        }
+
         GetActiveStylePart()?.Draw(target, states, Size);
 
         target.Draw(_text, states);
@@ -55,6 +80,8 @@ public class Window(Style style) : Control
         _text.Position = new Vector2f((int) x, (int) y);
     }
 
+    
+    
     protected override void OnMouseMove(int x, int y)
     {
         if (!_dragging)
@@ -62,7 +89,7 @@ public class Window(Style style) : Control
             return;
         }
 
-        Position += new Vector2f(x, y) - _dragPos;
+        Position += new Vector2i(x, y) - _dragPos;
     }
 
     protected override void OnMousePressed(int x, int y, Mouse.Button button)
@@ -91,7 +118,7 @@ public class Window(Style style) : Control
     private void BeginDrag(int x, int y)
     {
         _dragging = true;
-        _dragPos = new Vector2f(x, y);
+        _dragPos = new Vector2i(x, y);
 
         CaptureMouse();
     }
@@ -103,6 +130,16 @@ public class Window(Style style) : Control
         ReleaseMouse();
     }
 
+    public void MoveToFront()
+    {
+        if (Parent is null)
+        {
+            return;
+        }
+
+        Parent.MoveToFront(this);
+    }
+    
     public void MoveToCenter()
     {
         if (Parent is null)
@@ -113,6 +150,6 @@ public class Window(Style style) : Control
         var x = (Parent.Size.X - Size.X) / 2;
         var y = (Parent.Size.Y - Size.Y) / 2;
 
-        Position = new Vector2f(x, y);
+        Position = new Vector2i(x, y);
     }
 }

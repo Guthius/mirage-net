@@ -1,18 +1,14 @@
-﻿using Mirage.Engine.UI.Controls;
-using SFML.Graphics;
+﻿using SFML.Graphics;
 using SFML.Window;
 
 namespace Mirage.Client.Scenes;
 
 public interface IScene : Drawable, IDisposable
 {
-    Control UI { get; }
-    
     void Update(float dt);
     void Show();
     void Hide();
-    void ShowAlert(string alertMessage);
-    
+
     void HandleMouseButtonPressed(MouseButtonEventArgs e);
     void HandleMouseButtonReleased(MouseButtonEventArgs e);
     void HandleMouseMoved(MouseMoveEventArgs e);

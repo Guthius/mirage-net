@@ -5,6 +5,9 @@ using Mirage.Client.Extensions;
 using Mirage.Client.Inventory;
 using Mirage.Client.Maps;
 using Mirage.Client.Scenes;
+using Mirage.Client.Scenes.Editor;
+using Mirage.Client.Scenes.Game;
+using Mirage.Client.Scenes.Menu;
 using Mirage.Shared.Data;
 using SFML.Graphics;
 using SFML.System;
@@ -18,7 +21,7 @@ public sealed class Game
     private readonly RenderWindow _renderWindow = new(new VideoMode(800, 600), "Mirage.NET", Styles.Close | Styles.Titlebar);
     private readonly Clock _clock = new();
 
-    public static readonly Font Font = new("Content/Fonts/Coolvetica Rg.otf");
+    public static readonly Font Font = new("Content/Skins/Default/Fonts/LiberationSans-Regular.ttf");
 
     public List<JobInfo> Jobs { get; set; } = [];
     public int MaxCharacters { get; set; }
@@ -36,7 +39,9 @@ public sealed class Game
 
         services.AddCore();
         services.AddSingleton<Game>();
-        services.AddScenesFromAssemblyContaining<Game>();
+        services.AddSingleton<IMenuScene, MenuScene>();
+        services.AddSingleton<IGameScene, GameScene>();
+        services.AddSingleton<IEditorScene, EditorScene>();
 
         var serviceProvider = services.BuildServiceProvider();
 
@@ -64,7 +69,7 @@ public sealed class Game
 
     public void Run()
     {
-        _sceneManager.SwitchTo<MainMenuScene>();
+        _sceneManager.SwitchTo<IMenuScene>();
 
         _clock.Restart();
 
@@ -90,12 +95,8 @@ public sealed class Game
 
     public void ConnectionLost()
     {
-        _sceneManager.SwitchTo<MainMenuScene>();
-        _sceneManager.Current?.ShowAlert("The connection with the server has been lost.");
-    }
-
-    public void ShowAlert(string alertMessage)
-    {
-        _sceneManager.Current?.ShowAlert(alertMessage);
+        _sceneManager
+            .SwitchTo<IMenuScene>()
+            .ShowAlert("The connection with the server has been lost.");
     }
 }

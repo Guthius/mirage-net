@@ -36,8 +36,8 @@ public sealed class CheckBox : Control
     {
         UpdateText();
 
-        states.Transform *= Transform;
-
+        states.Transform.Translate(Position.X, Position.Y);
+        
         DrawSprite(target, states);
 
         target.Draw(_text, states);

@@ -6,7 +6,7 @@ internal sealed class SceneManager(IServiceProvider serviceProvider) : ISceneMan
 {
     public IScene? Current { get; private set; }
 
-    private IScene ConstructScene<TScene>() where TScene : IScene
+    private TScene ConstructScene<TScene>() where TScene : IScene
     {
         return serviceProvider.GetRequiredService<TScene>();
     }
@@ -23,8 +23,12 @@ internal sealed class SceneManager(IServiceProvider serviceProvider) : ISceneMan
         Current.Show();
     }
 
-    public void SwitchTo<TScene>() where TScene : class, IScene
+    public TScene SwitchTo<TScene>() where TScene : class, IScene
     {
-        Show(ConstructScene<TScene>());
+        var scene = ConstructScene<TScene>();
+
+        Show(scene);
+
+        return scene;
     }
 }
