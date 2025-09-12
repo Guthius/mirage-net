@@ -80,39 +80,43 @@ public class Window(Style style) : Control
         _text.Position = new Vector2f((int) x, (int) y);
     }
 
-    
-    
-    protected override void OnMouseMove(int x, int y)
+
+    protected override bool OnMouseMove(int x, int y)
     {
         if (!_dragging)
         {
-            return;
+            return false;
         }
 
         Position += new Vector2i(x, y) - _dragPos;
+        return true;
     }
 
-    protected override void OnMousePressed(int x, int y, Mouse.Button button)
+    protected override bool OnMousePressed(int x, int y, Mouse.Button button)
     {
         if (button != Mouse.Button.Left)
         {
-            return;
+            return false;
         }
 
-        if (CanDrag && x >= 0 && y >= 0 && x < Size.X && y < 22)
+        if (!CanDrag || x < 0 || y < 0 || x >= Size.X || y >= 22)
         {
-            BeginDrag(x, y);
+            return false;
         }
+
+        BeginDrag(x, y);
+        return true;
     }
 
-    protected override void OnMouseReleased(int x, int y, Mouse.Button button)
+    protected override bool OnMouseReleased(int x, int y, Mouse.Button button)
     {
         if (button != Mouse.Button.Left)
         {
-            return;
+            return false;
         }
 
         EndDrag();
+        return true;
     }
 
     private void BeginDrag(int x, int y)
@@ -132,14 +136,9 @@ public class Window(Style style) : Control
 
     public void MoveToFront()
     {
-        if (Parent is null)
-        {
-            return;
-        }
-
-        Parent.MoveToFront(this);
+        Parent?.MoveToFront(this);
     }
-    
+
     public void MoveToCenter()
     {
         if (Parent is null)

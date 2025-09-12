@@ -80,11 +80,11 @@ public class HScroll(Style style) : Control
         _hot = false;
     }
 
-    protected override void OnMousePressed(int x, int y, Mouse.Button button)
+    protected override bool OnMousePressed(int x, int y, Mouse.Button button)
     {
         if (button != Mouse.Button.Left || !Enabled)
         {
-            return;
+            return false;
         }
 
         if (x < _thumbRect.Position.X ||
@@ -92,31 +92,33 @@ public class HScroll(Style style) : Control
             x > _thumbRect.Position.X + _thumbRect.Size.X ||
             y > _thumbRect.Position.Y + _thumbRect.Size.Y)
         {
-            return;
+            return false;
         }
 
         _dragging = true;
 
         CaptureMouse();
+        return true;
     }
 
-    protected override void OnMouseReleased(int x, int y, Mouse.Button button)
+    protected override bool OnMouseReleased(int x, int y, Mouse.Button button)
     {
         if (button != Mouse.Button.Left)
         {
-            return;
+            return false;
         }
 
         _dragging = false;
 
         ReleaseMouse();
+        return true;
     }
 
-    protected override void OnMouseMove(int x, int y)
+    protected override bool OnMouseMove(int x, int y)
     {
         if (!_dragging)
         {
-            return;
+            return false;
         }
 
         var thumbWidth = _thumbRect.Size.X;
@@ -128,12 +130,13 @@ public class HScroll(Style style) : Control
         var newValue = MinValue + percentage * range;
         if (newValue == Value)
         {
-            return;
+            return true;
         }
 
         Value = newValue;
 
         OnValueChanged();
+        return true;
     }
 
     protected virtual void OnValueChanged()

@@ -362,15 +362,15 @@ public static class NetworkHandlers
             return;
         }
 
-        // var chatMessage = command.Message;
-        // var chatMessageColor = new Color(
-        //     command.Color.R,
-        //     command.Color.G,
-        //     command.Color.B,
-        //     command.Color.A);
-        //
-        //
-        // gameScene.AddChatMessage(chatMessage, chatMessageColor);
+        var chatMessage = command.Message;
+        var chatMessageColor = new SFML.Graphics.Color(
+            command.Color.R,
+            command.Color.G,
+            command.Color.B,
+            command.Color.A);
+
+        // Protocol currently does not include a channel; default to Global
+        gameScene.AddChatMessage(chatMessage, "Global", chatMessageColor);
     }
 
     public static void HandleDownloadAssetChunk(DownloadAssetChunkCommand command)

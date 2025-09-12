@@ -99,14 +99,15 @@ public sealed class Button : Control
         _mouseOver = false;
     }
 
-    protected override void OnMousePressed(int x, int y, Mouse.Button button)
+    protected override bool OnMousePressed(int x, int y, Mouse.Button button)
     {
         CaptureMouse();
 
         _mousePressed = true;
+        return true;
     }
 
-    protected override void OnMouseReleased(int x, int y, Mouse.Button button)
+    protected override bool OnMouseReleased(int x, int y, Mouse.Button button)
     {
         ReleaseMouse();
 
@@ -116,6 +117,7 @@ public sealed class Button : Control
         }
 
         _mousePressed = false;
+        return true;
     }
 
     private void OnClick()

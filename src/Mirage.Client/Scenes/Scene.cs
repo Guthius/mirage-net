@@ -11,7 +11,7 @@ public abstract class Scene : IScene
 
     public UserInterface UI { get; } = new("Default")
     {
-        Size = new Vector2i(800, 600)
+        Size = new Vector2i(1280, 720)
     };
 
     public void Show()
@@ -54,30 +54,47 @@ public abstract class Scene : IScene
 
     public void HandleMouseButtonPressed(MouseButtonEventArgs e)
     {
-        UI.HandleMouseButtonPressed(e.X, e.Y, e.Button);
+        if (!UI.HandleMouseButtonPressed(e.X, e.Y, e.Button))
+        {
+            OnMouseButtonPressed(e.X, e.Y, e.Button);
+        }
     }
 
     public void HandleMouseButtonReleased(MouseButtonEventArgs e)
     {
-        UI.HandleMouseButtonReleased(e.X, e.Y, e.Button);
+        if (!UI.HandleMouseButtonReleased(e.X, e.Y, e.Button))
+        {
+            OnMouseButtonReleased(e.X, e.Y, e.Button);
+        }
     }
 
     public void HandleMouseMoved(MouseMoveEventArgs e)
     {
-        UI.HandleMouseMoved(e.X, e.Y);
+        if (!UI.HandleMouseMoved(e.X, e.Y))
+        {
+            OnMouseMoved(e.X, e.Y);
+        }
+    }
+
+    public void HandleMouseWheelScrolled(MouseWheelScrollEventArgs e)
+    {
+        // UI does not currently handle wheel scroll; forward directly to scene.
+        OnMouseWheelScrolled(e.X, e.Y, e.Delta);
     }
 
     public void HandleTextEntered(TextEventArgs e)
     {
-        UI.HandleTextEntered(e);
+        if (!UI.HandleTextEntered(e))
+        {
+            OnTextEntered(e.Unicode);
+        }
     }
 
     public void HandleKeyPressed(KeyEventArgs e)
     {
-        if (UI.HasKeyboardFocus)
+        // Try UI first; if not handled, pass to scene.
+        if (UI.HandleKeyPressed(e))
         {
-            UI.HandleKeyPressed(e);
-
             return;
         }
 
@@ -85,6 +102,26 @@ public abstract class Scene : IScene
     }
 
     protected virtual void OnKeyPressed(Keyboard.Key key)
+    {
+    }
+
+    protected virtual void OnMouseButtonPressed(int x, int y, Mouse.Button button)
+    {
+    }
+
+    protected virtual void OnMouseButtonReleased(int x, int y, Mouse.Button button)
+    {
+    }
+
+    protected virtual void OnMouseMoved(int x, int y)
+    {
+    }
+
+    protected virtual void OnMouseWheelScrolled(int x, int y, float delta)
+    {
+    }
+
+    protected virtual void OnTextEntered(string text)
     {
     }
 

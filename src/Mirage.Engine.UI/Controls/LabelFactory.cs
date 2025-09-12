@@ -6,13 +6,11 @@ namespace Mirage.Engine.UI.Controls;
 
 internal sealed class LabelFactory(ISkin skin) : ControlFactory<Label>(skin)
 {
-    private readonly ISkin _skin = skin;
-
     public override Label Create(XmlReader xmlReader, Control? parent)
     {
         var props = ReadCoreProperties(xmlReader, parent);
 
-        return new Label(ReadStyle(xmlReader, _skin.DefaultStyleName))
+        return new Label
         {
             Name = props.Name,
             Position = new Vector2i(props.X, props.Y),

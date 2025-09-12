@@ -1,3 +1,8 @@
-﻿namespace Mirage.Client.Scenes.Game;
+﻿using SFML.Graphics;
 
-public interface IGameScene : IScene;
+namespace Mirage.Client.Scenes.Game;
+
+public interface IGameScene : IScene
+{
+    void AddChatMessage(string message, string channel, Color color);
+}

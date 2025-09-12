@@ -14,45 +14,100 @@ public sealed class GameScene : Scene, IGameScene
     private int _itemPickupTimer;
     private readonly Client.Game _game;
 
-    private readonly ChatPanel _chatPanel = new()
+    // Chat UI fields
+    private readonly ChatPanel _chatPanel = new();
+    private TextBox _chatInput = null!;
+    private Label _chatPrompt = null!;
+    private CheckBox _cbLocal = null!;
+    private CheckBox _cbPlayer = null!;
+    private CheckBox _cbParty = null!;
+    private CheckBox _cbGuild = null!;
+    private CheckBox _cbGlobal = null!;
+    private Mirage.Engine.UI.Controls.Window _chatWindow = null!;
+
+    private readonly List<(string Message, string Channel, Color Color)> _chatMessages = new();
+
+    private readonly Dictionary<string, bool> _channelFilters = new(StringComparer.OrdinalIgnoreCase)
     {
-        Position = new Vector2i(2, 474),
-        Size = new Vector2i(122, 600)
+        ["Local"] = true,
+        ["Player"] = true,
+        ["Party"] = true,
+        ["Guild"] = true,
+        ["Global"] = true,
     };
+
+    private bool _chatWindowVisible;
+    private int _lastEnterTick;
+    private int _lastEscapeTick;
 
     public GameScene(Client.Game game)
     {
         _game = game;
 
-        _chatInput = new TextBox(TempStyle.Style)
-        {
-            Position = new Vector2i(0, 600 - 28),
-            Size = new Vector2i(800, 28)
-        };
+        // Load chat window from XML layout
+        _chatWindow = UI.CreateWindow("WinChat");
 
+        // Map controls from the layout
+        _chatInput = _chatWindow.Get<TextBox>("ChatInput");
+        _chatPrompt = _chatWindow.Get<Label>("ChatPrompt");
+        _cbLocal = _chatWindow.Get<CheckBox>("CbLocal");
+        _cbPlayer = _chatWindow.Get<CheckBox>("CbPlayer");
+        _cbParty = _chatWindow.Get<CheckBox>("CbParty");
+        _cbGuild = _chatWindow.Get<CheckBox>("CbGuild");
+        _cbGlobal = _chatWindow.Get<CheckBox>("CbGlobal");
+
+        // Install chat panel into the host area
+        var msgHost = _chatWindow.Get<Panel>("MsgHost");
+        _chatPanel.Position = msgHost.Position;
+        _chatPanel.Size = msgHost.Size;
+        _chatWindow.Add(_chatPanel);
+
+        // Configure filters row (checkboxes)
+        _cbLocal.Tag = "Local";
+        _cbPlayer.Tag = "Player";
+        _cbParty.Tag = "Party";
+        _cbGuild.Tag = "Guild";
+        _cbGlobal.Tag = "Global";
+        _cbLocal.CheckedChanged += OnChannelFilterChanged;
+        _cbPlayer.CheckedChanged += OnChannelFilterChanged;
+        _cbParty.CheckedChanged += OnChannelFilterChanged;
+        _cbGuild.CheckedChanged += OnChannelFilterChanged;
+        _cbGlobal.CheckedChanged += OnChannelFilterChanged;
+
+        // Input events
         _chatInput.Submit += () =>
         {
             _chatInput.Text = string.Empty;
-            _chatInput.Visible = false;
-
+            ShowChatWindow(false);
             UI.ClearFocus();
         };
-
         _chatInput.Blur += () =>
         {
             _chatInput.Text = string.Empty;
-            _chatInput.Visible = false;
+            ShowChatWindow(false);
         };
 
-        //UI.Add(_chatPanel);
-        UI.Add(_chatInput);
-    }
+        ShowChatWindow(false);
 
-    private readonly TextBox _chatInput;
+        AddChatMessage("Hello World", "Global", Color.White);
+    }
 
     protected override void OnUpdate(float dt)
     {
         _game.Map.Update(dt);
+
+        // Handle Escape to hide chat when input focused
+        if (_chatInput.HasFocus && Keyboard.IsKeyPressed(Keyboard.Key.Escape))
+        {
+            var now = Environment.TickCount;
+            if (now - _lastEscapeTick > 150)
+            {
+                _lastEscapeTick = now;
+                _chatInput.Text = string.Empty;
+                ShowChatWindow(false);
+                UI.ClearFocus();
+            }
+        }
 
         CheckForKeyboardInput();
     }
@@ -98,7 +153,7 @@ public sealed class GameScene : Scene, IGameScene
         DrawStats(target);
         //DrawMapName(target);
 
-        target.Draw(UI, states);
+        // UI is drawn by base Scene.Draw
     }
 
     private readonly Texture _tt = new Texture("Content/UI/CharacterInfo.png");
@@ -213,29 +268,97 @@ public sealed class GameScene : Scene, IGameScene
 
     protected override void OnKeyPressed(Keyboard.Key key)
     {
-        if (key != Keyboard.Key.Enter || Environment.TickCount - _itemPickupTimer < 1000)
+        // Keep existing item pickup on Enter when not interacting with chat
+        if (key == Keyboard.Key.Enter && !UI.HasKeyboardFocus)
+        {
+            if (Environment.TickCount - _itemPickupTimer < 1000)
+            {
+                return;
+            }
+
+            _itemPickupTimer = Environment.TickCount;
+            Network.Send<ItemPickupRequest>();
+        }
+    }
+
+    private void ShowChatWindow(bool visible)
+    {
+        // Chat window is always visible now; ignore parameter
+        _chatWindowVisible = true;
+
+        _chatPanel.Visible = true;
+        _cbLocal.Visible = true;
+        _cbPlayer.Visible = true;
+        _cbParty.Visible = true;
+        _cbGuild.Visible = true;
+        _cbGlobal.Visible = true;
+        _chatInput.Visible = true;
+
+        _chatPrompt.Visible = false;
+    }
+
+    private void OnChannelFilterChanged(object? sender, EventArgs e)
+    {
+        if (sender is not CheckBox cb || cb.Tag is not string channel)
         {
             return;
         }
 
-        _itemPickupTimer = Environment.TickCount;
+        _channelFilters[channel] = cb.Checked;
+        RebuildChatPanel();
+    }
 
-        Network.Send<ItemPickupRequest>();
+    private void RebuildChatPanel()
+    {
+        _chatPanel.Clear();
+
+        foreach (var m in _chatMessages)
+        {
+            if (!_channelFilters.TryGetValue(m.Channel, out var enabled) || !enabled)
+            {
+                continue;
+            }
+
+            _chatPanel.AddChatMessage(m.Message, m.Color);
+        }
+
+        _chatPanel.ScrollToBottom();
+    }
+
+    public void AddChatMessage(string message, string channel, Color color)
+    {
+        _chatMessages.Add((message, channel, color));
+
+        if (_channelFilters.TryGetValue(channel, out var enabled) && enabled)
+        {
+            _chatPanel.AddChatMessage(message, color);
+            _chatPanel.ScrollToBottom();
+        }
     }
 
     private void CheckForKeyboardInput()
     {
+        // If chat is not active and no other UI has focus (or only the prompt has focus), Enter opens chat
+        var uiHasFocus = UI.HasKeyboardFocus;
+        var promptHasFocus = ReferenceEquals(UI.ActiveControl, _chatPrompt);
+        if ((!uiHasFocus || promptHasFocus) && Keyboard.IsKeyPressed(Keyboard.Key.Enter))
+        {
+            var now = Environment.TickCount;
+            if (now - _lastEnterTick > 150)
+            {
+                _lastEnterTick = now;
+                ShowChatWindow(true);
+                _chatInput.Focus();
+                return;
+            }
+        }
+
         if (UI.HasKeyboardFocus)
         {
             return;
         }
 
-        if (Keyboard.IsKeyPressed(Keyboard.Key.T))
-        {
-            _chatInput.Visible = true;
-            _chatInput.Focus();
-        }
-
+        // Game controls
         CheckAttack();
         CheckMovement();
     }
@@ -331,10 +454,5 @@ public sealed class GameScene : Scene, IGameScene
         {
             Network.Send<AttackRequest>();
         }
-    }
-
-    public void AddChatMessage(string message, Color color)
-    {
-        _chatPanel.AddChatMessage(message, color);
     }
 }

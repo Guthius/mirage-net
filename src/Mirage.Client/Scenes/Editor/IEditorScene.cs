@@ -1,5 +1,3 @@
 ﻿namespace Mirage.Client.Scenes.Editor;
 
-public interface IEditorScene : IScene
-{
-}
+public interface IEditorScene : IScene;

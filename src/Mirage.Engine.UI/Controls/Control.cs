@@ -80,7 +80,23 @@ public class Control : Drawable
 
     public Control? GetChildAt(int x, int y)
     {
-        return _children.FirstOrDefault(child => child.Contains(x, y));
+        for (var i = _children.Count - 1; i >= 0; i--)
+        {
+            var child = _children[i];
+            if (!child.Visible)
+            {
+                continue;
+            }
+
+            var lx = x - child.Position.X;
+            var ly = y - child.Position.Y;
+            if (child.Contains(lx, ly))
+            {
+                return child;
+            }
+        }
+
+        return null;
     }
 
     public IEnumerable<T> GetChildrenOfType<T>() where T : Control
@@ -117,7 +133,8 @@ public class Control : Drawable
 
     protected bool Contains(int x, int y)
     {
-        return x >= Position.X && x < Position.X + Size.X && y >= Position.Y && y < Position.Y + Size.Y;
+        // x,y are expected to be in the local coordinate space of this control
+        return x >= 0 && x < Size.X && y >= 0 && y < Size.Y;
     }
 
     public Vector2i PointToLocal(Vector2i pt)
@@ -157,19 +174,28 @@ public class Control : Drawable
 
         static Control? GetControlAt(Control parent, Vector2i pt)
         {
-            var child = parent._children.Where(c => c.Visible).FirstOrDefault(x => x.Contains(pt.X, pt.Y));
-            if (child is null || !child.Visible)
+            for (var i = parent._children.Count - 1; i >= 0; i--)
             {
-                return null;
+                var child = parent._children[i];
+                if (!child.Visible)
+                {
+                    continue;
+                }
+
+                var lpt = pt - child.Position;
+                if (!child.Contains(lpt.X, lpt.Y))
+                {
+                    continue;
+                }
+
+                return GetControlAt(child, lpt) ?? child;
             }
 
-            pt -= child.Position;
-
-            return GetControlAt(child, pt) ?? child;
+            return null;
         }
     }
 
-    public void HandleMouseButtonPressed(int x, int y, Mouse.Button button)
+    public bool HandleMouseButtonPressed(int x, int y, Mouse.Button button)
     {
         if (_mouseTarget is not null)
         {
@@ -178,7 +204,7 @@ public class Control : Drawable
             pt = _mouseTarget.PointToLocal(pt);
 
             _mouseTarget.OnMousePressed(pt.X, pt.Y, button);
-            return;
+            return true;
         }
 
         if (button == Mouse.Button.Left)
@@ -186,7 +212,7 @@ public class Control : Drawable
             FindFocusTarget(new Vector2i(x, y));
         }
 
-        OnMousePressed(x - Position.X, y - Position.Y, button);
+        var handled = OnMousePressed(x - Position.X, y - Position.Y, button);
 
         var lx = x - Position.X;
         var ly = y - Position.Y;
@@ -195,17 +221,19 @@ public class Control : Drawable
         for (var i = children.Length - 1; i >= 0; i--)
         {
             var child = children[i];
-            if (!child.Contains(lx, ly))
+            if (!child.Contains(lx - child.Position.X, ly - child.Position.Y))
             {
                 continue;
             }
 
-            child.HandleMouseButtonPressed(lx, ly, button);
+            handled = child.HandleMouseButtonPressed(lx, ly, button) || handled;
             break;
         }
+
+        return handled;
     }
 
-    public void HandleMouseButtonReleased(int x, int y, Mouse.Button button)
+    public bool HandleMouseButtonReleased(int x, int y, Mouse.Button button)
     {
         if (_mouseTarget is not null)
         {
@@ -214,10 +242,10 @@ public class Control : Drawable
             pt = _mouseTarget.PointToLocal(pt);
 
             _mouseTarget.OnMouseReleased(pt.X, pt.Y, button);
-            return;
+            return true;
         }
 
-        OnMouseReleased(x, y, button);
+        var handled = OnMouseReleased(x - Position.X, y - Position.Y, button);
 
         var lx = x - Position.X;
         var ly = y - Position.Y;
@@ -226,17 +254,19 @@ public class Control : Drawable
         for (var i = children.Length - 1; i >= 0; i--)
         {
             var child = children[i];
-            if (!child.Contains(lx, ly))
+            if (!child.Contains(lx - child.Position.X, ly - child.Position.Y))
             {
                 continue;
             }
 
-            child.HandleMouseButtonReleased(lx, ly, button);
+            handled = child.HandleMouseButtonReleased(lx, ly, button) || handled;
             break;
         }
+
+        return handled;
     }
 
-    public void HandleMouseMoved(int x, int y)
+    public bool HandleMouseMoved(int x, int y)
     {
         if (_mouseTarget is not null)
         {
@@ -245,10 +275,13 @@ public class Control : Drawable
             pt = _mouseTarget.PointToLocal(pt);
 
             _mouseTarget.OnMouseMove(pt.X, pt.Y);
-            return;
+            return true;
         }
 
-        var hot = Contains(x, y);
+        var lx = x - Position.X;
+        var ly = y - Position.Y;
+
+        var hot = Contains(lx, ly);
         if (hot != _mouseOver)
         {
             switch (hot)
@@ -264,22 +297,21 @@ public class Control : Drawable
         }
 
         _mouseOver = hot;
+        
+        var handled = false;
         if (_mouseOver)
         {
-            OnMouseMove(x, y);
+            handled = OnMouseMove(lx, ly) || handled;
         }
 
-        var lx = x - Position.X;
-        var ly = y - Position.Y;
+        handled = _children.Where(c => c.Visible).Aggregate(handled, (current, child) => child.HandleMouseMoved(lx, ly) || current);
 
-        foreach (var child in _children.Where(c => c.Visible))
-        {
-            child.HandleMouseMoved(lx, ly);
-        }
+        return handled;
     }
 
-    protected virtual void OnMouseMove(int x, int y)
+    protected virtual bool OnMouseMove(int x, int y)
     {
+        return false;
     }
 
     protected virtual void OnMouseEnter()
@@ -290,16 +322,14 @@ public class Control : Drawable
     {
     }
 
-    protected virtual void OnMousePressed(int x, int y, Mouse.Button button)
+    protected virtual bool OnMousePressed(int x, int y, Mouse.Button button)
     {
+        return false;
     }
 
-    protected virtual void OnMouseReleased(int x, int y, Mouse.Button button)
+    protected virtual bool OnMouseReleased(int x, int y, Mouse.Button button)
     {
-    }
-
-    protected virtual void OnPositionChanged()
-    {
+        return false;
     }
 
     private void Activate(Control? control)
@@ -343,7 +373,7 @@ public class Control : Drawable
         _activeControl = null;
     }
 
-    public void HandleKeyPressed(KeyEventArgs e)
+    public bool HandleKeyPressed(KeyEventArgs e)
     {
         if (e.Code == Keyboard.Key.Tab)
         {
@@ -356,19 +386,30 @@ public class Control : Drawable
                 MoveToNextTabStop();
             }
 
-            return;
+            return true;
         }
 
-        _activeControl?.OnKeyPressed(e.Control, e.Alt, e.Shift, e.Code);
+        if (_activeControl is not null)
+        {
+            return _activeControl.OnKeyPressed(e.Control, e.Alt, e.Shift, e.Code);
+        }
+
+        return false;
     }
 
-    public void HandleTextEntered(TextEventArgs e)
+    public bool HandleTextEntered(TextEventArgs e)
     {
-        _activeControl?.OnTextEntered(e.Unicode);
+        if (_activeControl is not null)
+        {
+            return _activeControl.OnTextEntered(e.Unicode);
+        }
+
+        return false;
     }
 
-    protected virtual void OnTextEntered(string character)
+    protected virtual bool OnTextEntered(string character)
     {
+        return false;
     }
 
     protected virtual void MoveToNextTabStop()
@@ -455,7 +496,8 @@ public class Control : Drawable
         }
     }
 
-    protected virtual void OnKeyPressed(bool control, bool alt, bool shift, Keyboard.Key key)
+    protected virtual bool OnKeyPressed(bool control, bool alt, bool shift, Keyboard.Key key)
     {
+        return false;
     }
 }

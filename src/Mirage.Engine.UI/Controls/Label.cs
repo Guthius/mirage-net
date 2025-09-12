@@ -1,36 +1,53 @@
-﻿using Mirage.Engine.UI.Styles;
-using SFML.Graphics;
+﻿using SFML.Graphics;
 using SFML.System;
 
 namespace Mirage.Engine.UI.Controls;
 
-public sealed class Label(Style style) : Control
+public sealed class Label : Control
 {
     private static readonly Color DefaultColor = new(192, 224, 255);
     
     private Text[] _lines = [];
-    private bool _updateText;
+    private bool _updateText = true; // ensure first draw renders
+    
+    // Cache inputs that affect text layout to avoid unnecessary work
+    private Font? _lastFont;
+    private int _lastFontSize;
+    private Vector2i _lastSize;
+
+    private string _text = string.Empty;
 
     public string Text
     {
-        get;
+        get => _text;
         set
         {
-            field = value;
+            if (_text == value)
+            {
+                return;
+            }
 
+            _text = value;
             _updateText = true;
         }
-    } = string.Empty;
+    }
 
     public Color TextColor { get; set; } = DefaultColor;
     public HorizontalAlignment HorizontalAlignment { get; set; } = HorizontalAlignment.Left;
 
     public override void Draw(RenderTarget target, RenderStates states)
     {
+        if (!_updateText)
+        {
+            if (!ReferenceEquals(_lastFont, Font) || _lastFontSize != FontSize || _lastSize != Size)
+            {
+                _updateText = true;
+            }
+        }
+
         if (_updateText)
         {
             UpdateText();
-
             _updateText = false;
         }
 
@@ -44,11 +61,14 @@ public sealed class Label(Style style) : Control
 
     private void UpdateText()
     {
-        var lines = Text.Split('\n');
+        var lines = _text.Split('\n');
         
         _lines = new Text[lines.Length];
         if (_lines.Length == 0)
         {
+            _lastFont = Font;
+            _lastFontSize = FontSize;
+            _lastSize = Size;
             return;
         }
         
@@ -72,6 +92,10 @@ public sealed class Label(Style style) : Control
 
             y += height;
         }
+
+        _lastFont = Font;
+        _lastFontSize = FontSize;
+        _lastSize = Size;
     }
 
     private int GetTextX(FloatRect size)

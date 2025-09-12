@@ -4,11 +4,5 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.5"/>
         <PackageReference Include="SFML.Net" Version="2.6.1"/>
     </ItemGroup>
-
-    <ItemGroup>
-        <None Update="Content\**">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-
+    
 </Project>

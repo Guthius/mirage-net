@@ -1,7 +1,6 @@
 ﻿using Mirage.Client.Net;
 using Mirage.Client.Scenes.Menu.Windows;
 using Mirage.Engine.UI.Controls;
-using Mirage.Engine.UI.Styles;
 using Mirage.Net.Protocol.FromClient;
 using Mirage.Shared.Data;
 using SFML.Graphics;
@@ -28,7 +27,7 @@ public sealed class MenuScene : Scene, IMenuScene
         _winDeleteAccount = new WinDeleteAccount(UI.CreateWindow("WinDeleteAccount"), this);
         _winLogin = new WinLogin(UI.CreateWindow("WinLogin"), this);
         _winMainMenu = new WinMainMenu(UI.CreateWindow("WinMainMenu"), this);
-        _statusLabel = new Label(Style.Empty)
+        _statusLabel = new Label()
         {
             Position = new Vector2i(10, 570),
             Size = new Vector2i(200, 25),

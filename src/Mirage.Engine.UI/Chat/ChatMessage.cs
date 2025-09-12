@@ -4,7 +4,7 @@ namespace Mirage.Engine.UI.Chat;
 
 public sealed class ChatMessage : Drawable
 {
-    private static readonly Font Font = new("Content/Fonts/Coolvetica Rg.otf");
+    private static readonly Font Font = new("Content/Skins/Default/Fonts/LiberationSans-Regular.ttf");
     
     private readonly Text _text;
 

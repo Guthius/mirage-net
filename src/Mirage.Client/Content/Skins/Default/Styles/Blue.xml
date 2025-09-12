@@ -11,7 +11,7 @@
     <Part Name="VScroll.BarDisabled" TextureRect="64, 32, 14, 16" NinePatchRect="2, 4, 12, 6"/>
     <Part Name="VScroll.Track" TextureRect="64, 48, 6, 6" NinePatchRect="2, 2, 2, 2"/>
     <Part Name="VScroll.TrackDisabled" TextureRect="72, 48, 6, 6" NinePatchRect="2, 2, 2, 2"/>
-    
+
     <Part Name="HScroll.BarNormal" TextureRect="80, 0, 16, 14" NinePatchRect="2, 4, 12, 6"/>
     <Part Name="HScroll.BarHot" TextureRect="80, 16, 16, 14" NinePatchRect="2, 4, 12, 6"/>
     <Part Name="HScroll.BarDisabled" TextureRect="80, 32, 16, 14" NinePatchRect="2, 4, 12, 6"/>
@@ -36,10 +36,10 @@
     <Sprite Name="ComboBox.Arrow" TextureRect="96, 32, 13, 9"/>
 
     <Part Name="Panel.Normal" TextureRect="96, 0, 12, 12" NinePatchRect="2, 2, 8, 8"/>
-    
+
     <Part Name="Button.Normal" TextureRect="0, 128, 32, 32" NinePatchRect="4, 4, 24, 24"/>
     <Part Name="Button.Hot" TextureRect="32, 128, 32, 32" NinePatchRect="4, 4, 24, 24"/>
     <Part Name="Button.Pressed" TextureRect="64, 128, 32, 32" NinePatchRect="4, 4, 24, 24"/>
     <Part Name="Button.Disabled" TextureRect="96, 128, 32, 32" NinePatchRect="4, 4, 24, 24"/>
-
+    
 </Style>

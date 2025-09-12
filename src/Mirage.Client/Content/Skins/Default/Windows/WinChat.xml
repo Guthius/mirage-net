@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Window Name="WinChat" Position="8, -196" Size="360, 188" Text="Chat" ShowFrame="False" ShowTitlebar="False"
+        CanDrag="False" Visible="True">
+
+    <!-- Channel filters -->
+    <CheckBox Name="CbLocal" Position="0, 0" Size="70, 24" Text="Local" IsChecked="True"/>
+    <CheckBox Name="CbPlayer" Position="72, 0" Size="70, 24" Text="Player" IsChecked="True"/>
+    <CheckBox Name="CbParty" Position="144, 0" Size="70, 24" Text="Party" IsChecked="True"/>
+    <CheckBox Name="CbGuild" Position="216, 0" Size="70, 24" Text="Guild" IsChecked="True"/>
+    <CheckBox Name="CbGlobal" Position="288, 0" Size="70, 24" Text="Global" IsChecked="True"/>
+
+    <!-- Messages Host -->
+    <Panel Name="MsgHost" Position="0, 24" Size="360, 140"/>
+
+    <!-- Input and prompt (prompt remains hidden since chat is always visible) -->
+    <TextBox Name="ChatInput" Position="0, 164" Size="360, 24"/>
+
+    <Label Name="ChatPrompt" Position="0, 164" Size="360, 24"
+           Text="Press Enter to chat" TextAlignment="Center"
+           Visible="False"/>
+
+</Window>

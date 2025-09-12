@@ -24,6 +24,15 @@ public sealed class ChatPanel : Control
         Add(_scrollBar);
     }
 
+    public void Clear()
+    {
+        lock (_messageLock)
+        {
+            _messages.Clear();
+            _messageHeight = 0;
+        }
+    }
+
     public override void Draw(RenderTarget target, RenderStates states)
     {
         _scrollBar.MaxValue = _messageHeight - Size.Y;

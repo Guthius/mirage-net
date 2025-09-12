@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Mirage.Client.Entities;
-using Mirage.Client.Extensions;
 using Mirage.Client.Inventory;
 using Mirage.Client.Maps;
 using Mirage.Client.Scenes;
@@ -18,7 +17,7 @@ namespace Mirage.Client;
 public sealed class Game
 {
     private readonly ISceneManager _sceneManager;
-    private readonly RenderWindow _renderWindow = new(new VideoMode(800, 600), "Mirage.NET", Styles.Close | Styles.Titlebar);
+    private readonly RenderWindow _renderWindow = new(new VideoMode(1280, 720), "Mirage.NET", Styles.Close | Styles.Titlebar);
     private readonly Clock _clock = new();
 
     public static readonly Font Font = new("Content/Skins/Default/Fonts/LiberationSans-Regular.ttf");
@@ -37,7 +36,7 @@ public sealed class Game
     {
         var services = new ServiceCollection();
 
-        services.AddCore();
+        services.AddSingleton<ISceneManager, SceneManager>();
         services.AddSingleton<Game>();
         services.AddSingleton<IMenuScene, MenuScene>();
         services.AddSingleton<IGameScene, GameScene>();
@@ -60,16 +59,17 @@ public sealed class Game
         _renderWindow.MouseButtonPressed += (_, e) => _sceneManager.Current?.HandleMouseButtonPressed(e);
         _renderWindow.MouseButtonReleased += (_, e) => _sceneManager.Current?.HandleMouseButtonReleased(e);
         _renderWindow.MouseMoved += (_, e) => _sceneManager.Current?.HandleMouseMoved(e);
+        _renderWindow.MouseWheelScrolled += (_, e) => _sceneManager.Current?.HandleMouseWheelScrolled(e);
         _renderWindow.TextEntered += (_, e) => _sceneManager.Current?.HandleTextEntered(e);
         _renderWindow.KeyPressed += (_, e) => _sceneManager.Current?.HandleKeyPressed(e);
         _renderWindow.KeyReleased += (_, e) => _sceneManager.Current?.HandleKeyReleased(e);
-
+        
         Map = new Map(this);
     }
 
     public void Run()
     {
-        _sceneManager.SwitchTo<IMenuScene>();
+        _sceneManager.SwitchTo<IEditorScene>();
 
         _clock.Restart();
 

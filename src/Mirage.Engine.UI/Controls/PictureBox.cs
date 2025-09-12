@@ -5,23 +5,23 @@ namespace Mirage.Engine.UI.Controls;
 public sealed class PictureBox : Control
 {
     private readonly Sprite _sprite = new();
+    private string _image = string.Empty;
     private bool _mustUpdate;
     
     public string Image
     {
-        get;
+        get => _image;
         set
         {
-            if (field == value)
+            if (_image == value)
             {
                 return;
             }
 
-            field = value;
-
+            _image = value;
             _mustUpdate = true;
         }
-    } = string.Empty;
+    }
 
     public override void Draw(RenderTarget target, RenderStates states)
     {
@@ -50,6 +50,20 @@ public sealed class PictureBox : Control
             return;
         }
         
-        _sprite.Texture = new Texture(Image);
+        try
+        {
+            if (!File.Exists(Image))
+            {
+                _sprite.Texture = null;
+                return;
+            }
+
+            _sprite.Texture = new Texture(Image);
+        }
+        catch
+        {
+            // If loading fails for any reason, clear the texture so it simply renders nothing
+            _sprite.Texture = null;
+        }
     }
 }

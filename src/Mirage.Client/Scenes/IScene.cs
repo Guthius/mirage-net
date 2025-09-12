@@ -12,6 +12,7 @@ public interface IScene : Drawable, IDisposable
     void HandleMouseButtonPressed(MouseButtonEventArgs e);
     void HandleMouseButtonReleased(MouseButtonEventArgs e);
     void HandleMouseMoved(MouseMoveEventArgs e);
+    void HandleMouseWheelScrolled(MouseWheelScrollEventArgs e);
     void HandleTextEntered(TextEventArgs e);
     void HandleKeyPressed(KeyEventArgs e);
     void HandleKeyReleased(KeyEventArgs e);

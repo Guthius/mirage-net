@@ -21,14 +21,14 @@ public sealed class RadioButton : Control
     public string Text { get; set; } = string.Empty;
     public bool Checked { get; set; }
 
-    public event Action? CheckedChanged;
+    public event EventHandler? CheckedChanged;
 
     public RadioButton(Style style)
     {
-        _spriteNormal = style.GetSprite("CheckBox.Normal");
-        _spriteNormalChecked = style.GetSprite("CheckBox.NormalChecked");
-        _spriteHot = style.GetSprite("CheckBox.Hot");
-        _spriteHotChecked = style.GetSprite("CheckBox.HotChecked");
+        _spriteNormal = style.GetSprite("RadioButton.Normal");
+        _spriteNormalChecked = style.GetSprite("RadioButton.NormalChecked");
+        _spriteHot = style.GetSprite("RadioButton.Hot");
+        _spriteHotChecked = style.GetSprite("RadioButton.HotChecked");
 
         TabStop = true;
     }
@@ -96,14 +96,15 @@ public sealed class RadioButton : Control
         _mouseOver = false;
     }
 
-    protected override void OnMousePressed(int x, int y, Mouse.Button button)
+    protected override bool OnMousePressed(int x, int y, Mouse.Button button)
     {
         CaptureMouse();
 
         _mousePressed = true;
+        return true;
     }
 
-    protected override void OnMouseReleased(int x, int y, Mouse.Button button)
+    protected override bool OnMouseReleased(int x, int y, Mouse.Button button)
     {
         ReleaseMouse();
 
@@ -113,6 +114,7 @@ public sealed class RadioButton : Control
         }
 
         _mousePressed = false;
+        return true;
     }
 
     private void SetChecked(bool value)
@@ -123,7 +125,7 @@ public sealed class RadioButton : Control
         }
 
         Checked = value;
-        CheckedChanged?.Invoke();
+        CheckedChanged?.Invoke(this, EventArgs.Empty);
 
         if (!Checked || Parent is null)
         {

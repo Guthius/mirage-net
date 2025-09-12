@@ -83,28 +83,32 @@ public sealed class ComboBox(Style style) : Control
         _text.Position = new Vector2f(5, y);
     }
 
-    protected override void OnMousePressed(int x, int y, Mouse.Button button)
+    protected override bool OnMousePressed(int x, int y, Mouse.Button button)
     {
         if (button != Mouse.Button.Left)
         {
-            return;
+            return false;
         }
 
         if (_popup is null)
         {
             OpenDropDown();
 
-            return;
+            return true;
         }
 
-        ClickDropDown(
-            x - (int) _popup.Position.X,
-            y - (int) _popup.Position.Y);
+        ClickDropDown(x - _popup.Position.X, y - _popup.Position.Y);
+        return true;
     }
 
-    protected override void OnMouseMove(int x, int y)
+    protected override bool OnMouseMove(int x, int y)
     {
-        _popup?.HandleMouseMoved(x, y);
+        if (_popup is null)
+        {
+            return false;
+        }
+
+        return _popup.HandleMouseMoved(x, y);
     }
 
     private void ClickDropDown(int x, int y)
