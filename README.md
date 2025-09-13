@@ -49,11 +49,6 @@ Alternatively, from the repo root:
 dotnet run --project src/Terestrium.Client/Terestrium.Client.csproj
 ```
 
-## Solution Files
-
-- Terestrium.sln — primary solution file after the rename
-- Mirage.NET.sln (legacy) — may remain temporarily for transition
-
 ## Stopping
 
 - Stop the server: press Ctrl+C in the terminal where it's running
@@ -64,7 +59,7 @@ docker-compose down
 
 ## Contributing
 
-Contributions are welcome! If you encounter issues or have suggestions related to the ongoing rename or new features, please open an issue or pull request.
+Contributions are welcome! If you encounter issues or have suggestions or feature requests, please open an issue or pull request.
 
 ## License
 
