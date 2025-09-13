@@ -4,8 +4,7 @@ using Terestrium.Client.Assets;
 using Terestrium.Client.Core.Scenes;
 using Terestrium.Client.Inventory;
 using Terestrium.Client.Localization;
-using Terestrium.Client.Scenes.Game;
-using Terestrium.Client.Scenes.Menu;
+using Terestrium.Client.Scenes;
 
 namespace Terestrium.Client.Net;
 
@@ -13,7 +12,7 @@ public static class NetworkHandlers
 {
     private static readonly Game Game = Ioc.Default.GetRequiredService<Game>();
     private static readonly ISceneManager SceneManager = Ioc.Default.GetRequiredService<ISceneManager>();
-    private static readonly IMenuScene MenuScene = Ioc.Default.GetRequiredService<IMenuScene>();
+    private static readonly ISceneMainMenu MenuScene = Ioc.Default.GetRequiredService<ISceneMainMenu>();
 
     public static void HandleCreateAccount(CreateAccountResponse response)
     {
@@ -221,7 +220,7 @@ public static class NetworkHandlers
 
     public static void HandleEnterGame(EnterGameCommand command)
     {
-        SceneManager.SwitchTo<IGameScene>();
+        SceneManager.SwitchTo<ISceneGame>();
     }
 
     public static void HandleMoveMap(MoveMapResponse response)
@@ -357,7 +356,7 @@ public static class NetworkHandlers
 
     public static void HandleChat(ChatCommand command)
     {
-        if (SceneManager.Current is not IGameScene gameScene)
+        if (SceneManager.Current is not ISceneGame gameScene)
         {
             return;
         }
@@ -387,7 +386,7 @@ public static class NetworkHandlers
     {
         Network.Disconnect();
 
-        var menu = SceneManager.SwitchTo<IMenuScene>();
+        var menu = SceneManager.SwitchTo<ISceneMainMenu>();
 
         menu.ShowAlert(command.Message);
     }

@@ -9,12 +9,12 @@ using Terestrium.Client.UI.Chat;
 using Terestrium.Client.UI.Controls;
 using Window = Terestrium.Client.UI.Controls.Window;
 
-namespace Terestrium.Client.Scenes.Game;
+namespace Terestrium.Client.Scenes;
 
-public sealed class GameScene : Scene, IGameScene
+public sealed class SceneGame : Scene, ISceneGame
 {
     private int _itemPickupTimer;
-    private readonly Client.Game _game;
+    private readonly Game _game;
 
     // Chat UI fields
     private readonly ChatPanel _chatPanel = new();
@@ -42,7 +42,7 @@ public sealed class GameScene : Scene, IGameScene
     private int _lastEnterTick;
     private int _lastEscapeTick;
 
-    public GameScene(Client.Game game)
+    public SceneGame(Game game)
     {
         _game = game;
 
@@ -192,7 +192,7 @@ public sealed class GameScene : Scene, IGameScene
     {
         var text = new Text();
 
-        text.Font = Client.Game.Font;
+        text.Font = Game.Font;
         text.CharacterSize = 14;
         text.FillColor = Color.White;
         text.DisplayedString = name;
@@ -208,7 +208,7 @@ public sealed class GameScene : Scene, IGameScene
     {
         var text = new Text();
 
-        text.Font = Client.Game.Font;
+        text.Font = Game.Font;
         text.CharacterSize = 14;
         text.FillColor = Color.White;
         text.DisplayedString = level.ToString();
@@ -233,7 +233,7 @@ public sealed class GameScene : Scene, IGameScene
 
         var text = new Text();
 
-        text.Font = Client.Game.Font;
+        text.Font = Game.Font;
         text.DisplayedString = $"{value}/{max}";
         text.CharacterSize = 13;
         text.FillColor = Color.White;
@@ -254,7 +254,7 @@ public sealed class GameScene : Scene, IGameScene
 
         var text = new Text();
 
-        text.Font = Client.Game.Font;
+        text.Font = Game.Font;
         text.CharacterSize = 16;
         text.FillColor = info.PvpEnabled ? Color.Red : Color.White;
         text.DisplayedString = info.Name;

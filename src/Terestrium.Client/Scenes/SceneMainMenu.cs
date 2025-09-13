@@ -4,12 +4,12 @@ using SFML.Graphics;
 using SFML.System;
 using Terestrium.Client.Core.Scenes;
 using Terestrium.Client.Net;
-using Terestrium.Client.Scenes.Menu.Windows;
 using Terestrium.Client.UI.Controls;
+using Terestrium.Client.Windows;
 
-namespace Terestrium.Client.Scenes.Menu;
+namespace Terestrium.Client.Scenes;
 
-public sealed class MenuScene : Scene, IMenuScene
+public sealed class SceneMainMenu : Scene, ISceneMainMenu
 {
     private readonly WinConfirm _winConfirm;
     private readonly WinCharacterSelect _winCharacterSelect;
@@ -20,7 +20,7 @@ public sealed class MenuScene : Scene, IMenuScene
     private readonly Label _statusLabel;
     private float _statusTimer;
 
-    public MenuScene()
+    public SceneMainMenu()
     {
         _winConfirm = new WinConfirm(UI.CreateWindow("WinConfirm"));
         _winCharacterSelect = new WinCharacterSelect(UI.CreateWindow("WinCharacterSelect"), this, _winConfirm);
@@ -28,7 +28,7 @@ public sealed class MenuScene : Scene, IMenuScene
         _winDeleteAccount = new WinDeleteAccount(UI.CreateWindow("WinDeleteAccount"), this);
         _winLogin = new WinLogin(UI.CreateWindow("WinLogin"), this);
         _winMainMenu = new WinMainMenu(UI.CreateWindow("WinMainMenu"), this);
-        _statusLabel = new Label()
+        _statusLabel = new Label
         {
             Position = new Vector2i(10, 570),
             Size = new Vector2i(200, 25),
@@ -37,8 +37,6 @@ public sealed class MenuScene : Scene, IMenuScene
         };
 
         UI.Add(_statusLabel);
-        
-        ShowAlert("Test");
     }
 
     protected override void OnUpdate(float dt)
@@ -131,9 +129,8 @@ public sealed class MenuScene : Scene, IMenuScene
 
             if (!await Network.ConnectAsync())
             {
-                ShowStatus("Failed to connect to server.", Color.Red);
-                
                 ShowLogin();
+                ShowAlert("Failed to connect to server.");
 
                 return;
             }
@@ -144,9 +141,8 @@ public sealed class MenuScene : Scene, IMenuScene
         }
         catch (Exception ex)
         {
-            ShowStatus(ex.Message, Color.Red);
-
             ShowLogin();
+            ShowStatus(ex.Message, Color.Red);
         }
     }
 

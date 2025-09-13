@@ -8,9 +8,8 @@ using Terestrium.Client.Core.Scenes;
 using Terestrium.Client.Entities;
 using Terestrium.Client.Inventory;
 using Terestrium.Client.Maps;
+using Terestrium.Client.Scenes;
 using Terestrium.Client.Scenes.Editor;
-using Terestrium.Client.Scenes.Game;
-using Terestrium.Client.Scenes.Menu;
 
 namespace Terestrium.Client;
 
@@ -38,8 +37,8 @@ public sealed class Game
 
         services.AddSingleton<ISceneManager, SceneManager>();
         services.AddSingleton<Game>();
-        services.AddSingleton<IMenuScene, MenuScene>();
-        services.AddSingleton<IGameScene, GameScene>();
+        services.AddSingleton<ISceneMainMenu, SceneMainMenu>();
+        services.AddSingleton<ISceneGame, SceneGame>();
         services.AddSingleton<IEditorScene, EditorScene>();
 
         var serviceProvider = services.BuildServiceProvider();
@@ -69,7 +68,7 @@ public sealed class Game
 
     public void Run()
     {
-        _sceneManager.SwitchTo<IEditorScene>();
+        _sceneManager.SwitchTo<ISceneMainMenu>();
 
         _clock.Restart();
 
@@ -96,7 +95,7 @@ public sealed class Game
     public void ConnectionLost()
     {
         _sceneManager
-            .SwitchTo<IMenuScene>()
+            .SwitchTo<ISceneMainMenu>()
             .ShowAlert("The connection with the server has been lost.");
     }
 }

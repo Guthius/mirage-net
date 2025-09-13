@@ -2,9 +2,9 @@
 using SFML.Graphics;
 using Terestrium.Client.Core.Scenes;
 
-namespace Terestrium.Client.Scenes.Menu;
+namespace Terestrium.Client.Scenes;
 
-public interface IMenuScene : IScene
+public interface ISceneMainMenu : IScene
 {
     void ShowAlert(string alertMessage);
     void ShowStatus(string status, Color? color = null);
