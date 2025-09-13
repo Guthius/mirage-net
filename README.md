@@ -1,5 +1,5 @@
 ﻿<div align="center">
-    <img src=".github/assets/mirage.png" width="420" alt="Terestrium logo">
+    <img src=".github/assets/logo.png" width="420" alt="Terestrium logo">
 
 ![.NET](https://img.shields.io/badge/.NET-9.0-512BD4?style=flat-square&logo=dotnet)
 ![C#](https://img.shields.io/badge/C%23-13.0-239120?style=flat-square&logo=c-sharp)
