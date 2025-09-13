@@ -1,14 +1,12 @@
 ﻿<div align="center">
-    <img src=".github/assets/mirage.png" width="420">
+    <img src=".github/assets/mirage.png" width="420" alt="Terestrium logo">
 
 ![.NET](https://img.shields.io/badge/.NET-9.0-512BD4?style=flat-square&logo=dotnet)
 ![C#](https://img.shields.io/badge/C%23-13.0-239120?style=flat-square&logo=c-sharp)
-![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/guthius/mirage-net)
-![GitHub License](https://img.shields.io/github/license/guthius/mirage-net)
-![GitHub contributors](https://img.shields.io/github/contributors/guthius/mirage-net?style=flat-square)
-![GitHub downloads](https://img.shields.io/github/downloads/guthius/mirage-net/total?style=flat-square)
 
-This is a full conversion of the Mirage 3.0.3 game engine from VB6 to C#.
+Terestrium is a simple 2D online RPG (ORPG) engine written in C#. 
+
+Inspired by the classic VB6 Mirage 3.0.3 engine.
 
 </div>
 
@@ -17,37 +15,57 @@ This is a full conversion of the Mirage 3.0.3 game engine from VB6 to C#.
 - Account management
 - Character creation
 - Basic combat system
-- NPC's
+- NPCs
 - Items (Inventory + Equipment)
 
-## Running the Server
+## Requirements
 
-### Prerequisites
-- Docker and Docker Compose installed on your system
-- .NET 9.0 SDK or later
+- .NET SDK 9.0 or later
+- Docker and Docker Compose (for required services)
 
-### Steps to Run
+## Quick Start
 
-1. First, start the required services using Docker Compose:
-   ```bash
-   docker-compose up -d
-   ```
+### 1) Start required services
+```bash
+# From the repository root
+docker-compose up -d
+```
 
-2. Once the services are up and running, you can start the server:
-   ```bash
-   cd src/Mirage.Server
-   dotnet run
-   ```
+### 2) Run the Server
+```bash
+cd src/Mirage.Server
+dotnet run
+```
+The server will initialize and be ready to accept client connections. Ensure the Docker services are running first.
 
-The server will initialize and be ready to accept client connections. 
+### 3) Run the Client (optional)
+You can run the client from the Terestrium client project:
+```bash
+cd src/Terestrium.Client
+dotnet run
+```
+Alternatively, from the repo root:
+```bash
+dotnet run --project src/Terestrium.Client/Terestrium.Client.csproj
+```
 
-Make sure the Docker services are running before starting the server, as it depends on them for proper functionality.
+## Solution Files
 
-### Stopping the Server
+- Terestrium.sln — primary solution file after the rename
+- Mirage.NET.sln (legacy) — may remain temporarily for transition
 
-1. To stop the server, press `Ctrl+C` in the terminal where it's running.
+## Stopping
 
-2. To stop the Docker services when you're done:
-   ```bash
-   docker-compose down
-   ```
+- Stop the server: press Ctrl+C in the terminal where it's running
+- Stop Docker services when finished:
+```bash
+docker-compose down
+```
+
+## Contributing
+
+Contributions are welcome! If you encounter issues or have suggestions related to the ongoing rename or new features, please open an issue or pull request.
+
+## License
+
+This project is licensed under the terms of the LICENSE file included in this repository.

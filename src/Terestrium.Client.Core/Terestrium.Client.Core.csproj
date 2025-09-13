@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <PackageReference Include="SFML.Net" Version="2.6.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Terestrium.Client.UI\Terestrium.Client.UI.csproj"/>
+    </ItemGroup>
+
+</Project>
