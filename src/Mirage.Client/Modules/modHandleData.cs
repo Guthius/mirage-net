@@ -1,4 +1,8 @@
-﻿using Mirage.Forms;
+﻿using System.Windows;
+using Mirage.Forms;
+using Mirage.Windows;
+using Application = System.Windows.Forms.Application;
+using MessageBox = System.Windows.Forms.MessageBox;
 
 namespace Mirage.Modules;
 
@@ -650,14 +654,14 @@ public static class modHandleData
         {
             modGameLogic.InItemsEditor = true;
 
-            using var frmIndex = new frmIndex();
+            var frmIndex = new WindowIndex();
 
             for (var i = 1; i <= modTypes.MAX_INV; i++)
             {
-                frmIndex.lstIndex.Items.Add($"{i}: {modTypes.Item[i].Name.Trim()}");
+                frmIndex.Items.Items.Add($"{i}: {modTypes.Item[i].Name.Trim()}");
             }
 
-            frmIndex.lstIndex.SelectedIndex = 0;
+            frmIndex.Items.SelectedIndex = 0;
             frmIndex.ShowDialog();
 
             return;
@@ -748,15 +752,15 @@ public static class modHandleData
         {
             modGameLogic.InNpcEditor = true;
 
-            using var frmIndex = new frmIndex();
+            var frmIndex = new WindowIndex();
 
             // Add the names
             for (var i = 1; i <= modTypes.MAX_NPCS; i++)
             {
-                frmIndex.lstIndex.Items.Add($"{i}: {modTypes.Npc[i].Name.Trim()}");
+                frmIndex.Items.Items.Add($"{i}: {modTypes.Npc[i].Name.Trim()}");
             }
 
-            frmIndex.lstIndex.SelectedIndex = 0;
+            frmIndex.Items.SelectedIndex = 0;
             frmIndex.ShowDialog();
         }
 
@@ -843,15 +847,15 @@ public static class modHandleData
         {
             modGameLogic.InShopEditor = true;
 
-            using var frmIndex = new frmIndex();
+            var frmIndex = new WindowIndex();
 
             // Add the names
             for (var i = 1; i <= modTypes.MAX_SHOPS; i++)
             {
-                frmIndex.lstIndex.Items.Add($"{i}: {modTypes.Shop[i].Name.Trim()}");
+                frmIndex.Items.Items.Add($"{i}: {modTypes.Shop[i].Name.Trim()}");
             }
 
-            frmIndex.lstIndex.SelectedIndex = 0;
+            frmIndex.Items.SelectedIndex = 0;
             frmIndex.ShowDialog();
         }
 
@@ -906,15 +910,15 @@ public static class modHandleData
         {
             modGameLogic.InSpellEditor = true;
 
-            using var frmIndex = new frmIndex();
+            var frmIndex = new WindowIndex();
 
             // Add the names
             for (var i = 1; i <= modTypes.MAX_SPELLS; i++)
             {
-                frmIndex.lstIndex.Items.Add($"{i}: {modTypes.Spell[i].Name.Trim()}");
+                frmIndex.Items.Items.Add($"{i}: {modTypes.Spell[i].Name.Trim()}");
             }
 
-            frmIndex.lstIndex.SelectedIndex = 0;
+            frmIndex.Items.SelectedIndex = 0;
             frmIndex.ShowDialog();
         }
 
@@ -961,9 +965,9 @@ public static class modHandleData
         {
             var shopNum = int.Parse(parse[1]);
 
-            using var frmTrade = new frmTrade();
+            var frmTrade = new WindowTrade();
 
-            frmTrade.picFixItems.Visible = int.Parse(parse[2]) == 1;
+            frmTrade.picFixItems.Visibility = int.Parse(parse[2]) == 1 ? Visibility.Visible : Visibility.Hidden;
 
             var n = 3;
             for (var i = 1; i <= modTypes.MAX_TRADES; i++)

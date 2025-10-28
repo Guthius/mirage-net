@@ -25,7 +25,6 @@ public static class modClientTCP
         My.Forms.frmMirage.Socket.Close();
 
         My.Forms.frmChars.Hide();
-        My.Forms.frmCredits.Hide();
         My.Forms.frmDeleteAccount.Hide();
         My.Forms.frmLogin.Hide();
         My.Forms.frmNewAccount.Hide();

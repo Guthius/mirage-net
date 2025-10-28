@@ -1,21 +1,17 @@
+﻿using System.Windows;
 using Mirage.Modules;
+using MessageBox = System.Windows.MessageBox;
 
-namespace Mirage.Forms;
+namespace Mirage.Windows;
 
-public partial class frmNewAccount : Form
+public partial class WindowNewAccount
 {
-    public frmNewAccount()
+    public WindowNewAccount()
     {
         InitializeComponent();
     }
 
-    private void picCancel_Click(object sender, EventArgs e)
-    {
-        My.Forms.frmMainMenu.Show();
-        Hide();
-    }
-
-    private void picConnect_Click(object sender, EventArgs e)
+    private void OnAccept(object sender, RoutedEventArgs e)
     {
         if (txtName.Text.Trim().Length == 0 ||
             txtPassword.Text.Trim().Length == 0)
@@ -31,13 +27,20 @@ public partial class frmNewAccount : Form
             MessageBox.Show(
                 "You cannot use high ascii chars in your name, please reenter.",
                 modTypes.GAME_NAME,
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Error);
 
             txtName.Text = "";
             return;
         }
         
         modGameLogic.MenuState(modGameLogic.MENU_STATE_NEWACCOUNT);
+    }
+
+    private void OnCancel(object sender, RoutedEventArgs e)
+    {
+        My.Forms.frmMainMenu.Show();
+        
+        Hide();
     }
 }

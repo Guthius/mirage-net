@@ -15,6 +15,8 @@ internal static class Program
         My.Forms.frmMainMenu.Show();
         My.Forms.frmSendGetData.Hide();
 
-        Application.Run(My.Forms.frmMainMenu);
+        var app = new System.Windows.Application();
+        
+        app.Run(My.Forms.frmMainMenu);
     }
 }

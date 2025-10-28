@@ -1,16 +1,16 @@
 ﻿using Mirage.Forms;
+using Mirage.Windows;
 
 namespace Mirage.My;
 
 internal static class Forms
 {
-    public static readonly frmChars frmChars = new();
-    public static readonly frmCredits frmCredits = new();
-    public static readonly frmDeleteAccount frmDeleteAccount = new();
-    public static readonly frmLogin frmLogin = new();
-    public static readonly frmMainMenu frmMainMenu = new();
+    public static readonly WindowChars frmChars = new();
+    public static readonly WindowDeleteAccount frmDeleteAccount = new();
+    public static readonly WindowLogin frmLogin = new();
+    public static readonly WindowMainMenu frmMainMenu = new();
     public static readonly frmMirage frmMirage = new();
-    public static readonly frmNewAccount frmNewAccount = new();
+    public static readonly WindowNewAccount frmNewAccount = new();
     public static readonly frmNewChar frmNewChar = new();
-    public static readonly frmSendGetData frmSendGetData = new();
+    public static readonly WindowSendGetData frmSendGetData = new();
 }

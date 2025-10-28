@@ -1,5 +1,6 @@
 using Mirage.Compat;
 using Mirage.Modules;
+using Mirage.Windows;
 
 namespace Mirage.Forms;
 
@@ -134,7 +135,7 @@ public partial class frmMirage : Form
 
     private void picTrain_Click(object sender, EventArgs e)
     {
-        using var frmTraining = new frmTraining();
+        var frmTraining = new WIndowTraining();
 
         frmTraining.ShowDialog();
     }

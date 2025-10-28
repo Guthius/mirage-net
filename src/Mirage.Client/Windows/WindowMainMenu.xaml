@@ -1,0 +1,17 @@
+﻿<Window x:Class="Mirage.Windows.WindowMainMenu"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Mirage Online"
+        Height="343" Width="562">
+    <Grid>
+        <StackPanel>
+            <Button Content="New Account" Click="OnCreateAccount" />
+            <Button Content="Delete Account" Click="OnDeleteAccount" />
+            <Button Content="Login" Click="OnLogin" />
+            <Button Content="Quit" Click="OnQuit" />
+        </StackPanel>
+    </Grid>
+</Window>

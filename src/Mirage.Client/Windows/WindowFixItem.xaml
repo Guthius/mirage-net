@@ -1,0 +1,37 @@
+﻿<Window x:Class="Mirage.Windows.WindowFixItem"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Fix Item"
+        Height="140" Width="280">
+    <Grid Margin="5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Please select the item you wish to fix." Margin="0,0,0,10" />
+
+        <Grid Grid.Row="1" VerticalAlignment="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0"
+                       Text="Item"
+                       TextAlignment="Right"
+                       VerticalAlignment="Center"
+                       Margin="0,0,5,0" />
+
+            <ComboBox Grid.Column="1" x:Name="cmbItem" VerticalAlignment="Top" />
+        </Grid>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,0,0">
+            <Button Padding="3" Width="80" Content="OK" Margin="0,0,5,0" Click="OnAccept" />
+            <Button Padding="3" Width="80" Content="Cancel" Click="OnCancel" />
+        </StackPanel>
+    </Grid>
+</Window>

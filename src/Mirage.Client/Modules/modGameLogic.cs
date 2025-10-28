@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using Mirage.Forms;
+using Mirage.Windows;
 using SFML.Graphics;
 using SFML.System;
 using Color = SFML.Graphics.Color;
@@ -90,7 +91,7 @@ public static partial class modGameLogic
 
     public static void SetStatus(string caption)
     {
-        My.Forms.frmSendGetData.lblStatus.Text = caption;
+        My.Forms.frmSendGetData.SetStatus(caption);
     }
 
     public static void MenuState(int state)
@@ -412,7 +413,7 @@ public static partial class modGameLogic
     {
         modClientTCP.InGame = false;
 
-        Application.Exit();
+        Environment.Exit(0);
     }
 
     private static void BltTile(int x, int y, int tileId)
@@ -866,7 +867,7 @@ public static partial class modGameLogic
                 // Show training
                 if (MyText.StartsWith("/train", StringComparison.OrdinalIgnoreCase))
                 {
-                    using var frmTraining = new frmTraining();
+                    var frmTraining = new WIndowTraining();
                     frmTraining.ShowDialog();
                     MyText = "";
                     return;
