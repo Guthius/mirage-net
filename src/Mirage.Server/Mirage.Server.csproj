@@ -1,12 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net9.0-windows</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
-        <UseWindowsForms>true</UseWindowsForms>
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>Mirage</RootNamespace>
-        <GenerateResourceUsePreserializedResources>True</GenerateResourceUsePreserializedResources>
         <IsPackable>false</IsPackable>
         <Product>Mirage</Product>
         <AssemblyVersion>3.0.0.3</AssemblyVersion>
@@ -25,4 +24,5 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
+    
 </Project>

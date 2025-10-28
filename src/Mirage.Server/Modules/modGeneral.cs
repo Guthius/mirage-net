@@ -102,7 +102,7 @@ public static class modGeneral
 
         modDatabase.SaveAllPlayersOnline();
 
-        Application.Exit();
+        Environment.Exit(0);
     }
 
     public static void SetStatus(string status)

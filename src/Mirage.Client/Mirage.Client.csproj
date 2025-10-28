@@ -12,6 +12,7 @@
         <IsPackable>false</IsPackable>
         <Product>Mirage</Product>
         <AssemblyVersion>3.0.0.3</AssemblyVersion>
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
     </PropertyGroup>
 
     <ItemGroup>
